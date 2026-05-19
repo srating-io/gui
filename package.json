@@ -7,7 +7,7 @@
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
     "@esmalley/react-material-icons": "^4.0.2",
-    "@esmalley/react-material-ui": "^1.2.2",
+    "@esmalley/react-material-ui": "^1.2.3",
     "@esmalley/ts-utils": "^6.2.8",
     "@next/bundle-analyzer": "^15.2.2",
     "@reduxjs/toolkit": "^2.0.1",
