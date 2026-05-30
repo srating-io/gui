@@ -1,4 +1,15 @@
-import { DEFAULT_CBB_ID, DEFAULT_CBB_SEASON, DEFAULT_CFB_ID, DEFAULT_CFB_SEASON, DEFAULT_D1_DIVISION_ID, DEFAULT_FBS_DIVISION_ID, DEFAULT_ORGANIZATION_ID } from './Defaults';
+import {
+  DEFAULT_CBB_ID,
+  DEFAULT_CBB_SEASON,
+  DEFAULT_CFB_ID,
+  DEFAULT_CFB_SEASON,
+  DEFAULT_D1_DIVISION_ID,
+  DEFAULT_FBS_DIVISION_ID,
+  DEFAULT_NBA_DIVISION_ID,
+  DEFAULT_NBA_ID,
+  DEFAULT_NBA_SEASON,
+  DEFAULT_ORGANIZATION_ID,
+} from './Defaults';
 
 
 class Initializer {
@@ -13,6 +24,10 @@ class Initializer {
 
         if (splat[1] === 'cbb') {
           return DEFAULT_CBB_ID;
+        }
+
+        if (splat[1] === 'nba') {
+          return DEFAULT_NBA_ID;
         }
       }
     }
@@ -32,6 +47,10 @@ class Initializer {
       return DEFAULT_D1_DIVISION_ID;
     }
 
+    if (organization_id === DEFAULT_NBA_ID) {
+      return DEFAULT_NBA_DIVISION_ID;
+    }
+
     return DEFAULT_D1_DIVISION_ID;
   }
 
@@ -45,6 +64,10 @@ class Initializer {
 
     if (organization_id === DEFAULT_CBB_ID) {
       return DEFAULT_CBB_SEASON;
+    }
+
+    if (organization_id === DEFAULT_NBA_ID) {
+      return DEFAULT_NBA_SEASON;
     }
 
     return 2026;

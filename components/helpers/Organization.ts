@@ -1,6 +1,6 @@
 import { getStore } from '@/app/StoreProvider';
 import { Organizations } from '@/types/general';
-import { DEFAULT_CBB_ID, DEFAULT_CFB_ID, DEFAULT_ORGANIZATION_ID } from './Defaults';
+import { DEFAULT_CBB_ID, DEFAULT_CFB_ID, DEFAULT_NBA_ID, DEFAULT_ORGANIZATION_ID } from './Defaults';
 
 
 /**
@@ -21,6 +21,10 @@ class Organization {
    */
   public static getCBBID(): string {
     return DEFAULT_CBB_ID;
+  }
+
+  public static getNBAID(): string {
+    return DEFAULT_NBA_ID;
   }
 
   public static getDefault(): string {
@@ -47,6 +51,15 @@ class Organization {
   public static isCFB(): boolean {
     const store = getStore();
     return (store.getState().organizationReducer.organization_id === this.getCFBID());
+  }
+
+  /**
+   * Is the current organization NBA
+   * Becareful using this, if you conditonally use it, the hooks between renders will be off and error out react
+   */
+  public static isNBA(): boolean {
+    const store = getStore();
+    return (store.getState().organizationReducer.organization_id === this.getNBAID());
   }
 
   /**
