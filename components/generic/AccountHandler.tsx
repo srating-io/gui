@@ -463,7 +463,7 @@ const AccountHandler = (
   } else {
     boxContents = (
       <div>
-        <Typography type = 'caption' style = {{ color: theme.text.secondary }}>{(message || 'Sign in to your account')}</Typography>
+        <Typography type = 'body1' style = {{ color: theme.text.secondary, paddingBottom: 12 }}>{(message || 'Sign in to your account')}</Typography>
         <TextInput
           inputHandler={loginInputHandler}
           triggerValidation={triggerValidation}
