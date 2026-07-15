@@ -190,7 +190,7 @@ const Sidebar = (
       })}
 
       {getButtonContainer({
-        onClick: () => { window.open('https://github.com/esmalleydev/srating.io-gui', '_blank'); },
+        onClick: () => { window.open('https://github.com/srating-io/gui', '_blank'); },
         icon: <GitHubIcon style={iconStyle} />,
         text: 'Github',
       })}
