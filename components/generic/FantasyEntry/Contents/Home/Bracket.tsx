@@ -2,7 +2,6 @@
 
 import Team from '@/components/helpers/Team';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
-import { BracketTeam, FantasyBracketSlots } from '@/types/general';
 import { useMemo, useState, useEffect, useRef } from 'react';
 
 import PublicIcon from '@esmalley/react-material-icons/Public';
@@ -18,6 +17,7 @@ import { useNavigation } from '@/components/hooks/useNavigation';
 import Game from '@/components/helpers/Game';
 import QueryStatsIcon from '@esmalley/react-material-icons/QueryStats';
 import { Chip, IconButton, Paper, Typography, useTheme, useWindowDimensions } from '@esmalley/react-material-ui';
+import { General } from '@srating-io/types';
 
 const slot_height = 100;
 const slot_width = 170;
@@ -113,7 +113,7 @@ const BracketSlot = (
   }:
   {
     fantasy_bracket_slot_id: string | null,
-    fantasy_bracket_slots: FantasyBracketSlots,
+    fantasy_bracket_slots: General.FantasyBracketSlots,
     isRightSide?: boolean,
     region_x_round_x_seed_x_bracket_teams?: object,
     team_id_x_seed: object,
@@ -207,7 +207,7 @@ const BracketSlot = (
         fantasy_bracket_slot.round in region_x_round_x_seed_x_bracket_teams[fantasy_bracket_slot.region] &&
         seedPairs[fantasy_bracket_slot.slot][0] in region_x_round_x_seed_x_bracket_teams[fantasy_bracket_slot.region][fantasy_bracket_slot.round]
       ) {
-        team_ids = Object.values(region_x_round_x_seed_x_bracket_teams[fantasy_bracket_slot.region][fantasy_bracket_slot.round][seedPairs[fantasy_bracket_slot.slot][0]]).map((r: BracketTeam) => r.team_id);
+        team_ids = Object.values(region_x_round_x_seed_x_bracket_teams[fantasy_bracket_slot.region][fantasy_bracket_slot.round][seedPairs[fantasy_bracket_slot.slot][0]]).map((r: General.BracketTeam) => r.team_id);
       }
     } else if (which === 'second') {
       if (fantasy_bracket_slot.actual_second_team_id) {
@@ -221,7 +221,7 @@ const BracketSlot = (
         fantasy_bracket_slot.round in region_x_round_x_seed_x_bracket_teams[fantasy_bracket_slot.region] &&
         seedPairs[fantasy_bracket_slot.slot][1] in region_x_round_x_seed_x_bracket_teams[fantasy_bracket_slot.region][fantasy_bracket_slot.round]
       ) {
-        team_ids = Object.values(region_x_round_x_seed_x_bracket_teams[fantasy_bracket_slot.region][fantasy_bracket_slot.round][seedPairs[fantasy_bracket_slot.slot][1]]).map((r: BracketTeam) => r.team_id);
+        team_ids = Object.values(region_x_round_x_seed_x_bracket_teams[fantasy_bracket_slot.region][fantasy_bracket_slot.round][seedPairs[fantasy_bracket_slot.slot][1]]).map((r: General.BracketTeam) => r.team_id);
       }
 
       if (fantasy_bracket_slot.actual_second_team_id && fantasy_bracket_slot.third_team_id) {

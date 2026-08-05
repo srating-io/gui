@@ -9,11 +9,8 @@ import LinearScaleIcon from '@esmalley/react-material-icons/LinearScale';
 
 
 import { Payload } from 'recharts/types/component/DefaultLegendContent';
-import { StatisticRankings as CBBStatisticRankings } from '@/types/cbb';
-import { StatisticRankings as CFBStatisticRanking } from '@/types/cfb';
 import { footerNavigationHeight } from '@/components/generic/FooterNavigation';
 import { headerBarHeight } from '@/components/generic/Header';
-import { Elos, Games, TeamSeasonConferences } from '@/types/general';
 import Organization from '@/components/helpers/Organization';
 import { useAppSelector } from '@/redux/hooks';
 import Team from '@/components/helpers/Team';
@@ -21,12 +18,13 @@ import TableColumns from '@/components/helpers/TableColumns';
 import { Color, Dates } from '@esmalley/ts-utils';
 import ColumnPicker from '@/components/generic/ColumnPicker';
 import { Chip, LinearProgress, Paper, Typography, useTheme, useWindowDimensions } from '@esmalley/react-material-ui';
+import { Basketball, Football, General } from '@srating-io/types';
 
 export interface TrendsType {
-  elos: Elos;
-  games: Games;
-  statistic_rankings: CBBStatisticRankings | CFBStatisticRanking
-  team_season_conferences: TeamSeasonConferences
+  elos: General.Elos;
+  games: General.Games;
+  statistic_rankings: Basketball.StatisticRankings | Football.StatisticRankings;
+  team_season_conferences: General.TeamSeasonConferences;
 }
 
 const padding = 5;

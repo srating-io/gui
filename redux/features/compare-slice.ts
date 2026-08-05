@@ -1,9 +1,9 @@
 import State from '@/components/helpers/State';
-import { Teams } from '@/types/general';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { Team } from '@srating-io/types';
 
 type InitialState = {
-  teams: Teams,
+  teams: {[team_id: string]: Team.loadTeamResults},
   home_team_id: string | null,
   away_team_id: string | null,
   next_search: string | null,

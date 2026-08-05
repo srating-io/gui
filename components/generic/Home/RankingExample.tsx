@@ -12,9 +12,9 @@ import { setLoading as setLoadingDisplay } from '@/redux/features/loading-slice'
 import Organization from '@/components/helpers/Organization';
 import TableColumns from '@/components/helpers/TableColumns';
 import { decorateHeaderRow, decorateRows } from '../Ranking/Contents/Client';
-import { RankingTable } from '@/types/cbb';
 import { useNavigation } from '@/components/hooks/useNavigation';
 import { Button, defaultSortOrderType, VirtualTable } from '@esmalley/react-material-ui';
+import { Basketball } from '@srating-io/types';
 
 
 
@@ -48,7 +48,7 @@ const RankingExample = () => {
 
   const headCells = TableColumns.getColumns({ organization_id, view });
 
-  const rows = getExampleRows() as unknown as RankingTable[];
+  const rows = getExampleRows() as unknown as Basketball.RankingTable[];
 
   const handleSort = (id) => {
     const isAsc = orderBy === id && order === 'asc';

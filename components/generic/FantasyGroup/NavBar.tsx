@@ -7,7 +7,6 @@ import { useState } from 'react';
 import { setLoading } from '@/redux/features/loading-slice';
 import { setDataKey } from '@/redux/features/fantasy_group-slice';
 import { useClientAPI } from '@/components/clientAPI';
-import { FantasyDraftOrders, FantasyGroup } from '@/types/general';
 import LockIcon from '@esmalley/react-material-icons/Lock';
 import LogoutIcon from '@esmalley/react-material-icons/Logout';
 import DeleteIcon from '@esmalley/react-material-icons/Delete';
@@ -17,6 +16,7 @@ import Organization from '@/components/helpers/Organization';
 import { Objector, Style } from '@esmalley/ts-utils';
 import { useNavigation } from '@/components/hooks/useNavigation';
 import { Button, IconButton, Menu, MenuOption, Modal, Typography, useTheme } from '@esmalley/react-material-ui';
+import { General } from '@srating-io/types';
 
 
 const getNavHeaderHeight = () => {
@@ -33,8 +33,8 @@ type ModalData = {
 }
 
 type LockResponse = {
-  fantasy_group: FantasyGroup;
-  fantasy_draft_orders: FantasyDraftOrders;
+  fantasy_group: General.FantasyGroup;
+  fantasy_draft_orders: General.FantasyDraftOrders;
   error?: string;
 }
 

@@ -1,10 +1,10 @@
 'use client';
 
-import { PlaybyPlay, PlaybyPlays } from '@/types/cbb';
 import { getNavHeaderHeight, getSubNavHeaderHeight } from '@/components/generic/Game/NavBar';
 import { footerNavigationHeight } from '@/components/generic/FooterNavigation';
 import { headerBarHeight } from '@/components/generic/Header';
 import { LinearProgress, Typography, useTheme } from '@esmalley/react-material-ui';
+import { Basketball } from '@srating-io/types';
 
 /**
  * The main wrapper div for all the contents
@@ -40,9 +40,9 @@ const ClientSkeleton = () => {
 
 const Client = ({ play_by_plays /* tag */ }) => {
   const theme = useTheme();
-  const rows: PlaybyPlays = play_by_plays;
+  const rows: Basketball.PlaybyPlays = play_by_plays;
 
-  const sortedPBP: PlaybyPlay[] = Object.values(rows).sort((a, b) => {
+  const sortedPBP: Basketball.PlaybyPlay[] = Object.values(rows).sort((a, b) => {
     return +a.order > +b.order ? -1 : 1;
   });
 

@@ -1,7 +1,7 @@
 'use server';
 
 import { Metadata, ResolvingMetadata } from 'next';
-import FantasyGroup, { getDecorateFantasyGroup } from 'Surface/FantasyGroup';
+import FantasyGroup, { getDecorateFantasyGroup } from '../../../Surface/FantasyGroup';
 
 
 type Props = {

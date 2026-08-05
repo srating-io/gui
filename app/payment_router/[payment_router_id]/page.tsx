@@ -1,7 +1,7 @@
 'use server';
 
 import { Metadata, ResolvingMetadata } from 'next';
-import PaymentRouter, { getDecoratePaymentRouter } from 'Surface/PaymentRouter';
+import PaymentRouter, { getDecoratePaymentRouter } from '../../../Surface/PaymentRouter';
 
 
 type Props = {

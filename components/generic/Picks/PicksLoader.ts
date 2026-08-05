@@ -3,6 +3,7 @@
 import { useClientAPI } from '@/components/clientAPI';
 import { setDataKey } from '@/redux/features/picks-slice';
 import { useAppDispatch } from '@/redux/hooks';
+import { Game } from '@srating-io/types';
 import { useEffect, useState } from 'react';
 
 
@@ -29,7 +30,7 @@ const PicksLoader = ({ organization_id, division_id, date }) => {
         division_id,
         start_date: date,
       },
-    }).then((response) => {
+    }).then((response: Game.getScoresResults) => {
       dispatch(setDataKey({ key: 'picks', value: response }));
       dispatch(setDataKey({ key: 'picksLoading', value: false }));
       setLoading(false);

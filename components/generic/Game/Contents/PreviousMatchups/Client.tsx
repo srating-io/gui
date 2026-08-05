@@ -5,11 +5,11 @@ import { useState } from 'react';
 import HelperGame from '@/components/helpers/Game';
 
 import PreviousMatchupTile from '@/components/generic/Game/Contents/PreviousMatchups/Tile';
-import { Game, Games } from '@/types/general';
 import { getNavHeaderHeight, getSubNavHeaderHeight } from '@/components/generic/Game/NavBar';
 import { footerNavigationHeight } from '@/components/generic/FooterNavigation';
 import { headerBarHeight } from '@/components/generic/Header';
 import { Chip, LinearProgress, Paper, Typography, useTheme } from '@esmalley/react-material-ui';
+import { General } from '@srating-io/types';
 
 /**
  * The main wrapper div for all the contents
@@ -44,7 +44,7 @@ const ClientSkeleton = () => {
 };
 
 
-const Client = ({ game, previousMatchups }: {game: Game, previousMatchups: Games}) => {
+const Client = ({ game, previousMatchups }: {game: General.Game, previousMatchups: General.Games}) => {
   const [showAllPreviousMatchups, setShowAllPreviousMatchups] = useState(false);
 
   const Game = new HelperGame({
@@ -58,7 +58,7 @@ const Client = ({ game, previousMatchups }: {game: Game, previousMatchups: Games
   if (previousMatchups && !Object.keys(previousMatchups).length) {
     previousMatchupContainers.push(<Paper elevation = {3} style = {{ padding: 10 }}><Typography type = 'body1'>Could not find any previous games :(</Typography></Paper>);
   } else if (previousMatchups) {
-    const sorted_matchups: Game[] = Object.values(previousMatchups).sort((a, b) => {
+    const sorted_matchups: General.Game[] = Object.values(previousMatchups).sort((a, b) => {
       return a.start_date > b.start_date ? -1 : 1;
     });
 

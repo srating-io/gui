@@ -3,7 +3,6 @@
 import { useState } from 'react';
 
 import HelperGame from '@/components/helpers/Game';
-import { Game, GamePulse, GamePulses, Odds, Oddsz } from '@/types/general';
 import Chart from '@/components/generic/Chart';
 import { LineProps } from 'recharts';
 import { getNavHeaderHeight, getSubNavHeaderHeight } from '@/components/generic/Game/NavBar';
@@ -11,6 +10,7 @@ import { footerNavigationHeight } from '@/components/generic/FooterNavigation';
 import { headerBarHeight } from '@/components/generic/Header';
 import { Color } from '@esmalley/ts-utils';
 import { Chip, LinearProgress, Typography, useTheme } from '@esmalley/react-material-ui';
+import { General } from '@srating-io/types';
 
 /**
  * The main wrapper div for all the contents
@@ -44,7 +44,7 @@ const ClientSkeleton = () => {
   );
 };
 
-const Client = ({ game, game_pulses, odds }: {game: Game, game_pulses: GamePulses, odds: Oddsz}) => {
+const Client = ({ game, game_pulses, odds }: {game: General.Game, game_pulses: General.GamePulses, odds: General.Oddsz}) => {
   const [selectedIntervalChip, setSelectedIntervalChip] = useState('scoring');
 
   const theme = useTheme();
@@ -89,7 +89,7 @@ const Client = ({ game, game_pulses, odds }: {game: Game, game_pulses: GamePulse
     );
   }
 
-  const sorted_game_pulses: GamePulse[] = Object.values(game_pulses || {}).sort((a, b) => {
+  const sorted_game_pulses: General.GamePulse[] = Object.values(game_pulses || {}).sort((a, b) => {
     return a.date_of_entry < b.date_of_entry ? -1 : 1;
   });
 
@@ -122,7 +122,7 @@ const Client = ({ game, game_pulses, odds }: {game: Game, game_pulses: GamePulse
         map[current_period] = true;
       }
 
-      const game_pulse_odds: Odds | null = sorted_game_pulses[i].odds_id in odds ? odds[sorted_game_pulses[i].odds_id] : null;
+      const game_pulse_odds: General.Odds | null = sorted_game_pulses[i].odds_id in odds ? odds[sorted_game_pulses[i].odds_id] : null;
 
       const data: Data = {
         time: clock + (showPeriod ? ` ${current_period}` : ''),

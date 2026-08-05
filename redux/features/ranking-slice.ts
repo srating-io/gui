@@ -1,7 +1,6 @@
 
 import State from '@/components/helpers/State';
-import { RankingTable as CBBRankingTable } from '@/types/cbb';
-import { RankingTable as CFBRankingTable } from '@/types/cfb';
+import { RankingTable } from '@/types/general';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 
@@ -21,7 +20,7 @@ type InitialState = {
   columnView: string,
   customColumns: Array<string>,
   data: object | null,
-  filteredRows: CBBRankingTable[] | CFBRankingTable[] | null | boolean,
+  filteredRows: RankingTable[] | null | boolean,
   searchValue: string,
   loadingView: boolean,
 };

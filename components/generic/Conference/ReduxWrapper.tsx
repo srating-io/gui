@@ -3,14 +3,11 @@
 import { useEffect } from 'react';
 import { setDataKey } from '@/redux/features/conference-slice';
 import { useAppDispatch } from '@/redux/hooks';
-import { StatisticRankings as StatsCBB } from '@/types/cbb';
-import { StatisticRankings as StatsCFB } from '@/types/cfb';
-import { Elos, TeamSeasonConferences } from '@/types/general';
-import { Teams } from '@/types/general';
+import { Basketball, Football, General } from '@srating-io/types';
 
 const ReduxWrapper = (
   { children, team_season_conferences, teams, statistic_rankings, elos, view, subview = null }:
-  { children: React.ReactNode, team_season_conferences: TeamSeasonConferences, teams: Teams, statistic_rankings: StatsCBB | StatsCFB, elos: Elos, view: string, subview: string | null | undefined },
+  { children: React.ReactNode, team_season_conferences: General.TeamSeasonConferences, teams: General.Teams, statistic_rankings: Basketball.StatisticRankings | Football.StatisticRankings, elos: General.Elos, view: string, subview: string | null | undefined },
 ) => {
   const dispatch = useAppDispatch();
 

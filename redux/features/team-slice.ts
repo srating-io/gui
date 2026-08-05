@@ -1,14 +1,14 @@
 import State from '@/components/helpers/State';
-import { Team, TeamSeasonConference } from '@/types/general';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { General } from '@srating-io/types';
 
 
 type InitialState = {
   view: string,
   subview: string | null,
-  team: Team,
-  team_season_conference: TeamSeasonConference,
-  schedulePredictions: object,
+  team: General.Team,
+  team_season_conference: General.TeamSeasonConference,
+  schedulePredictions: General.Predictions,
   schedulePredictionsLoading: boolean,
   scheduleStats: object,
   scheduleStatsLoading: boolean,
@@ -48,8 +48,8 @@ stateController.set_url_param_type_x_keys({
 stateController.setInitialState({
   view: 'schedule',
   subview: null,
-  team: {} as Team,
-  team_season_conference: {} as TeamSeasonConference,
+  team: {} as General.Team,
+  team_season_conference: {} as General.TeamSeasonConference,
   schedulePredictions: {},
   schedulePredictionsLoading: true,
   scheduleStats: {},

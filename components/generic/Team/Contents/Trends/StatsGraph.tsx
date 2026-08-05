@@ -298,7 +298,7 @@ const StatsGraph = (
       },
       {
         type: 'monotone',
-        name: `NCAA ${statistic.label}`,
+        name: `League ${statistic.label}`,
         dataKey: `league_${statistic.id}`,
         stroke: theme.secondary.dark,
         strokeWidth: 2,

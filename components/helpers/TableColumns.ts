@@ -150,7 +150,7 @@ class TableColumns {
         label: 'T',
         tooltip: 'Player is a transfer',
         sticky: true,
-        organization_ids: [Organization.getCBBID(), Organization.getNBAID(), Organization.getCFBID()],
+        organization_ids: [Organization.getCBBID(), Organization.getCFBID()],
         views: ['roster'],
         graphable: false,
         widths: {
@@ -163,6 +163,27 @@ class TableColumns {
         },
         getTooltip: () => {
           return 'Player is a transfer';
+        },
+      },
+      last_game_on_team_date: {
+        id: 'last_game_on_team_date',
+        numeric: false,
+        label: 'Traded',
+        tooltip: 'Last game on team date before trade',
+        sticky: true,
+        organization_ids: [Organization.getNBAID()],
+        views: ['roster'],
+        graphable: false,
+        // widths: {
+        //   default: 20,
+        // },
+        style: {
+        },
+        getLabel: () => {
+          return 'Traded';
+        },
+        getTooltip: () => {
+          return 'Last game on team date before trade';
         },
       },
       conference_code: {
@@ -4133,8 +4154,11 @@ class TableColumns {
         if (view === 'player') {
           return ['rank', 'name', 'team_name', 'rank_delta_combo', 'elo', 'efficiency_rating', 'offensive_rating', 'defensive_rating', 'player_efficiency_rating', 'minutes_per_game', 'points_per_game', 'usage_percentage', 'true_shooting_percentage'];
         }
-        if (view === 'roster') {
+        if (view === 'roster' && organization_id === Organization.getCBBID()) {
           return ['rank', 'is_transfer', 'name', 'elo', 'efficiency_rating', 'offensive_rating', 'defensive_rating', 'player_efficiency_rating', 'minutes_per_game', 'points_per_game', 'usage_percentage', 'true_shooting_percentage'];
+        }
+        if (view === 'roster' && organization_id === Organization.getNBAID()) {
+          return ['rank', 'name', 'elo', 'efficiency_rating', 'offensive_rating', 'defensive_rating', 'player_efficiency_rating', 'minutes_per_game', 'points_per_game', 'usage_percentage', 'true_shooting_percentage', 'last_game_on_team_date'];
         }
         if (view === 'conference') {
           return ['rank', 'name', 'rank_delta_combo', 'elo', 'adjusted_efficiency_rating', 'elo_sos', 'opponent_efficiency_rating', 'offensive_rating', 'defensive_rating', 'nonconfwins'];

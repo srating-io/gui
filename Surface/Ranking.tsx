@@ -1,6 +1,6 @@
 'use server';
 
-import Surface from 'Surface';
+
 import ContentsClientWrapper from '@/components/generic/Ranking/Contents/ClientWrapper';
 // import ContentsServer from '@/components/generic/Ranking/Contents/Server';
 import { Client, ClientSkeleton as ContentsClientSkeleton } from '@/components/generic/Ranking/Contents/Client';
@@ -8,6 +8,7 @@ import { Client, ClientSkeleton as ContentsClientSkeleton } from '@/components/g
 import Base from '@/components/generic/Ranking/Base';
 import Organization from '@/components/helpers/Organization';
 import Loader from '@/components/generic/Ranking/Contents/Loader';
+import Surface from '../Surface';
 
 export type getDecorateRanking ={
   view: string;

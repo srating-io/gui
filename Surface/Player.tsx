@@ -1,8 +1,9 @@
+/* eslint-disable no-param-reassign */
+
 'use server';
 
-import Surface from 'Surface';
+import Surface from '../Surface';
 import { useServerAPI } from '@/components/serverAPI';
-import { PlayerTeamSeason, PlayerTeamSeasons, Player as PlayerType, Team, Teams } from '@/types/general';
 
 import PlayerHelper from '@/components/helpers/Player';
 import { notFound } from 'next/navigation';
@@ -27,9 +28,11 @@ import { Suspense } from 'react';
 import { ClientSkeleton as HeaderClientSkeleton } from '@/components/generic/Player/Header/Client';
 import NavBar from '@/components/generic/Player/NavBar';
 import ContentsWrapper from '@/components/generic/Player/ContentsWrapper';
+import { General } from '@srating-io/types';
 
 export type getDecoratePlayer = {
   player_id: string;
+  player_team_season_id?: string;
   view: string;
   subview?: string | null;
   season?: number;
@@ -70,7 +73,7 @@ class Player extends Surface {
     const revalidateSeconds = 12 * 60 * 60; // 12 hours
     const organization_id = this.getOrganizationID();
 
-    const player: PlayerType = await useServerAPI({
+    const player: General.Player = await useServerAPI({
       class: 'player',
       function: 'get',
       arguments: {
@@ -79,7 +82,7 @@ class Player extends Surface {
       cache: revalidateSeconds,
     });
 
-    const player_team_seasons: PlayerTeamSeasons = await useServerAPI({
+    const player_team_seasons: General.PlayerTeamSeasons = await useServerAPI({
       class: 'player_team_season',
       function: 'read',
       arguments: {
@@ -89,7 +92,7 @@ class Player extends Surface {
       cache: revalidateSeconds,
     });
 
-    const teams: Teams = await useServerAPI({
+    const teams: General.Teams = await useServerAPI({
       class: 'team',
       function: 'read',
       arguments: {
@@ -103,7 +106,7 @@ class Player extends Surface {
 
 
   async getDecorate(
-    { player_id, view, season, division_id = this.getDivisionID(), trendsSeasons }:
+    { player_id, player_team_season_id, view, season, division_id = this.getDivisionID(), trendsSeasons }:
     getDecoratePlayer,
   ) {
     const organization_id = this.getOrganizationID();
@@ -111,14 +114,15 @@ class Player extends Surface {
     const data = await this.getData({ player_id });
     const { player, player_team_seasons, teams } = data;
 
-    let team: Team | null = null;
-    let player_team_season: PlayerTeamSeason | null = null;
+    let team: General.Team | null = null;
+    let player_team_season: General.PlayerTeamSeason | null = null;
 
     let lastSeason: null | number = null;
     let viewSeason = season;
 
-    for (const player_team_season_id in player_team_seasons) {
-      const row = player_team_seasons[player_team_season_id];
+
+    for (const id in player_team_seasons) {
+      const row = player_team_seasons[id];
 
       if (!lastSeason || lastSeason < row.season) {
         lastSeason = row.season;
@@ -129,10 +133,16 @@ class Player extends Surface {
       viewSeason = lastSeason;
     }
 
-    for (const player_team_season_id in player_team_seasons) {
-      const row = player_team_seasons[player_team_season_id];
+    for (const id in player_team_seasons) {
+      const row = player_team_seasons[id];
 
-      if (viewSeason && +row.season === +viewSeason) {
+      if (
+        (player_team_season_id && id === player_team_season_id) ||
+        (
+          !player_team_season_id &&
+          viewSeason && +row.season === +viewSeason
+        )
+      ) {
         player_team_season = row;
 
         if (row.team_id in teams) {
@@ -141,7 +151,11 @@ class Player extends Surface {
       }
     }
 
-    if (!player || !player.player_id || !team || !viewSeason) {
+    if (!player_team_season_id && player_team_season) {
+      player_team_season_id = player_team_season.player_team_season_id;
+    }
+
+    if (!player || !player.player_id || !team || !viewSeason || !player_team_season_id) {
       return notFound();
     }
 
@@ -150,7 +164,7 @@ class Player extends Surface {
         return (
           <StatsClientWrapper>
             <Suspense fallback = {<StatsClientSkeleton />}>
-              <StatsServer organization_id={organization_id} division_id={division_id} season = {viewSeason} player_id = {player_id} />
+              <StatsServer organization_id={organization_id} division_id={division_id} season = {viewSeason} player_id = {player_id} player_team_season_id = {player_team_season_id} />
             </Suspense>
           </StatsClientWrapper>
         );
@@ -184,7 +198,7 @@ class Player extends Surface {
       <ReduxWrapper player = {player} player_team_season = {player_team_season} player_team_seasons = {player_team_seasons} team = {team} teams = {teams} season = {+viewSeason} view = {view} >
         <HeaderClientWrapper>
           <Suspense fallback = {<HeaderClientSkeleton />}>
-            <HeaderServer organization_id={organization_id} division_id={division_id} player_id = {player_id} team_id={team.team_id} season = {viewSeason} />
+            <HeaderServer organization_id={organization_id} division_id={division_id} player_id = {player_id} team_id={team.team_id} player_team_season_id = {player_team_season_id} season = {viewSeason} />
           </Suspense>
         </HeaderClientWrapper>
         <NavBar />

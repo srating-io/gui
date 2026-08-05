@@ -1,6 +1,5 @@
 'use client';
 
-import { FantasyEntrys, FantasyGroup, FantasyGroups } from '@/types/general';
 import SentimentVeryDissatisfiedIcon from '@esmalley/react-material-icons/SentimentVeryDissatisfied';
 import { useState } from 'react';
 import SportsEsportsIcon from '@esmalley/react-material-icons/SportsEsports';
@@ -9,6 +8,7 @@ import AccountHandler from '@/components/generic/AccountHandler';
 import { Dates } from '@esmalley/ts-utils';
 import { useNavigation } from '@/components/hooks/useNavigation';
 import { Button, Paper, Tile, Typography, useTheme } from '@esmalley/react-material-ui';
+import { General } from '@srating-io/types';
 
 const PublicDraftGroups = (
   {
@@ -16,8 +16,8 @@ const PublicDraftGroups = (
     fantasy_group_id_x_fantasy_entrys,
   }:
   {
-    fantasy_groups: FantasyGroups;
-    fantasy_group_id_x_fantasy_entrys: {[fantasy_group_id: string]: FantasyEntrys};
+    fantasy_groups: General.FantasyGroups;
+    fantasy_group_id_x_fantasy_entrys: {[fantasy_group_id: string]: General.FantasyEntrys};
   },
 ) => {
   const theme = useTheme();
@@ -29,8 +29,8 @@ const PublicDraftGroups = (
   const [showModal, setShowModal] = useState(false);
   const [selectedFantasyGroupID, setSelectedFantasyGroupID] = useState(null);
 
-  const free_fantasy_groups: FantasyGroup[] = [];
-  const paid_fantasy_groups: FantasyGroup[] = [];
+  const free_fantasy_groups: General.FantasyGroup[] = [];
+  const paid_fantasy_groups: General.FantasyGroup[] = [];
 
   for (const fantasy_group_id in fantasy_groups) {
     const row = fantasy_groups[fantasy_group_id];

@@ -8,7 +8,6 @@ import Pin from '@/components/generic/Pin';
 import Rank from './Rank';
 import Record from './Record';
 import Organization from '@/components/helpers/Organization';
-import { Coaches, CoachTeamSeasons, Game } from '@/types/general';
 import CoachRank from './CoachRank';
 import CoachRecord from './CoachRecord';
 import ConferenceRank from './ConferenceRank';
@@ -16,6 +15,7 @@ import ConferenceRecord from './ConferenceRecord';
 import RefreshCounter from './RefreshCounter';
 import { useNavigation } from '@/components/hooks/useNavigation';
 import { Typography, useTheme, useWindowDimensions } from '@esmalley/react-material-ui';
+import { General, Game } from '@srating-io/types';
 
 
 const getBreakPoint = () => {
@@ -47,7 +47,7 @@ The tool are wrong and thinks everything in here is rendering, when they are not
 
 const ClientWrapper = (
   { game, coaches, coach_team_seasons, children }:
-  { game: Game; coaches: Coaches; coach_team_seasons: CoachTeamSeasons; children: React.JSX.Element; },
+  { game: Game.GameWithOddsAndTeams; coaches: General.Coaches; coach_team_seasons: General.CoachTeamSeasons; children: React.JSX.Element; },
 ) => {
   const navigation = useNavigation();
   const theme = useTheme();

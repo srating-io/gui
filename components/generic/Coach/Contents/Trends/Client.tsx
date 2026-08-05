@@ -6,12 +6,12 @@ import {
 } from 'recharts';
 
 
-import { CoachElo, CoachElos, Games } from '@/types/general';
 import { getNavHeaderHeight } from '@/components/generic/Coach/NavBar';
 import { footerNavigationHeight } from '@/components/generic/FooterNavigation';
 import { headerBarHeight } from '@/components/generic/Header';
 import { Dates } from '@esmalley/ts-utils';
 import { LinearProgress, Paper, Typography, useTheme } from '@esmalley/react-material-ui';
+import { General } from '@srating-io/types';
 
 
 // todo compare to 2 or more coach elos on the same graph? might be cool to see them with the time comparison. ex: and old coach vs relativiely new
@@ -50,10 +50,10 @@ const ClientSkeleton = () => {
   );
 };
 
-const Client = ({ coach_elos, games }: {coach_elos: CoachElos, games: Games}) => {
+const Client = ({ coach_elos, games }: {coach_elos: General.CoachElos, games: General.Games}) => {
   const theme = useTheme();
 
-  const sorted_elo: CoachElo[] = Object.values(coach_elos).sort((a: CoachElo, b: CoachElo) => {
+  const sorted_elo = Object.values(coach_elos).sort((a, b) => {
     if (!(a.game_id)) {
       return -1;
     }

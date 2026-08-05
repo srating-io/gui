@@ -1,7 +1,7 @@
 'use server';
 
 import { Metadata, ResolvingMetadata } from 'next';
-import Team, { getDecorateTeam } from 'Surface/Team';
+import Team, { getDecorateTeam } from '../../../../Surface/Team';
 
 
 type Props = {

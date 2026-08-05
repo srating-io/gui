@@ -2,12 +2,12 @@
 
 import { Client } from '@/components/generic/Coach/Contents/Trends/Client';
 import { useServerAPI } from '@/components/serverAPI';
-import { CoachElo, CoachElos, Games } from '@/types/general';
+import { General } from '@srating-io/types';
 
 const Server = async ({ organization_id, division_id, coach_id }) => {
   const revalidateSeconds = 60 * 60 * 2; // 2 hours
 
-  const coach_elos: CoachElos = await useServerAPI({
+  const coach_elos: General.CoachElos = await useServerAPI({
     class: 'coach_elo',
     function: 'read',
     arguments: {
@@ -18,11 +18,11 @@ const Server = async ({ organization_id, division_id, coach_id }) => {
     cache: revalidateSeconds,
   });
 
-  const games: Games = await useServerAPI({
+  const games: General.Games = await useServerAPI({
     class: 'game',
     function: 'read',
     arguments: {
-      game_id: Object.values(coach_elos).map((row: CoachElo) => row.game_id),
+      game_id: Object.values(coach_elos).map((row: General.CoachElo) => row.game_id),
     },
     cache: revalidateSeconds,
   });

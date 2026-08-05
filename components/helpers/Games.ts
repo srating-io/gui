@@ -1,11 +1,11 @@
 
 
-import { Games as GamesType } from '@/types/general';
 
+import { General } from '@srating-io/types';
 import Game from './Game';
 
 class Games {
-  private games: GamesType;
+  private games: General.Games;
 
   constructor(args) {
     this.games = args.games || {};

@@ -1,7 +1,7 @@
 'use server';
 
 import { Metadata, ResolvingMetadata } from 'next';
-import Ranking, { getDecorateRanking } from 'Surface/Ranking';
+import Ranking, { getDecorateRanking } from '../../../Surface/Ranking';
 
 
 type Props = {

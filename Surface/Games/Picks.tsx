@@ -12,10 +12,10 @@ import Calculator from '@/components/generic/Picks/Calculator';
 import PicksLoader from '@/components/generic/Picks/PicksLoader';
 import ContentsWrapper from '@/components/generic/Picks/ContentsWrapper';
 import DateBar from '@/components/generic/DateBar';
-import Games from 'Surface/Games';
 import { Suspense } from 'react';
 import ReduxWrapper from '@/components/generic/Picks/ReduxWrapper';
 import { Dates } from '@esmalley/ts-utils';
+import Games from '../Games';
 
 
 export type getDecoratePicks = {

@@ -25,35 +25,34 @@ const SubNavBar = ({ view }) => {
 
   const scrollRefTab = useRef<HTMLDivElement>(null);
 
-
   const season = useAppSelector((state) => state.playerReducer.season);
   const player_team_seasons = useAppSelector((state) => state.playerReducer.player_team_seasons);
 
   const subview = useAppSelector((state) => state.playerReducer.subview) || season;
-  const seasons = Object.values(player_team_seasons).map((r) => r.season);
+  const seasons = [...new Set(
+    Object.values(player_team_seasons).map((r) => r.season),
+  )];
 
   const scrollToElement = () => {
-    scrollRefTab.current?.scrollIntoView({ inline: 'center', behavior: 'smooth' });
+    scrollRefTab.current?.scrollIntoView({ inline: 'center', behavior: 'smooth', block: 'nearest' });
   };
 
   // console.log('todo add scroll to all subnavbars / normalize component')
 
   useLayoutEffect(() => {
     scrollToElement();
-  }, [subview]);
+  }, [subview, scrollRefTab.current]);
 
 
   let tabOrder: number[] = [];
-  let tabOptions = {};
 
   if (view === 'gamelog') {
     tabOrder = seasons.sort((a, b) => b - a);
-    tabOptions = Object.fromEntries(seasons.map((seasonNumber) => [seasonNumber, seasonNumber]));
   }
 
   const subHeaderHeight = getSubNavHeaderHeight();
 
-  const minSubBarWidth = 75;
+  const minSubBarWidth = 10;
 
   const subHeaderStyle: React.CSSProperties = {
     height: subHeaderHeight,
@@ -92,26 +91,41 @@ const SubNavBar = ({ view }) => {
 
 
     for (let i = 0; i < tabOrder.length; i++) {
-      const compare = subview || season;
-      let selected = false;
-      if (compare) {
-        selected = (+compare === +tabOptions[tabOrder[i]]);
-      }
+      const selected = tabOrder[i] === (subview ? +subview : season);
 
       let tabRef: RefObject<HTMLDivElement> | null = null;
       if (selected) {
         tabRef = scrollRefTab as RefObject<HTMLDivElement>;
       }
 
-      const tab = <Tab ref = {tabRef} key = {tabOrder[i]} title = {tabOptions[tabOrder[i]]} value = {tabOrder[i]} selected = {selected} onClick={handleTabClick} buttonStyle = {buttonStyle} />;
+      const tab =
+        <Tab
+          ref = {tabRef}
+          key = {tabOrder[i]}
+          title = {tabOrder[i].toString()}
+          value = {tabOrder[i]}
+          selected = {selected}
+          onClick={handleTabClick}
+          buttonStyle = {buttonStyle}
+        />;
 
       tabs.push(tab);
     }
 
 
     middleButtons.push(
-      <div style = {{ width: '100%', display: 'flex', justifyContent: 'center', overflowX: 'scroll', overflowY: 'hidden', scrollbarWidth: 'none' }}>
-        {tabs}
+      <div style = {{
+        width: '100%',
+        display: 'flex',
+        justifyContent: 'flex-start',
+        overflowX: 'auto',
+        overflowY: 'hidden',
+        scrollbarWidth: 'none',
+        WebkitOverflowScrolling: 'touch',
+      }}>
+        <div style={{ display: 'flex', margin: 'auto' }}>
+          {tabs}
+        </div>
       </div>,
     );
   }

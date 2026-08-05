@@ -1,5 +1,5 @@
+import { General } from '@srating-io/types';
 
-import { Player as PlayerType } from '@/types/general';
 
 
 class Player {
@@ -12,7 +12,7 @@ class Player {
   /**
    * Get the player
    */
-  getPlayer(): PlayerType {
+  getPlayer(): General.Player {
     return this.player;
   }
 

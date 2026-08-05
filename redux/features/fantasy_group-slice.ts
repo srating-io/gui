@@ -1,39 +1,26 @@
 
 import State from '@/components/helpers/State';
-import { PlayerStatisticRanking } from '@/types/cbb';
-import {
-  FantasyDraftOrders,
-  FantasyEntryPlayers,
-  FantasyEntryPlayerStatisticRanking,
-  FantasyEntrys,
-  FantasyGroup,
-  FantasyGroupComments,
-  FantasyGroupInvites,
-  FantasyGroupUser,
-  FantasyGroupUsers,
-  FantasyRankings,
-  Players,
-  PlayerTeamSeasons,
-} from '@/types/general';
+
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { Basketball, General } from '@srating-io/types';
 
 export type InitialState = {
   view: string;
   subview?: string;
   isOwner: boolean;
-  fantasy_group: FantasyGroup;
-  fantasy_group_user: FantasyGroupUser | null;
-  fantasy_group_users: FantasyGroupUsers;
-  fantasy_group_invites: FantasyGroupInvites;
-  fantasy_group_comments: FantasyGroupComments;
-  fantasy_entrys: FantasyEntrys;
-  fantasy_draft_orders: FantasyDraftOrders;
-  fantasy_entry_players: FantasyEntryPlayers;
-  player_team_seasons: PlayerTeamSeasons;
-  players: Players;
-  fantasy_rankings: FantasyRankings;
+  fantasy_group: General.FantasyGroup;
+  fantasy_group_user: General.FantasyGroupUser | null;
+  fantasy_group_users: General.FantasyGroupUsers;
+  fantasy_group_invites: General.FantasyGroupInvites;
+  fantasy_group_comments: General.FantasyGroupComments;
+  fantasy_entrys: General.FantasyEntrys;
+  fantasy_draft_orders: General.FantasyDraftOrders;
+  fantasy_entry_players: General.FantasyEntryPlayers;
+  player_team_seasons: General.PlayerTeamSeasons;
+  players: General.Players;
+  fantasy_rankings: General.FantasyRankings;
   fantasy_entry_player_statistic_rankings: {
-    [fantasy_entry_player_statistic_ranking_id: string]: FantasyEntryPlayerStatisticRanking & PlayerStatisticRanking
+    [fantasy_entry_player_statistic_ranking_id: string]: General.FantasyEntryPlayerStatisticRanking & Basketball.PlayerStatisticRanking
   };
   loadingView: boolean;
 };
@@ -68,19 +55,19 @@ stateController.setInitialState({
   view: 'home',
   subview: 'draft_board',
   isOwner: false,
-  fantasy_group: {} as FantasyGroup,
-  fantasy_group_invites: {} as FantasyGroupInvites,
-  fantasy_group_users: {} as FantasyGroupUsers,
-  fantasy_group_comments: {} as FantasyGroupComments,
+  fantasy_group: {} as General.FantasyGroup,
+  fantasy_group_invites: {} as General.FantasyGroupInvites,
+  fantasy_group_users: {} as General.FantasyGroupUsers,
+  fantasy_group_comments: {} as General.FantasyGroupComments,
   fantasy_group_user: null,
-  fantasy_entrys: {} as FantasyEntrys,
-  fantasy_draft_orders: {} as FantasyDraftOrders,
-  fantasy_entry_players: {} as FantasyEntryPlayers,
-  player_team_seasons: {} as PlayerTeamSeasons,
-  players: {} as Players,
-  fantasy_rankings: {} as FantasyRankings,
+  fantasy_entrys: {} as General.FantasyEntrys,
+  fantasy_draft_orders: {} as General.FantasyDraftOrders,
+  fantasy_entry_players: {} as General.FantasyEntryPlayers,
+  player_team_seasons: {} as General.PlayerTeamSeasons,
+  players: {} as General.Players,
+  fantasy_rankings: {} as General.FantasyRankings,
   fantasy_entry_player_statistic_rankings: {} as {
-    [fantasy_entry_player_statistic_ranking_id: string]: FantasyEntryPlayerStatisticRanking & PlayerStatisticRanking
+    [fantasy_entry_player_statistic_ranking_id: string]: General.FantasyEntryPlayerStatisticRanking & Basketball.PlayerStatisticRanking
   },
   loadingView: true,
 });

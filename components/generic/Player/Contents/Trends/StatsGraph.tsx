@@ -60,6 +60,9 @@ const StatsGraph = (
 
   const allColumns = TableColumns.getColumns({ organization_id, view: 'player', graphable: true, disabled: false });
 
+  console.log(player_statistic_rankings)
+  console.log('conference_player_statistic_rankings', conference_player_statistic_rankings)
+
   const theme = useTheme();
 
   const handleColumn = (value: string) => {
@@ -196,7 +199,7 @@ const StatsGraph = (
       if (!(date in date_of_rank_x_data)) {
         date_of_rank_x_data[date] = {
           date_of_rank: date,
-          date_friendly: Dates.format(row.date, date_friendly_format),
+          date_friendly: Dates.format(date, date_friendly_format),
         };
       }
 
@@ -296,6 +299,7 @@ const StatsGraph = (
 
   if (trendsColumn in allColumns) {
     const statistic = allColumns[trendsColumn];
+    console.log(statistic)
 
     const lines: LineProps[] = [
       {
@@ -331,7 +335,7 @@ const StatsGraph = (
     if (trendsBoxscoreLine) {
       // insert the line in the second position
       lines.splice(1, 0, {
-        type: 'monotone',
+        type: 'bump',
         name: `Box. ${statistic.label}`,
         dataKey: `player_boxscore_${statistic.id}`,
         stroke: theme.success.dark,

@@ -2,8 +2,8 @@
 
 import React, { useEffect } from 'react';
 import { useAppDispatch } from '@/redux/hooks';
-import { PaymentRouter } from '@/types/general';
 import { setDataKey } from '@/redux/features/payment_router-slice';
+import { General } from '@srating-io/types';
 
 const ReduxWrapper = (
   {
@@ -12,7 +12,7 @@ const ReduxWrapper = (
   }:
   {
     children: React.ReactNode,
-    payment_router: PaymentRouter,
+    payment_router: General.PaymentRouter,
   },
 ) => {
   const dispatch = useAppDispatch();

@@ -10,12 +10,12 @@ import { headerBarHeight } from '@/components/generic/Header';
 import RankTable from '@/components/generic/RankTable';
 import HelperTeam from '@/components/helpers/Team';
 import Organization from '@/components/helpers/Organization';
-import { PlayerStatisticRanking } from '@/types/cbb';
 import TableColumns from '@/components/helpers/TableColumns';
 import ClassSpan from '@/components/generic/ClassSpan';
 import { Objector } from '@esmalley/ts-utils';
 import { useNavigation } from '@/components/hooks/useNavigation';
 import { Chip, LinearProgress, Typography, useTheme } from '@esmalley/react-material-ui';
+import { Basketball, Football } from '@srating-io/types';
 
 
 /**
@@ -221,7 +221,7 @@ const Client = ({ player_statistic_rankings, players, player_team_seasons }) => 
   }
 
   const getTable = (player_ids, position) => {
-    const rows: PlayerStatisticRanking[] = [];
+    const rows: Basketball.PlayerStatisticRanking[] | Football.PlayerStatisticRanking[] = [];
 
     for (let i = 0; i < player_ids.length; i++) {
       if (player_ids[i] in player_id_x_stats) {

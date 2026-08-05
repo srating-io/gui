@@ -6,12 +6,12 @@ import { Client } from '@/components/generic/Team/Contents/Schedule/Client';
 import { useServerAPI } from '@/components/serverAPI';
 import { ClientSkeleton } from './StatsLoader/Client';
 import StatsLoaderServer from './StatsLoader/Server';
-import { Games } from '@/types/general';
+import { Team } from '@srating-io/types';
 
 const Server = async ({ organization_id, division_id, season, team_id }) => {
   const revalidateSeconds = 60;
 
-  const games: Games = await useServerAPI({
+  const games: Team.getScheduleResults = await useServerAPI({
     class: 'team',
     function: 'getSchedule',
     arguments: {

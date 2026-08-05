@@ -5,19 +5,19 @@ import { footerNavigationHeight } from '@/components/generic/FooterNavigation';
 import { headerBarHeight } from '@/components/generic/Header';
 import { getNavHeaderHeight } from '../../NavBar';
 import { useClientAPI } from '@/components/clientAPI';
-import { FantasyEntrys, FantasyGroups, FantasyGroupUsers } from '@/types/general';
 import MyGroups from './MyGroups';
 import { useAppSelector } from '@/redux/hooks';
 import PublicBracketsGroups from './PublicBracketsGroups';
 import PublicDraftGroups from './PublicDraftGroups';
 import CreateGroup from './CreateGroup';
 import { Columns, LinearProgress, useTheme } from '@esmalley/react-material-ui';
+import { General } from '@srating-io/types';
 
 
 interface Data {
-  fantasy_groups: FantasyGroups;
-  fantasy_group_users?: FantasyGroupUsers;
-  fantasy_entrys?: FantasyEntrys;
+  fantasy_groups: General.FantasyGroups;
+  fantasy_group_users?: General.FantasyGroupUsers;
+  fantasy_entrys?: General.FantasyEntrys;
 }
 
 /**
@@ -95,7 +95,7 @@ const Client = () => {
     return <ClientSkeleton />;
   }
 
-  const my_fantasy_groups: FantasyGroups = {};
+  const my_fantasy_groups: General.FantasyGroups = {};
   if (
     data?.fantasy_group_users &&
     data.fantasy_groups
@@ -108,7 +108,7 @@ const Client = () => {
     }
   }
 
-  const fantasy_group_id_x_fantasy_entrys: {[fantasy_group_id: string]: FantasyEntrys} = {};
+  const fantasy_group_id_x_fantasy_entrys: {[fantasy_group_id: string]: General.FantasyEntrys} = {};
   if (data?.fantasy_entrys) {
     for (const fantasy_entry_id in data.fantasy_entrys) {
       const row = data.fantasy_entrys[fantasy_entry_id];
@@ -122,8 +122,8 @@ const Client = () => {
   }
 
   // const fantasy_group_type_terminology_id_x_public_fantasy_groups = {};
-  const public_bracket_groups: FantasyGroups = {};
-  const public_draft_groups: FantasyGroups = {};
+  const public_bracket_groups: General.FantasyGroups = {};
+  const public_draft_groups: General.FantasyGroups = {};
   for (const fantasy_group_id in data?.fantasy_groups) {
     const row = data.fantasy_groups[fantasy_group_id];
 

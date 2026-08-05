@@ -2,8 +2,6 @@
 
 /* eslint-disable no-nested-ternary */
 
-import { PlayerBoxscore as CBBPlayerBoxscore } from '@/types/cbb';
-import { PlayerBoxscore as CFBPlayerBoxscore } from '@/types/cfb';
 import { useAppSelector } from '@/redux/hooks';
 import Organization from '@/components/helpers/Organization';
 import HelperGame from '@/components/helpers/Game';
@@ -17,6 +15,7 @@ import TableColumns from '@/components/helpers/TableColumns';
 import { Dates, Objector } from '@esmalley/ts-utils';
 import { useNavigation } from '@/components/hooks/useNavigation';
 import { Chip, LinearProgress, useTheme } from '@esmalley/react-material-ui';
+import { Basketball, Football } from '@srating-io/types';
 
 /**
  * The main wrapper div for all the contents
@@ -59,6 +58,8 @@ const Client = ({ organization_id, gamelogs }) => {
   const path = Organization.getPath({ organizations, organization_id });
   const season = useAppSelector((state) => state.playerReducer.season);
   const subview = useAppSelector((state) => state.playerReducer.subview);
+
+  console.log(gamelogs)
 
   const player_boxscores = {};
 
@@ -112,7 +113,7 @@ const Client = ({ organization_id, gamelogs }) => {
 
   const playerBoxscoreHeaderColumns = Objector.deepClone(TableColumns.getColumns({ organization_id, view: 'player_boxscore' }));
 
-  if (Organization.getCBBID() === organization_id) {
+  if (Organization.getCBBID() === organization_id || Organization.getNBAID() === organization_id) {
     playerColumns = ['game_details', 'minutes_played', 'points', 'fg', 'two_fg', 'three_fg', 'ft', 'offensive_rebounds', 'defensive_rebounds', 'assists', 'steals', 'blocks', 'turnovers', 'fouls'];
   }
 
@@ -168,7 +169,7 @@ const Client = ({ organization_id, gamelogs }) => {
     navigation.game(`/${path}/games/${game_id}`);
   };
 
-  type PartialPlayerBoxscore = Partial<CBBPlayerBoxscore | CFBPlayerBoxscore> & {
+  type PartialPlayerBoxscore = Partial<Basketball.PlayerBoxscore | Football.PlayerBoxscore> & {
     name?: string;
     fg?: string;
     fg_secondary?: string;
@@ -231,7 +232,7 @@ const Client = ({ organization_id, gamelogs }) => {
       </div>
     );
 
-    if (Organization.getCBBID() === organization_id) {
+    if (Organization.getCBBID() === organization_id || Organization.getNBAID() === organization_id) {
       // // # just typescript things
       // row = row as CBBPlayerBoxscore;
       formattedRow.fg = `${row.field_goal || 0}-${row.field_goal_attempts || 0}`;
@@ -278,9 +279,9 @@ const Client = ({ organization_id, gamelogs }) => {
     playerRows.push(formattedRow);
   }
 
-  if (Organization.getCBBID() === organization_id) {
+  if (Organization.getCBBID() === organization_id || Organization.getNBAID() === organization_id) {
     // # just typescript things
-    const footy = footerRow as CBBPlayerBoxscore;
+    const footy = footerRow as Basketball.PlayerBoxscore;
 
     footerRow.fg = `${footy.field_goal || 0}-${footy.field_goal_attempts || 0}`;
     footerRow.fg_secondary = footy.field_goal_attempts !== undefined && footy.field_goal_attempts > 0 ? `${(((footy.field_goal || 0) / footy.field_goal_attempts) * 100).toFixed(2)}%` : '0%';

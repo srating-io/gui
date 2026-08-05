@@ -1,7 +1,7 @@
 'use server';
 
 import { Metadata, ResolvingMetadata } from 'next';
-import Player, { getDecoratePlayer } from 'Surface/Player';
+import Player, { getDecoratePlayer } from '../../../../Surface/Player';
 
 
 type Props = {
@@ -34,6 +34,7 @@ export default async function Page({ params, searchParams }: Props) {
   const { player_id } = parameters;
 
   const division_id = searchParameters?.division_id;
+  const player_team_season_id = searchParameters?.player_team_season_id;
   const season = searchParameters?.season;
   const view = searchParameters?.view || 'stats';
   const subview = searchParameters?.subview;
@@ -45,6 +46,7 @@ export default async function Page({ params, searchParams }: Props) {
 
   const args: getDecoratePlayer = {
     player_id,
+    player_team_season_id,
     view,
   };
 

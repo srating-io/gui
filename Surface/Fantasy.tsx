@@ -1,7 +1,5 @@
 'use server';
 
-import Surface from 'Surface';
-
 import { notFound } from 'next/navigation';
 import ReduxWrapper from '@/components/generic/Fantasy/ReduxWrapper';
 import Organization from '@/components/helpers/Organization';
@@ -13,6 +11,7 @@ import { Client as CreateClient } from '@/components/generic/Fantasy/Contents/Cr
 
 import HomeClientWrapper from '@/components/generic/Fantasy/Contents/Home/ClientWrapper';
 import { Client as HomeClient } from '@/components/generic/Fantasy/Contents/Home/Client';
+import Surface from '../Surface';
 
 export type getDecorateFantasy = {
   // player_id: string;

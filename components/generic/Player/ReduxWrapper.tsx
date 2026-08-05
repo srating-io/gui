@@ -3,13 +3,13 @@
 import React, { useEffect } from 'react';
 import { useAppDispatch } from '@/redux/hooks';
 import { setDataKey } from '@/redux/features/player-slice';
-import { Player, PlayerTeamSeason, PlayerTeamSeasons, Team, Teams } from '@/types/general';
+import { General } from '@srating-io/types';
 
 const ReduxWrapper = (
   {
     children, player, player_team_season, player_team_seasons, team, teams, season, view,
   }:
-  { children: React.ReactNode, player: Player, player_team_season: PlayerTeamSeason | null, player_team_seasons: PlayerTeamSeasons, team: Team | null, teams: Teams, season: number, view: string },
+  { children: React.ReactNode, player: General.Player, player_team_season: General.PlayerTeamSeason | null, player_team_seasons: General.PlayerTeamSeasons, team: General.Team | null, teams: General.Teams, season: number, view: string },
 ) => {
   const dispatch = useAppDispatch();
 

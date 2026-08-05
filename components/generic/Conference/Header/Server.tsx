@@ -2,8 +2,8 @@
 
 import HeaderClient from '@/components/generic/Conference/Header/Client';
 import { useServerAPI } from '@/components/serverAPI';
+import { General } from '@srating-io/types';
 import { unstable_noStore } from 'next/cache';
-import { TeamSeasonConferences } from '@/types/general';
 
 
 const Server = async ({ organization_id, division_id, season, conference_id }) => {
@@ -23,7 +23,7 @@ const Server = async ({ organization_id, division_id, season, conference_id }) =
     cache: revalidateSeconds,
   });
 
-  const team_season_conferences: TeamSeasonConferences = await useServerAPI({
+  const team_season_conferences: General.TeamSeasonConferences = await useServerAPI({
     class: 'team_season_conference',
     function: 'read',
     arguments: {

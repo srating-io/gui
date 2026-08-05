@@ -1,9 +1,6 @@
 'use server';
 
-import Surface from 'Surface';
 import { useServerAPI } from '@/components/serverAPI';
-import { StatisticRankings } from '@/types/cbb';
-import { Conference as ConferenceType, Elos, Teams, TeamSeasonConferences } from '@/types/general';
 
 import HeaderServer from '@/components/generic/Conference/Header/Server';
 import HeaderClientWrapper from '@/components/generic/Conference/Header/ClientWrapper';
@@ -22,14 +19,16 @@ import PredictionLoader from '@/components/generic/Conference/Contents/Standings
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import ContentsWrapper from '@/components/generic/Conference/ContentsWrapper';
+import Surface from '../Surface';
+import { Basketball, Football, General } from '@srating-io/types';
 
 
 type Data = {
-  conference: ConferenceType;
-  team_season_conferences: TeamSeasonConferences;
-  teams: Teams;
-  statistic_rankings: StatisticRankings;
-  elos: Elos;
+  conference: General.Conference;
+  team_season_conferences: General.TeamSeasonConferences;
+  teams: General.Teams;
+  statistic_rankings: Basketball.StatisticRankings | Football.StatisticRankings;
+  elos: General.Elos;
   division_id: string | null;
 }
 
@@ -67,8 +66,8 @@ class Conference extends Surface {
     };
   }
 
-  async getConference({ conference_id }): Promise<ConferenceType> {
-    const conference: ConferenceType = await useServerAPI({
+  async getConference({ conference_id }): Promise<General.Conference> {
+    const conference: General.Conference = await useServerAPI({
       class: 'conference',
       function: 'get',
       arguments: {
@@ -85,7 +84,7 @@ class Conference extends Surface {
 
     const conference = await this.getConference({ conference_id });
 
-    const team_season_conferences: TeamSeasonConferences = await useServerAPI({
+    const team_season_conferences: General.TeamSeasonConferences = await useServerAPI({
       class: 'team_season_conference',
       function: 'read',
       arguments: {
@@ -103,7 +102,7 @@ class Conference extends Surface {
       division_id = row.division_id;
     }
 
-    const teams: Teams = await useServerAPI({
+    const teams: General.Teams = await useServerAPI({
       class: 'team',
       function: 'read',
       arguments: {
@@ -112,7 +111,7 @@ class Conference extends Surface {
       cache: revalidateSeconds,
     });
 
-    const statistic_rankings: StatisticRankings = await useServerAPI({
+    const statistic_rankings: Basketball.StatisticRankings | Football.StatisticRankings = await useServerAPI({
       class: 'statistic_ranking',
       function: 'readStats',
       arguments: {
@@ -126,7 +125,7 @@ class Conference extends Surface {
     });
 
 
-    const elos: Elos = await useServerAPI({
+    const elos: General.Elos = await useServerAPI({
       class: 'elo',
       function: 'read',
       arguments: {

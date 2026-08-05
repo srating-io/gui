@@ -4,17 +4,17 @@ import { useTransition } from 'react';
 
 import FavoritePicker from '@/components/generic/FavoritePicker';
 import HelperTeam from '@/components/helpers/Team';
+import HelperGeneral from '@/components/helpers/General';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import OptionPicker from '@/components/generic/OptionPicker';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { setLoading } from '@/redux/features/loading-slice';
 import Organization from '@/components/helpers/Organization';
-import { Coach, CoachStatisticRanking, Team } from '@/types/general';
-import { ConferenceStatisticRanking } from '@/types/cbb';
-import General from '@/components/helpers/General';
 import { Color } from '@esmalley/ts-utils';
 import { useNavigation } from '@/components/hooks/useNavigation';
 import { Skeleton, Typography, useTheme, useWindowDimensions } from '@esmalley/react-material-ui';
+import { Basketball, Football, General } from '@srating-io/types';
+import { CustomizedTeam } from '@/types/general';
 
 
 /**
@@ -77,14 +77,14 @@ const Client = (
     conference_statistic_ranking,
   }:
   {
-    team: Team,
+    team: CustomizedTeam,
     season: number,
     organization_id: string,
     division_id: string,
     seasons: number[],
-    coach: Coach | null,
-    coach_statistic_ranking: CoachStatisticRanking | null,
-    conference_statistic_ranking: ConferenceStatisticRanking
+    coach: General.Coach | null,
+    coach_statistic_ranking: General.CoachStatisticRanking | null,
+    conference_statistic_ranking: Basketball.ConferenceStatisticRanking | Football.ConferenceStatisticRanking
   },
 ) => {
   const breakPoint = 475;
@@ -110,8 +110,8 @@ const Client = (
   const conferenceName = teamHelper.getConference(conferences);
   const conferenceNumber = Organization.getNumberOfConferences({ organization_id, division_id, season });
 
-  const bestColor = General.getBestColor();
-  const worstColor = General.getWorstColor();
+  const bestColor = HelperGeneral.getBestColor();
+  const worstColor = HelperGeneral.getWorstColor();
 
 
   const supStyle: React.CSSProperties = {

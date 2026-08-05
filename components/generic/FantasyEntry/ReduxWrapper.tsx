@@ -3,32 +3,20 @@
 import React, { useEffect } from 'react';
 import { useAppDispatch } from '@/redux/hooks';
 import { setDataKey } from '@/redux/features/fantasy_entry-slice';
-import {
-  BracketTeams,
-  FantasyBracketSlots,
-  FantasyEntry,
-  FantasyEntryPlayers,
-  FantasyEntryPlayerStatisticRanking,
-  FantasyGroup,
-  Games,
-  Players,
-  PlayerTeamSeasons,
-  Teams,
-} from '@/types/general';
 import { updateDivisionID, updateOrganizationID } from '@/redux/features/organization-slice';
 import { AppDispatch } from '@/redux/store';
-import { PlayerStatisticRanking } from '@/types/cbb';
+import { Basketball, General } from '@srating-io/types';
 
 export interface FantasyEntryLoadData {
-  fantasy_entry_players: FantasyEntryPlayers;
-  player_team_seasons: PlayerTeamSeasons;
-  players: Players;
-  fantasy_bracket_slots: FantasyBracketSlots;
-  bracket_teams: BracketTeams;
-  teams: Teams;
-  games: Games;
+  fantasy_entry_players: General.FantasyEntryPlayers;
+  player_team_seasons: General.PlayerTeamSeasons;
+  players: General.Players;
+  fantasy_bracket_slots: General.FantasyBracketSlots;
+  bracket_teams: General.BracketTeams;
+  teams: General.Teams;
+  games: General.Games;
   fantasy_entry_player_statistic_rankings: {
-    [fantasy_entry_player_statistic_ranking_id: string]: FantasyEntryPlayerStatisticRanking & PlayerStatisticRanking
+    [fantasy_entry_player_statistic_ranking_id: string]: General.FantasyEntryPlayerStatisticRanking & Basketball.PlayerStatisticRanking
   },
   // player_boxscores: PlayerBoxscores;
   error?: string;
@@ -64,8 +52,8 @@ const ReduxWrapper = (
   }:
   {
     children: React.ReactNode;
-    fantasy_entry?: FantasyEntry;
-    fantasy_group?: FantasyGroup;
+    fantasy_entry?: General.FantasyEntry;
+    fantasy_group?: General.FantasyGroup;
   },
 ) => {
   const dispatch = useAppDispatch();

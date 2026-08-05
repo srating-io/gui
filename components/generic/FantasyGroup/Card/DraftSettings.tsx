@@ -1,6 +1,5 @@
 'use client';
 
-import { FantasyGroup as FantasyGroupType } from '@/types/general';
 import GroupsIcon from '@esmalley/react-material-icons/Groups';
 import { getTitle, innerBreakPoint, paperStyle } from '../Card';
 import { useAppSelector } from '@/redux/hooks';
@@ -8,6 +7,7 @@ import FantasyGroup from '@/components/helpers/FantasyGroup';
 import React, { useState } from 'react';
 import { Dates } from '@esmalley/ts-utils';
 import { Button, Columns, Modal, Paper, Slab, Typography, useTheme } from '@esmalley/react-material-ui';
+import { General } from '@srating-io/types';
 
 
 const DraftSettings = (
@@ -15,7 +15,7 @@ const DraftSettings = (
     fantasy_group,
   } :
   {
-    fantasy_group: FantasyGroupType
+    fantasy_group: General.FantasyGroup
   },
 ) => {
   const theme = useTheme();

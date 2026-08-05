@@ -3,17 +3,15 @@
 import React, { useState, useEffect } from 'react';
 
 import { useAppSelector } from '@/redux/hooks';
-import { PlayerStatisticRankings as CBBPlayerStatisticRankings, PlayerStatisticRanking as CBBPlayerStatisticRanking } from '@/types/cbb';
-import { PlayerStatisticRankings as CFBPlayerStatisticRankings, PlayerStatisticRanking as CFBPlayerStatisticRanking } from '@/types/cfb';
 import Organization from '@/components/helpers/Organization';
 import RankTable from '@/components/generic/RankTable';
 import TableColumns from '@/components/helpers/TableColumns';
-import { Player, Players } from '@/types/general';
 import SyncAltIcon from '@esmalley/react-material-icons/SyncAlt';
 import ClassSpan from '@/components/generic/ClassSpan';
-import { Objector, Style, Textor } from '@esmalley/ts-utils';
+import { Dates, Objector, Style, Textor } from '@esmalley/ts-utils';
 import { useNavigation } from '@/components/hooks/useNavigation';
 import { Chip, Tooltip, Typography, useTheme } from '@esmalley/react-material-ui';
+import { Basketball, Football, General } from '@srating-io/types';
 
 
 const Roster = ({ organization_id, rosterStats, player_team_seasons, season }) => {
@@ -22,7 +20,7 @@ const Roster = ({ organization_id, rosterStats, player_team_seasons, season }) =
 
   const [view, setView] = useState<string>('composite');
 
-  const { players, player_statistic_rankings }: { players: Players; player_statistic_rankings: CBBPlayerStatisticRankings | CFBPlayerStatisticRankings} = rosterStats;
+  const { players, player_statistic_rankings }: { players: General.Players; player_statistic_rankings: Basketball.PlayerStatisticRankings | Football.PlayerStatisticRankings} = rosterStats;
   const organizations = useAppSelector((state) => state.dictionaryReducer.organization);
   const path = Organization.getPath({ organizations, organization_id });
   const team_season_conference = useAppSelector((state) => state.teamReducer.team_season_conference);
@@ -31,15 +29,24 @@ const Roster = ({ organization_id, rosterStats, player_team_seasons, season }) =
 
   const player_id_x_is_transfer = {};
   const player_id_x_current_player_team_season = {};
+  const player_id_x_traded_player_team_season = {};
 
   for (const player_team_season_id in player_team_seasons) {
     const row = player_team_seasons[player_team_season_id];
 
     if (+row.season === +season) {
-      player_id_x_current_player_team_season[row.player_id] = row;
+      if (row.end_date) {
+        player_id_x_traded_player_team_season[row.player_id] = row;
+      } else {
+        player_id_x_current_player_team_season[row.player_id] = row;
+      }
     }
 
     if (+row.season !== lastSeason) {
+      continue;
+    }
+
+    if (Organization.getNBAID() === organization_id) {
       continue;
     }
 
@@ -56,13 +63,23 @@ const Roster = ({ organization_id, rosterStats, player_team_seasons, season }) =
   }, []);
 
 
-  const getColumns = (position: string) => {
+  const getColumns = (position: string, traded = false) => {
     let columnView = view;
 
     if (position !== 'all') {
       columnView = position;
     }
-    return TableColumns.getViewableColumns({ organization_id, view: 'roster', columnView, customColumns: [], positions: [position] });
+
+    const cols = TableColumns.getViewableColumns({ organization_id, view: 'roster', columnView, customColumns: [], positions: [position] });
+    const index = cols.indexOf('last_game_on_team_date');
+
+    if (
+      !traded &&
+      index > -1
+    ) {
+      cols.splice(index, 1);
+    }
+    return cols;
   };
 
   const columns = Objector.extender(TableColumns.getColumns({ organization_id, view: 'player' }), TableColumns.getColumns({ organization_id, view: 'roster' }));
@@ -76,12 +93,17 @@ const Roster = ({ organization_id, rosterStats, player_team_seasons, season }) =
   const transferIcon = <Tooltip text = {'Player is a transfer'}><SyncAltIcon style={transferStyle} /></Tooltip>;
 
   type groupedPosition = {
-    [key:string]: (CBBPlayerStatisticRanking | CFBPlayerStatisticRanking | Player)[];
+    [key:string]: (Basketball.PlayerStatisticRanking | Football.PlayerStatisticRanking | General.Player)[];
   }
+  type TypedRow = (Basketball.PlayerStatisticRanking | Football.PlayerStatisticRanking) & { name?: string | React.JSX.Element; is_transfer?: string | React.JSX.Element; };
+  type TypedPlayer = General.Player & { name?: string | React.JSX.Element; is_transfer?: string | React.JSX.Element; last_game_on_team_date?: string }
+
   const grouped_position_x_playerRows: groupedPosition = {};
 
+  const traded_playerRows: (TypedRow | TypedPlayer)[] = [];
+
   for (const player_statistic_ranking_id in player_statistic_rankings) {
-    const row: (CBBPlayerStatisticRanking | CFBPlayerStatisticRanking) & { name?: string | React.JSX.Element; is_transfer?: string | React.JSX.Element; } = player_statistic_rankings[player_statistic_ranking_id];
+    const row: TypedRow = player_statistic_rankings[player_statistic_ranking_id];
 
     if (!(row.player_id in players)) {
       continue;
@@ -132,14 +154,18 @@ const Roster = ({ organization_id, rosterStats, player_team_seasons, season }) =
       row.name = <><ClassSpan class_year={class_year} />{row.name}</>;
     }
 
-    grouped_position_x_playerRows[grouped_position].push(row);
+    if (row.player_id in player_id_x_traded_player_team_season) {
+      traded_playerRows.push(row);
+    } else {
+      grouped_position_x_playerRows[grouped_position].push(row);
+    }
   }
 
   if (!Object.keys(grouped_position_x_playerRows).length && players && Object.keys(players).length) {
     grouped_position_x_playerRows.all = [];
     for (const player_id in players) {
       const isTransfer = (player_id_x_is_transfer[player_id]);
-      const player: Player & { name?: string | React.JSX.Element; is_transfer?: string | React.JSX.Element } = players[player_id];
+      const player: TypedPlayer = players[player_id];
       player.name = `${player.first_name.charAt(0)}. ${player.last_name}`;
       player.is_transfer = isTransfer ? transferIcon : '-';
 
@@ -149,11 +175,19 @@ const Roster = ({ organization_id, rosterStats, player_team_seasons, season }) =
       player.weight = (player_id in player_id_x_current_player_team_season && player_id_x_current_player_team_season[player_id].weight) || null;
       player.class_year = (player_id in player_id_x_current_player_team_season && player_id_x_current_player_team_season[player_id].class_year) || null;
 
+      if (player_id in player_id_x_traded_player_team_season && player_id_x_traded_player_team_season[player_id].end_date) {
+        player.last_game_on_team_date = Dates.format(player_id_x_traded_player_team_season[player_id].end_date, 'M jS y');
+      }
+
       if (player.class_year) {
         player.name = <><ClassSpan class_year={player.class_year} />{player.name}</>;
       }
 
-      grouped_position_x_playerRows.all.push(player);
+      if (player_id in player_id_x_traded_player_team_season) {
+        traded_playerRows.push(player);
+      } else {
+        grouped_position_x_playerRows.all.push(player);
+      }
     }
   }
 
@@ -210,11 +244,15 @@ const Roster = ({ organization_id, rosterStats, player_team_seasons, season }) =
     }
 
 
-    if (organization_id === Organization.getCBBID()) {
+    if (
+      organization_id === Organization.getCBBID() ||
+      organization_id === Organization.getNBAID()
+    ) {
       return (
         <>
           <div className={Style.getStyleClassName(chipContainerStyle)}>{statDisplayChips}</div>
-          {getPlayerTableContent('all')}
+          {getPlayerTableContent('all', grouped_position_x_playerRows.all, getColumns('all'))}
+          {traded_playerRows.length ? getPlayerTableContent('traded players (stats when on team)', traded_playerRows, getColumns('all', true)) : ''}
         </>
       );
     }
@@ -223,9 +261,9 @@ const Roster = ({ organization_id, rosterStats, player_team_seasons, season }) =
       return (
         <>
         <div className={Style.getStyleClassName(chipContainerStyle)}>{statDisplayChips}</div>
-        {getPlayerTableContent('passing')}
-        {getPlayerTableContent('rushing')}
-        {getPlayerTableContent('receiving')}
+        {getPlayerTableContent('passing', grouped_position_x_playerRows.passing, getColumns('passing'))}
+        {getPlayerTableContent('rushing', grouped_position_x_playerRows.rushing, getColumns('rushing'))}
+        {getPlayerTableContent('receiving', grouped_position_x_playerRows.receiving, getColumns('receiving'))}
         </>
       );
     }
@@ -233,12 +271,8 @@ const Roster = ({ organization_id, rosterStats, player_team_seasons, season }) =
     return <></>;
   };
 
-  const getPlayerTableContent = (position: string): React.JSX.Element => {
-    const playerRows = grouped_position_x_playerRows[position];
-
+  const getPlayerTableContent = (position: string, playerRows, playerColumns): React.JSX.Element => {
     const defaultPlayerTableSort = 'rank';
-
-    const playerColumns: string[] = getColumns(position);
 
     let title = <></>;
 

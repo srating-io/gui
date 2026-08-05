@@ -6,11 +6,9 @@ import Organization from '@/components/helpers/Organization';
 import TableColumns from '@/components/helpers/TableColumns';
 import { useNavigation } from '@/components/hooks/useNavigation';
 import { useAppSelector } from '@/redux/hooks';
-import { PlayerBoxscore as CBBPlayerBoxscore, PlayerStatisticRanking } from '@/types/cbb';
-import { PlayerBoxscore as CFBPlayerBoxscore } from '@/types/cfb';
-import { FantasyEntry, FantasyEntryPlayers, FantasyEntryPlayerStatisticRanking, FantasyGroup, Players, PlayerTeamSeasons } from '@/types/general';
 import { Paper, Typography } from '@esmalley/react-material-ui';
 import { Objector, Textor } from '@esmalley/ts-utils';
+import { Basketball, Football, General } from '@srating-io/types';
 
 import React from 'react';
 
@@ -25,13 +23,13 @@ const Roster = (
     fantasy_entry_player_statistic_rankings,
   }:
   {
-    fantasy_entry: FantasyEntry;
-    fantasy_group: FantasyGroup;
-    fantasy_entry_players: FantasyEntryPlayers;
-    player_team_seasons: PlayerTeamSeasons;
-    players: Players;
+    fantasy_entry: General.FantasyEntry;
+    fantasy_group: General.FantasyGroup;
+    fantasy_entry_players: General.FantasyEntryPlayers;
+    player_team_seasons: General.PlayerTeamSeasons;
+    players: General.Players;
     fantasy_entry_player_statistic_rankings: {
-      [fantasy_entry_player_statistic_ranking_id: string]: FantasyEntryPlayerStatisticRanking & PlayerStatisticRanking;
+      [fantasy_entry_player_statistic_ranking_id: string]: General.FantasyEntryPlayerStatisticRanking & Basketball.PlayerStatisticRanking;
     };
   },
 ) => {
@@ -74,7 +72,7 @@ const Roster = (
     }
 
 
-    type PartialPlayerBoxscore = Partial<CBBPlayerBoxscore | CFBPlayerBoxscore> & {
+    type PartialPlayerBoxscore = Partial<Basketball.PlayerBoxscore | Football.PlayerBoxscore> & {
       name?: string | React.JSX.Element;
       name_secondary?: string;
       // fg?: string;
@@ -190,7 +188,7 @@ const Roster = (
 
     if (Organization.getCBBID() === fantasy_group.organization_id) {
       // # just typescript things
-      const footy = footerRow as CBBPlayerBoxscore & { rating: number; };
+      const footy = footerRow as Basketball.PlayerBoxscore & { rating: number; };
 
       footerRow.fantasy_points = footy.rating;
 

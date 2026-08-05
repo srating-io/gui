@@ -258,7 +258,7 @@ class State<T extends object> {
           this.updateURL(key, defaultState[key]);
         }
         (state as T)[key] = defaultState[key];
-        this.setLocalStorage(key, state[key]);
+        this.setLocalStorage(key, (state as T)[key]);
       }
     }
     if (updateURL) {
@@ -273,7 +273,7 @@ class State<T extends object> {
     const defaultState = this.getDefaultState();
     this.updateURL(key, defaultState[key]);
     (state as T)[key] = defaultState[key];
-    this.setLocalStorage(key, state[key]);
+    this.setLocalStorage(key, (state as T)[key]);
   }
 
   /**
@@ -282,7 +282,7 @@ class State<T extends object> {
   public setDataKey<K extends keyof T>(state: WritableDraft<T>, key: K, value: T[K]) {
     this.updateURL(key, value);
     (state as T)[key] = value;
-    this.setLocalStorage(key, state[key]);
+    this.setLocalStorage(key, (state as T)[key]);
   }
 
   /**
@@ -295,9 +295,10 @@ class State<T extends object> {
    * updateDataKey will remove 1 while keeping the other elements [2, 3]
    */
   public updateDataKey<K extends keyof T>(state: WritableDraft<T>, key: K, value: T[K] | null) {
+    const currentValue = (state as T)[key];
     // if the default value is null, but it can be an array, this will not work
-    if (Array.isArray(state[key])) {
-      let strate = state[key] as string[];
+    if (Array.isArray(currentValue)) {
+      let strate = currentValue as string[];
       const v = value as string | string[];
       if (typeof v === 'object' && v !== null) {
         strate = Objector.deepClone(v);
@@ -326,7 +327,7 @@ class State<T extends object> {
       (state as T)[key] = value;
     }
 
-    this.setLocalStorage(key, state[key]);
+    this.setLocalStorage(key, (state as T)[key]);
   }
 }
 

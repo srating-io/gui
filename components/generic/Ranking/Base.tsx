@@ -121,7 +121,12 @@ const Base = (
       label: `${value - 1} - ${value}`,
     };
   });
-  const title = `College ${sport} ${view} rankings.`;
+
+  let title = `College ${sport} ${view} rankings.`;
+
+  if (Organization.getNBAID() === organization_id) {
+    title = `NBA ${view} rankings.`;
+  }
 
 
   return (

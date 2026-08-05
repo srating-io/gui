@@ -1,11 +1,11 @@
 'use client';
 
 import MoneyIcon from '@esmalley/react-material-icons/Money';
-import { FantasyEntrys, FantasyGroup } from '@/types/general';
 import { getTitle, innerBreakPoint, paperStyle } from '../Card';
 import Payment from '@/components/helpers/Payment';
 import { useAppSelector } from '@/redux/hooks';
 import { Columns, Paper, Slab, useTheme } from '@esmalley/react-material-ui';
+import { General } from '@srating-io/types';
 
 
 const PayoutInfo = (
@@ -14,8 +14,8 @@ const PayoutInfo = (
     fantasy_entrys,
   } :
   {
-    fantasy_group: FantasyGroup,
-    fantasy_entrys: FantasyEntrys,
+    fantasy_group: General.FantasyGroup,
+    fantasy_entrys: General.FantasyEntrys,
   },
 ) => {
   const theme = useTheme();

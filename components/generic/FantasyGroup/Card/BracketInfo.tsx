@@ -1,9 +1,9 @@
 'use client';
 
 import RuleIcon from '@esmalley/react-material-icons/Rule';
-import { FantasyGroup } from '@/types/general';
 import { getTitle, innerBreakPoint, paperStyle } from '../Card';
 import { Columns, Paper, Slab, useTheme } from '@esmalley/react-material-ui';
+import { General } from '@srating-io/types';
 
 
 const BracketInfo = (
@@ -11,7 +11,7 @@ const BracketInfo = (
     fantasy_group,
   } :
   {
-    fantasy_group: FantasyGroup
+    fantasy_group: General.FantasyGroup
   },
 ) => {
   const theme = useTheme();

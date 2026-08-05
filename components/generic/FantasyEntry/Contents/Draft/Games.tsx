@@ -1,13 +1,13 @@
 'use client';
 
 import { useAppSelector } from '@/redux/hooks';
-import { Game } from '@/types/general';
 import Blank from '@/components/generic/Blank';
 import Organization from '@/components/helpers/Organization';
 import Team from '@/components/helpers/Team';
 import { Dates } from '@esmalley/ts-utils';
 import { useNavigation } from '@/components/hooks/useNavigation';
 import { Paper, Typography, useTheme, useWindowDimensions } from '@esmalley/react-material-ui';
+import { General } from '@srating-io/types';
 
 
 
@@ -25,8 +25,8 @@ const Games = ({ fantasy_entry_id }) => {
   const organizations = useAppSelector((state) => state.dictionaryReducer.organization);
   const path = Organization.getPath({ organizations, organization_id: fantasy_group.organization_id });
 
-  const past: Game[] = [];
-  const future: Game[] = [];
+  const past: General.Game[] = [];
+  const future: General.Game[] = [];
 
   const now = new Date();
 

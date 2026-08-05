@@ -1,6 +1,6 @@
 import { getStore } from '@/app/StoreProvider';
-import { Organizations } from '@/types/general';
 import { DEFAULT_CBB_ID, DEFAULT_CFB_ID, DEFAULT_NBA_ID, DEFAULT_ORGANIZATION_ID } from './Defaults';
+import { General } from '@srating-io/types';
 
 
 /**
@@ -70,7 +70,7 @@ class Organization {
     return (store.getState().organizationReducer.organization_id === this.getCBBID());
   }
 
-  public static getPath({ organizations, organization_id }: { organizations: Organizations, organization_id: string}): string {
+  public static getPath({ organizations, organization_id }: { organizations: General.Organizations, organization_id: string}): string {
     if (!organizations) {
       return '';
     }

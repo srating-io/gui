@@ -1,7 +1,7 @@
 'use server';
 
 import { Metadata, ResolvingMetadata } from 'next';
-import Picks, { getDecoratePicks } from 'Surface/Games/Picks';
+import Picks, { getDecoratePicks } from '../../../Surface/Games/Picks';
 
 type Props = {
   params: Promise<{ sport: string }>;

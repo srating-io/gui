@@ -4,8 +4,6 @@ import React, { Profiler, useState } from 'react';
 
 import HelperGame from '@/components/helpers/Game';
 import CompareStatistic, { CompareStatisticRow } from '@/components/generic/CompareStatistic';
-import { Boxscore as BoxscoreCBB, PlayerBoxscore as CBBPlayerBoxscore, PlayerBoxscores as CBBPlayerBoxscores, PlayerStatisticRankings as CBBPlayerStatisticRankings } from '@/types/cbb';
-import { Boxscore as BoxscoreCFB, PlayerBoxscores as CFBPlayerBoxscores, PlayerBoxscore as CFBPlayerBoxscore, PlayerStatisticRankings as CFBPlayerStatisticRankings } from '@/types/cfb';
 import { useAppSelector } from '@/redux/hooks';
 import { getNavHeaderHeight, getSubNavHeaderHeight } from '@/components/generic/Game/NavBar';
 import { footerNavigationHeight } from '@/components/generic/FooterNavigation';
@@ -13,12 +11,12 @@ import { headerBarHeight } from '@/components/generic/Header';
 import Organization from '@/components/helpers/Organization';
 // import ButtonSwitch from '../../ButtonSwitch';
 import RankTable from '@/components/generic/RankTable';
-import { Game, Players } from '@/types/general';
 import TableColumns from '@/components/helpers/TableColumns';
-import General from '@/components/helpers/General';
+import HelperGeneral from '@/components/helpers/General';
 import { Color, Objector, Style, Textor } from '@esmalley/ts-utils';
 import { useNavigation } from '@/components/hooks/useNavigation';
 import { Chip, LinearProgress, Paper, Typography, useTheme, useWindowDimensions } from '@esmalley/react-material-ui';
+import { Basketball, Football, General } from '@srating-io/types';
 
 
 
@@ -64,17 +62,17 @@ const Client = (
     players,
   }:
   {
-    game: Game;
-    boxscores: BoxscoreCBB[] | BoxscoreCFB[];
-    player_boxscores: CBBPlayerBoxscores | CFBPlayerBoxscores;
-    players: Players;
+    game: General.Game;
+    boxscores: Basketball.Boxscores | Football.Boxscores;
+    player_boxscores: Basketball.PlayerBoxscores | Football.PlayerBoxscores;
+    players: General.Players;
   },
 ) => {
   const navigation = useNavigation();
   const theme = useTheme();
 
-  const bestColor = General.getBestColor();
-  const worstColor = General.getWorstColor();
+  const bestColor = HelperGeneral.getBestColor();
+  const worstColor = HelperGeneral.getWorstColor();
   const { width } = useWindowDimensions();
 
   const numberOfTeams = Organization.getNumberOfTeams({ organization_id: game.organization_id, division_id: game.division_id, season: game.season });
@@ -95,8 +93,8 @@ const Client = (
 
   const [boxscore_team_id, set_boxscore_team_id] = useState(game.away_team_id);
 
-  let home_boxscore: BoxscoreCBB | BoxscoreCFB | null = null;
-  let away_boxscore: BoxscoreCBB | BoxscoreCFB | null = null;
+  let home_boxscore: Basketball.Boxscore | Football.Boxscore | null = null;
+  let away_boxscore: Basketball.Boxscore | Football.Boxscore | null = null;
 
   let defaultPlayerTableSort = 'minutes_played';
 
@@ -215,11 +213,11 @@ const Client = (
     const sections = getBoxscoreSections();
 
     if (game.organization_id === Organization.getCFBID()) {
-      away_boxscore = away_boxscore as BoxscoreCFB;
-      home_boxscore = home_boxscore as BoxscoreCFB;
+      away_boxscore = away_boxscore as Football.Boxscore;
+      home_boxscore = home_boxscore as Football.Boxscore;
     } else {
-      away_boxscore = away_boxscore as BoxscoreCBB;
-      home_boxscore = home_boxscore as BoxscoreCBB;
+      away_boxscore = away_boxscore as Basketball.Boxscore;
+      home_boxscore = home_boxscore as Basketball.Boxscore;
     }
 
     return (
@@ -245,7 +243,7 @@ const Client = (
 
   const getTopPlayers = (): React.JSX.Element => {
     if (game.organization_id === Organization.getCFBID()) {
-      type CFBPlayerPartial = CFBPlayerBoxscore & {
+      type CFBPlayerPartial = Football.PlayerBoxscore & {
         player_name?: string;
         player_number?: string;
         initials?: string;
@@ -600,7 +598,7 @@ const Client = (
       </>
     );
 
-    if (game.organization_id === Organization.getCBBID()) {
+    if (game.organization_id === Organization.getCBBID() || game.organization_id === Organization.getNBAID()) {
       return (
         <>
           {picker}
@@ -630,7 +628,7 @@ const Client = (
   const getPlayerBoxscoreContent = (position: string | null): React.JSX.Element => {
     let playerColumns: string[] = [];
 
-    if (Organization.getCBBID() === game.organization_id) {
+    if (Organization.getCBBID() === game.organization_id || game.organization_id === Organization.getNBAID()) {
       playerColumns = ['name', 'minutes_played', 'points', 'two_fg', 'three_fg', 'ft', 'offensive_rebounds', 'defensive_rebounds', 'assists', 'steals', 'blocks', 'turnovers', 'fouls'];
     }
 
@@ -676,7 +674,7 @@ const Client = (
     }
 
 
-    type PartialPlayerBoxscore = Partial<CBBPlayerBoxscore | CFBPlayerBoxscore> & {
+    type PartialPlayerBoxscore = Partial<Basketball.PlayerBoxscore | Football.PlayerBoxscore> & {
       name?: string | React.JSX.Element;
       name_secondary?: string;
       // fg?: string;
@@ -779,9 +777,9 @@ const Client = (
         formattedRow.name_secondary = player_number;
       }
 
-      if (Organization.getCBBID() === game.organization_id) {
+      if (Organization.getCBBID() === game.organization_id || Organization.getNBAID() === game.organization_id) {
         // # just typescript things
-        row = row as CBBPlayerBoxscore;
+        row = row as Basketball.PlayerBoxscore;
 
         // formattedRow.fg = `${row.field_goal || 0}-${row.field_goal_attempts || 0}`;
         // formattedRow.fg_secondary = `${row.field_goal_percentage || 0}%`;
@@ -798,7 +796,7 @@ const Client = (
 
       if (Organization.getCFBID() === game.organization_id) {
         // # just typescript things
-        row = row as CFBPlayerBoxscore;
+        row = row as Football.PlayerBoxscore;
         formattedRow.passing_completions_and_attempts = `${row.passing_completions || 0}/${row.passing_attempts || 0}`;
         formattedRow.passing_completions_and_attempts_secondary = `${row.passing_completion_percentage || 0}%`;
       }
@@ -827,9 +825,9 @@ const Client = (
       playerRows.push(formattedRow);
     }
 
-    if (Organization.getCBBID() === game.organization_id) {
+    if (Organization.getCBBID() === game.organization_id || Organization.getNBAID() === game.organization_id) {
       // # just typescript things
-      const footy = footerRow as CBBPlayerBoxscore;
+      const footy = footerRow as Basketball.PlayerBoxscore;
 
       // footerRow.fg = `${footy.field_goal || 0}-${footy.field_goal_attempts || 0}`;
       // footerRow.fg_secondary = footy.field_goal_attempts !== undefined && footy.field_goal_attempts > 0 ? `${(((footy.field_goal || 0) / footy.field_goal_attempts) * 100).toFixed(2)}%` : '0%';

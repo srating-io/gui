@@ -1,12 +1,9 @@
 'use server';
 
-import Surface from 'Surface';
-
 import { notFound } from 'next/navigation';
 import ReduxWrapper from '@/components/generic/FantasyGroup/ReduxWrapper';
 import Organization from '@/components/helpers/Organization';
 import ContentsWrapper from '@/components/generic/FantasyGroup/ContentsWrapper';
-import { FantasyGroup as FantasyGroupType } from '@/types/general';
 import NavBar from '@/components/generic/FantasyGroup/NavBar';
 import { useServerAPI } from '@/components/serverAPI';
 
@@ -15,6 +12,8 @@ import { Client as HomeClient } from '@/components/generic/FantasyGroup/Contents
 
 import DraftClientWrapper from '@/components/generic/FantasyGroup/Contents/Draft/ClientWrapper';
 import { Client as DraftClient } from '@/components/generic/FantasyGroup/Contents/Draft/Client';
+import Surface from '../Surface';
+import { General } from '@srating-io/types';
 
 export type getDecorateFantasyGroup = {
   fantasy_group_id: string;
@@ -33,7 +32,7 @@ class FantasyGroup extends Surface {
   async getData({ fantasy_group_id }) {
     const revalidateSeconds = 5 * 60;
 
-    const fantasy_group: FantasyGroupType = await useServerAPI({
+    const fantasy_group: General.FantasyGroup = await useServerAPI({
       class: 'fantasy_group',
       function: 'get',
       arguments: {

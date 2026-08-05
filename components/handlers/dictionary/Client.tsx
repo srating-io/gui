@@ -7,6 +7,8 @@ import { load } from '@/redux/features/dictionary-slice';
 const Client = ({ data }) => {
   const dispatch = useAppDispatch();
 
+  // console.log(data)
+
   useEffect(() => {
     dispatch(load(data));
   }, [dispatch, data]);

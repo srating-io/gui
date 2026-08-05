@@ -2,17 +2,15 @@
 
 import { Client } from '@/components/generic/Team/Header/Client';
 import { useServerAPI } from '@/components/serverAPI';
-import {
-  CoachStatisticRanking, TeamSeasonConferences, Coach, CoachTeamSeason,
-  Team,
-} from '@/types/general';
+import { CustomizedTeam } from '@/types/general';
+import { General } from '@srating-io/types';
 
 
 
 const Server = async ({ organization_id, division_id, season, team_id }) => {
   const revalidateSeconds = 60 * 60 * 2; // 2 hours
 
-  const team: Team = await useServerAPI({
+  const team: CustomizedTeam = await useServerAPI({
     class: 'team',
     function: 'loadTeam',
     arguments: {
@@ -24,7 +22,7 @@ const Server = async ({ organization_id, division_id, season, team_id }) => {
     cache: revalidateSeconds,
   });
 
-  const team_season_conferences: TeamSeasonConferences = await useServerAPI({
+  const team_season_conferences: General.TeamSeasonConferences = await useServerAPI({
     class: 'team_season_conference',
     function: 'read',
     arguments: {
@@ -34,11 +32,9 @@ const Server = async ({ organization_id, division_id, season, team_id }) => {
     cache: revalidateSeconds,
   });
 
-  // todo this needs to get the active one, do a read and find the one without an end date
-
-  const coach_team_season: CoachTeamSeason = await useServerAPI({
+  const coach_team_seasons: General.CoachTeamSeasons = await useServerAPI({
     class: 'coach_team_season',
-    function: 'get',
+    function: 'read',
     arguments: {
       team_id,
       season,
@@ -47,8 +43,22 @@ const Server = async ({ organization_id, division_id, season, team_id }) => {
     cache: revalidateSeconds,
   });
 
-  let coach: Coach | null = null;
-  let coach_statistic_ranking: CoachStatisticRanking | null = null;
+  let coach_team_season: General.CoachTeamSeason | null = null;
+
+  for (const id in coach_team_seasons) {
+    const row = coach_team_seasons[id];
+
+    if (
+      !coach_team_season ||
+      !row.end_date
+    ) {
+      coach_team_season = row;
+    }
+  }
+
+
+  let coach: General.Coach | null = null;
+  let coach_statistic_ranking: General.CoachStatisticRanking | null = null;
 
   if (coach_team_season && coach_team_season.coach_id) {
     coach = await useServerAPI({

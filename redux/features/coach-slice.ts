@@ -1,17 +1,16 @@
-import { Coach, CoachTeamSeasons, Teams } from '@/types/general';
-import { StatisticRankings as StatsCBB } from '@/types/cbb';
-import { StatisticRankings as StatsCFB } from '@/types/cfb';
+
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import State from '@/components/helpers/State';
+import { Basketball, Football, General } from '@srating-io/types';
 
 type InitialState = {
   view: string,
   subview: string | null,
   scrollTop: number,
-  coach: Coach,
-  coach_team_seasons: CoachTeamSeasons;
-  teams: Teams;
-  statistic_rankings: StatsCBB | StatsCFB;
+  coach: General.Coach,
+  coach_team_seasons: General.CoachTeamSeasons;
+  teams: General.Teams;
+  statistic_rankings: Basketball.StatisticRankings | Football.StatisticRankings;
   loadingView: boolean;
 };
 
@@ -40,10 +39,10 @@ stateController.setInitialState({
   view: 'trends',
   subview: null,
   scrollTop: 0,
-  coach: {} as Coach,
-  coach_team_seasons: {} as CoachTeamSeasons,
-  teams: {} as Teams,
-  statistic_rankings: {} as StatsCBB | StatsCFB,
+  coach: {} as General.Coach,
+  coach_team_seasons: {},
+  teams: {},
+  statistic_rankings: {},
   loadingView: false,
 });
 

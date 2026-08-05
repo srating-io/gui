@@ -7,11 +7,11 @@ import SearchIcon from '@esmalley/react-material-icons/Search';
 
 import useDebounce from '@/components/hooks/useDebounce';
 import { useClientAPI } from '@/components/clientAPI';
-import { Team } from '@/types/general';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { setDataKey } from '@/redux/features/compare-slice';
 import { Color, Textor } from '@esmalley/ts-utils';
 import { Inputs, Menu, MenuOption, TextInput } from '@esmalley/react-material-ui';
+import { General } from '@srating-io/types';
 
 const Search = () => {
   const router = useRouter();
@@ -19,7 +19,7 @@ const Search = () => {
   const [isPending, startTransition] = useTransition();
 
   const [value, setValue] = useState('');
-  const [teams, setTeams] = useState<Team[]>([]);
+  const [teams, setTeams] = useState<General.Team[]>([]);
   const [loading, setLoading] = useState(false);
 
   const dispatch = useAppDispatch();

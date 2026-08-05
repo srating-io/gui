@@ -1,5 +1,5 @@
 import { getStore } from '@/app/StoreProvider';
-import { DEFAULT_D1_DIVISION_ID, DEFAULT_D2_DIVISION_ID, DEFAULT_D3_DIVISION_ID, DEFAULT_FBS_DIVISION_ID, DEFAULT_FCS_DIVISION_ID } from './Defaults';
+import { DEFAULT_D1_DIVISION_ID, DEFAULT_D2_DIVISION_ID, DEFAULT_D3_DIVISION_ID, DEFAULT_FBS_DIVISION_ID, DEFAULT_FCS_DIVISION_ID, DEFAULT_NBA_DIVISION_ID } from './Defaults';
 
 
 
@@ -40,6 +40,13 @@ class Division {
    */
   public static getD3(): string {
     return DEFAULT_D3_DIVISION_ID;
+  }
+
+  /**
+   * Get the NBA division ID
+   */
+  public static getNBA(): string {
+    return DEFAULT_NBA_DIVISION_ID;
   }
 
   /**

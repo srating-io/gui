@@ -10,7 +10,6 @@ import HelperGame from '@/components/helpers/Game';
 
 
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
-import { Game } from '@/types/general';
 import Organization from '@/components/helpers/Organization';
 import { setLoading } from '@/redux/features/loading-slice';
 import { Arrayifier, Dates, Sorter } from '@esmalley/ts-utils';
@@ -18,6 +17,8 @@ import { useNavigation } from '@/components/hooks/useNavigation';
 import {
   Button, CircularProgress, Columns, Inputs, Paper, Skeleton, Table, Tbody, Td, TextInput, Th, Thead, Tr, Typography, useTheme, useWindowDimensions,
 } from '@esmalley/react-material-ui';
+import { General } from '@srating-io/types';
+import { PicksGameWithPrediction } from './Picks';
 
 // todo this somestimes triggers a double load in PicksLoader.... something with having const picksLoading = useAppSelector(state => state.picksReducer.picksLoading);, makes it double render
 
@@ -149,7 +150,7 @@ const Calculator = ({ games, date }) => {
 
   type tableRow = {
     game_id: string;
-    game: Game;
+    game: General.Game;
     start_timestamp: number;
     pick: string;
     pick_ml: string;
@@ -162,10 +163,8 @@ const Calculator = ({ games, date }) => {
 
   /**
    * Get a common, formatted row for our tables
-   * @param {Object} game
-   * @return Object
    */
-  const getFormattedGameRow = (game: Game) => {
+  const getFormattedGameRow = (game: PicksGameWithPrediction) => {
     const Game = new HelperGame({
       game,
     });

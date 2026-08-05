@@ -3,17 +3,17 @@
 import { useClientAPI } from '@/components/clientAPI';
 import { setDataKey } from '@/redux/features/user-slice';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
-import { ApiKeys, FantasyGroups, FantasyGroupUsers, Pricings, Subscriptions, User, UserPaymentTokens } from '@/types/general';
+import { General } from '@srating-io/types';
 import { useEffect, useState } from 'react';
 
 interface Data {
-  subscription: Subscriptions;
-  pricing: Pricings;
-  api_key: ApiKeys;
-  user: User;
-  fantasy_group_user: FantasyGroupUsers;
-  fantasy_group: FantasyGroups;
-  user_payment_token: UserPaymentTokens;
+  subscription: General.Subscriptions;
+  pricing: General.Pricings;
+  api_key: General.ApiKeys;
+  user: General.User;
+  fantasy_group_user: General.FantasyGroupUsers;
+  fantasy_group: General.FantasyGroups;
+  user_payment_token: General.UserPaymentTokens;
 }
 
 const AccountLoader = () => {

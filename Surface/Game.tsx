@@ -1,8 +1,6 @@
 'use server';
 
-import Surface from 'Surface';
 import { useServerAPI } from '@/components/serverAPI';
-import { Coaches, CoachTeamSeasons, Game as GameType, Games } from '@/types/general';
 
 import HeaderClientWrapper from '@/components/generic/Game/Header/ClientWrapper';
 import HeaderServer from '@/components/generic/Game/Header/Server';
@@ -50,6 +48,8 @@ import Organization from '@/components/helpers/Organization';
 import HelperGame from '@/components/helpers/Game';
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
+import Surface from '../Surface';
+import { General, Game as GameAPI } from '@srating-io/types';
 
 
 export type getDecorateGame = {
@@ -101,7 +101,7 @@ class Game extends Surface {
     const organization_id = this.getOrganizationID();
 
     const revalidateSeconds = 30;
-    const games: Games = await useServerAPI({
+    const games: GameAPI.getGamesResults = await useServerAPI({
       class: 'game',
       function: 'getGames',
       arguments: {
@@ -110,13 +110,13 @@ class Game extends Surface {
       cache: revalidateSeconds,
     });
 
-    const game: GameType = games[game_id];
+    const game = games[game_id];
 
     if (!game) {
       notFound();
     }
 
-    const coach_team_seasons: CoachTeamSeasons = await useServerAPI({
+    const coach_team_seasons: General.CoachTeamSeasons = await useServerAPI({
       class: 'coach_team_season',
       function: 'read',
       arguments: {
@@ -127,7 +127,7 @@ class Game extends Surface {
       cache: 60 * 60 * 12,
     });
 
-    const coaches: Coaches = await useServerAPI({
+    const coaches: General.Coaches = await useServerAPI({
       class: 'coach',
       function: 'read',
       arguments: {
