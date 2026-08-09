@@ -60,8 +60,6 @@ const StatsGraph = (
 
   const allColumns = TableColumns.getColumns({ organization_id, view: 'player', graphable: true, disabled: false });
 
-  console.log(player_statistic_rankings)
-  console.log('conference_player_statistic_rankings', conference_player_statistic_rankings)
 
   const theme = useTheme();
 
@@ -297,9 +295,10 @@ const StatsGraph = (
 
   let chart: React.JSX.Element | null = null;
 
+  const leagueName = organization_id === Organization.getNBAID() ? 'NBA' : 'NCAA';
+
   if (trendsColumn in allColumns) {
     const statistic = allColumns[trendsColumn];
-    console.log(statistic)
 
     const lines: LineProps[] = [
       {
@@ -314,7 +313,7 @@ const StatsGraph = (
       },
       {
         type: 'monotone',
-        name: `NCAA ${statistic.label}`,
+        name: `${leagueName} ${statistic.label}`,
         dataKey: `league_${statistic.id}`,
         stroke: theme.secondary.dark,
         strokeWidth: 2,

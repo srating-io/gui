@@ -4,7 +4,7 @@
 
 export const DEFAULT_CFB_SEASON = 2027;
 export const DEFAULT_CBB_SEASON = 2026;
-export const DEFAULT_NBA_SEASON = 2026;
+export const DEFAULT_NBA_SEASON = 2027;
 export const DEFAULT_CFB_ID = 'f1dedce6-3b4c-11ef-94bc-2a93761010b8';
 export const DEFAULT_CBB_ID = 'f1c37c98-3b4c-11ef-94bc-2a93761010b8';
 export const DEFAULT_NBA_ID = 'd36a29dc-5453-11f1-8ce7-46e166b0a263';
