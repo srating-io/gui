@@ -128,6 +128,18 @@ const Base = (
     title = `NBA ${view} rankings.`;
   }
 
+  let classYearPicker: null | React.JSX.Element = null;
+  if (
+    (
+      organization_id === Organization.getCBBID() ||
+      organization_id === Organization.getCFBID()
+    ) &&
+    (view === 'transfer' || view === 'player') &&
+    width > 700
+  ) {
+    classYearPicker = <ClassYearPicker selected = {class_years} />;
+  }
+
 
   return (
     <Profiler id="Ranking.Base" onRender={(id, phase, actualDuration) => {
@@ -152,7 +164,7 @@ const Base = (
                   {view === 'player' || view === 'transfer' ? <AdditionalOptions view = {view} /> : ''}
                   {view !== 'conference' ? <ConferencePicker /> : ''}
                   {view === 'player' || view === 'transfer' ? <PositionPicker selected = {positions} isRadio = {Organization.getCFBID() === organization_id} /> : ''}
-                  {(view === 'player' || view === 'transfer') && width > 700 ? <ClassYearPicker selected = {class_years} /> : ''}
+                  {classYearPicker}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                   <Search view = {view} />

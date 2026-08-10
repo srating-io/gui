@@ -75,8 +75,8 @@ class Organization {
   }
 
   public static getPath({ organizations, organization_id }: { organizations: General.Organizations, organization_id: string}): string {
-    if (!organizations) {
-      return '';
+    if (!organizations || !Object.keys(organizations).length) {
+      return 'Loading...';
     }
     if (!organization_id) {
       throw new Error('organization_id required');

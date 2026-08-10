@@ -26,9 +26,9 @@ const getData = ({ view }) => {
 
   // you have to pass the functions the same arguments or on re-render it complains about hooks being different (re-rendering from CFB to CBB organization)
   if (isCBB || isNBA) {
-    // console.time('formatCBBData')
-    const d = formatCBBData(args);
-    // console.timeEnd('formatCBBData')
+    // console.time('formatBasketballData')
+    const d = formatBasketballData(args);
+    // console.timeEnd('formatBasketballData')
     return d;
   }
   if (isCFB) {
@@ -38,7 +38,7 @@ const getData = ({ view }) => {
   return { rows: [], lastUpdated: null };
 };
 
-const formatCBBData = (args) => {
+const formatBasketballData = (args) => {
   const {
     view, data, positions, selectedConferences, hideCommitted, hideUnderTwoMPG, filterCommittedConf, filterOriginalConf, conferences, class_years,
   } = args;

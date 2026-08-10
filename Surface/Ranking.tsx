@@ -31,6 +31,8 @@ class Ranking extends Surface {
       sportText = 'College basketball';
     } else if (organization_id === Organization.getCFBID()) {
       sportText = 'College football';
+    } else if (organization_id === Organization.getNBAID()) {
+      sportText = 'NBA';
     }
 
     let title = `sRating | ${sportText} team ranking`;
