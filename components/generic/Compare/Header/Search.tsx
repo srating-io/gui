@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useRef, useState, useTransition } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 
 import SearchIcon from '@esmalley/react-material-icons/Search';
@@ -29,6 +29,8 @@ const Search = () => {
   const away_team_id = useAppSelector((state) => state.compareReducer.away_team_id); // || searchParams?.get('away_team_id') || null;
   const next_search = useAppSelector((state) => state.compareReducer.next_search);
 
+  const abortControllerRef = useRef<AbortController | null>(null);
+
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
   const [anchorSearch, setAnchorSearch] = useState<HTMLInputElement | HTMLTextAreaElement | null>(null);
 
@@ -41,6 +43,15 @@ const Search = () => {
 
 
   const debouncedRequest = useDebounce(() => {
+    // Abort the previous request if it's still pending
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // Create a new AbortController for this request
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     useClientAPI({
       class: 'search',
       function: 'search',
@@ -51,10 +62,15 @@ const Search = () => {
         team: 1,
         player: 0,
       },
+      signal: controller.signal,
     }).then((response) => {
       setTeams((response && response.teams) || []);
       setLoading(false);
     }).catch((e) => {
+      // Ignore the error if we intentionally aborted it
+      if (e.name === 'AbortError') {
+        return;
+      }
       setTeams([]);
       setLoading(false);
     });
@@ -106,7 +122,7 @@ const Search = () => {
     return {
       value: team.team_id,
       selectable: true,
-      label: team.alt_name,
+      label: team.alt_name || team.name,
       onSelect: handleClick,
     };
   }).sort((a, b) => {

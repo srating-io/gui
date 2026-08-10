@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import useDebounce from '@/components/hooks/useDebounce';
 import SearchIcon from '@esmalley/react-material-icons/Search';
 
@@ -24,6 +24,8 @@ const Search = (
   const organization_id = useAppSelector((state) => state.organizationReducer.organization_id);
   const organizations = useAppSelector((state) => state.dictionaryReducer.organization);
   const path = Organization.getPath({ organizations, organization_id });
+
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   let division_id: string | null = null;
 
@@ -66,6 +68,15 @@ const Search = (
 
 
   const debouncedRequest = useDebounce(() => {
+    // Abort the previous request if it's still pending
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // Create a new AbortController for this request
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     useClientAPI({
       class: 'search',
       function: 'search',
@@ -74,12 +85,17 @@ const Search = (
         division_id,
         name: value,
       },
+      signal: controller.signal,
     }).then((response) => {
       setTeams((response && response.teams) || []);
       setPlayers((response && response.players) || []);
       setCoaches((response && response.coaches) || []);
       setLoading(false);
     }).catch((e) => {
+      // Ignore the error if we intentionally aborted it
+      if (e.name === 'AbortError') {
+        return;
+      }
       setTeams([]);
       setPlayers([]);
       setCoaches([]);
