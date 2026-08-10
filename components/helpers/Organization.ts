@@ -44,6 +44,20 @@ class Organization {
     return emoji;
   }
 
+  public static getSportText({ organization_id }): string {
+    let text = '';
+
+    if (organization_id === Organization.getCBBID()) {
+      text = 'college basketball';
+    } else if (organization_id === Organization.getCFBID()) {
+      text = 'college football';
+    } else if (organization_id === Organization.getNBAID()) {
+      text = 'NBA';
+    }
+
+    return text;
+  }
+
   /**
    * Is the current organization college football?
    * Becareful using this, if you conditonally use it, the hooks between renders will be off and error out react

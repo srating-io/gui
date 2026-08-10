@@ -51,13 +51,7 @@ class FantasyGroup extends Surface {
 
     const { fantasy_group } = await this.getData({ fantasy_group_id });
 
-    let sportText = '';
-
-    if (organization_id === Organization.getCBBID()) {
-      sportText = 'college basketball';
-    } else if (organization_id === Organization.getCFBID()) {
-      sportText = 'college football';
-    }
+    const sportText = Organization.getSportText({ organization_id });
 
 
     return {

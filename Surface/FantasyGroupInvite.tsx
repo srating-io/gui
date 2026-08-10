@@ -74,13 +74,7 @@ class FantasyGroupInvite extends Surface {
   async getMetaData() {
     const organization_id = this.getOrganizationID();
 
-    let sportText = 'unknown';
-
-    if (organization_id === Organization.getCBBID()) {
-      sportText = 'college basketball';
-    } else if (organization_id === Organization.getCFBID()) {
-      sportText = 'college football';
-    }
+    const sportText = Organization.getSportText({ organization_id });
 
 
     return {

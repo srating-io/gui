@@ -53,13 +53,7 @@ class FantasyEntry extends Surface {
 
     const { fantasy_entry } = await this.getData({ fantasy_entry_id });
 
-    let sportText = 'unknown';
-
-    if (organization_id === Organization.getCBBID()) {
-      sportText = 'college basketball';
-    } else if (organization_id === Organization.getCFBID()) {
-      sportText = 'college football';
-    }
+    const sportText = Organization.getSportText({ organization_id });
 
 
     return {

@@ -25,15 +25,7 @@ class Ranking extends Surface {
   async getMetaData({ view }) {
     const organization_id = this.getOrganizationID();
 
-    let sportText = '';
-
-    if (organization_id === Organization.getCBBID()) {
-      sportText = 'College basketball';
-    } else if (organization_id === Organization.getCFBID()) {
-      sportText = 'College football';
-    } else if (organization_id === Organization.getNBAID()) {
-      sportText = 'NBA';
-    }
+    const sportText = Organization.getSportText({ organization_id });
 
     let title = `sRating | ${sportText} team ranking`;
     let description = 'View statistic ranking for all teams';

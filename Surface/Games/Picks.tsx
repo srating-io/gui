@@ -34,13 +34,7 @@ class Picks extends Games {
   async getMetaData() {
     const organization_id = this.getOrganizationID();
 
-    let sportText = '';
-
-    if (organization_id === Organization.getCBBID()) {
-      sportText = 'college basketball';
-    } else if (organization_id === Organization.getCFBID()) {
-      sportText = 'college football';
-    }
+    const sportText = Organization.getSportText({ organization_id });
 
     return {
       title: `sRating | ${sportText} betting picks`,
