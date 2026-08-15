@@ -44,6 +44,7 @@ stateController.set_url_param_type_x_keys({
     'subview',
     'trendsColumn',
   ],
+  number: [],
   array: [],
   boolean: [],
 });

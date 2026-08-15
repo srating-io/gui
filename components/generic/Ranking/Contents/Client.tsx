@@ -416,14 +416,14 @@ export const decorateHeaderRow = (
           showSortArrow = false;
         }
 
-        let label = headCell.getLabel ? headCell.getLabel() : headCell.label;
+        let label = headCell.getLabel();
 
-        if (useAlternateLabel && (headCell.getAltLabel || headCell.alt_label)) {
-          label = headCell.getAltLabel ? headCell.getAltLabel() : headCell.alt_label as string;
+        if (useAlternateLabel && headCell.getAltLabel) {
+          label = headCell.getAltLabel();
         }
 
         return (
-          <Tooltip key={headCell.id} position = 'top' text={headCell.getTooltip ? headCell.getTooltip() : headCell.tooltip}>
+          <Tooltip key={headCell.id} position = 'top' text={headCell.getTooltip()}>
             <Th
               style = {tdStyle}
               key={headCell.id}
@@ -459,7 +459,9 @@ const Client = ({ generated, organization_id, division_id, season, view }) => {
   const filteredRows = useAppSelector((state) => state.rankingReducer.filteredRows);
   const columnView = useAppSelector((state) => state.rankingReducer.columnView);
   const customColumns = useAppSelector((state) => state.rankingReducer.customColumns);
-  const tableColumns = TableColumns.getViewableColumns({ organization_id, view, columnView, customColumns, positions });
+  const career = useAppSelector((state) => state.rankingReducer.career);
+  const career_active = useAppSelector((state) => state.rankingReducer.career_active);
+  const tableColumns = TableColumns.getViewableColumns({ organization_id, view, columnView, customColumns, positions, career: (career === 1 || career_active === 1) });
   const confChipsLength = getConferenceChips().length;
   const currentPath = Organization.getPath({ organizations, organization_id });
   const [tableHorizontalScroll, setTableHorizontalScroll] = useState(0);
@@ -474,7 +476,7 @@ const Client = ({ generated, organization_id, division_id, season, view }) => {
     }
   }, [tableHorizontalScroll, order, orderBy]);
 
-  const headCells = TableColumns.getColumns({ organization_id, view });
+  const headCells = TableColumns.getColumns({ organization_id, view, career: (career === 1 || career_active === 1) });
 
   if (data === null) {
     return <ClientSkeleton />;

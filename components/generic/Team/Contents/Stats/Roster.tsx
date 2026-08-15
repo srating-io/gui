@@ -70,7 +70,7 @@ const Roster = ({ organization_id, rosterStats, player_team_seasons, season }) =
       columnView = position;
     }
 
-    const cols = TableColumns.getViewableColumns({ organization_id, view: 'roster', columnView, customColumns: [], positions: [position] });
+    const cols = TableColumns.getViewableColumns({ organization_id, view: 'roster', columnView, customColumns: [], positions: [position], career: false });
     const index = cols.indexOf('last_game_on_team_date');
 
     if (

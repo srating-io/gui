@@ -83,12 +83,12 @@ const Client = ({ organization_id, division_id, coach_team_seasons, teams, stati
   columns.season = {
     id: 'season',
     numeric: true,
-    label: 'Season',
-    tooltip: 'Season',
+    getLabel: () => 'Season',
+    getTooltip: () => 'Season',
     sort: 'higher',
     sticky: true,
     organization_ids: [],
-    views: [],
+    getViews: () => [],
     graphable: false,
     widths: {
       default: 70,

@@ -23,7 +23,7 @@ const TableView = ({ statistic_rankings }) => {
   const numberOfTeams = Organization.getNumberOfTeams({ organization_id, division_id, season });
 
   const [view, setView] = useState<string>('composite');
-  const columns = TableColumns.getViewableColumns({ organization_id, view: 'team', columnView: view, customColumns: [], positions: [] });
+  const columns = TableColumns.getViewableColumns({ organization_id, view: 'team', columnView: view, customColumns: [], positions: [], career: false });
 
   for (let i = columns.length - 1; i >= 0; i--) {
     if (columns[i] === 'rank_delta_combo') {

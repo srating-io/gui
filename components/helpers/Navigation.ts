@@ -1,7 +1,7 @@
 'use client';
 
 import { updateDataKey as updateDataKeyDisplay } from '@/redux/features/display-slice';
-import { InitialState, InitialStateKeys, resetDataKey as resetDataKeyPlayer, reset as resetPlayer, setDataKey as setDataKeyPlayer } from '@/redux/features/player-slice';
+import { InitialState as InitialStatePlayer, InitialStateKeys as InitialStateKeysPlayer, resetDataKey as resetDataKeyPlayer, reset as resetPlayer, setDataKey as setDataKeyPlayer } from '@/redux/features/player-slice';
 import { reset as resetCompare } from '@/redux/features/compare-slice';
 import { reset as resetCoach } from '@/redux/features/coach-slice';
 import { reset as resetConference } from '@/redux/features/conference-slice';
@@ -12,7 +12,7 @@ import { reset as resetPicks, setDataKey as setDataKeyPicks, InitialStateKeys as
 import { AppDispatch } from '@/redux/store';
 import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import { TransitionStartFunction } from 'react';
-import { resetDataKey as resetDataKeyRanking, reset as resetRanking, setDataKey as setDataKeyRanking } from '@/redux/features/ranking-slice';
+import { InitialState as InitialStateRanking, InitialStateKeys as InitialStateKeysRanking, resetDataKey as resetDataKeyRanking, reset as resetRanking, setDataKey as setDataKeyRanking } from '@/redux/features/ranking-slice';
 import { setLoading } from '@/redux/features/loading-slice';
 import { reset as resetFantasy, setDataKey as setDataKeyFantasy, InitialStateKeys as InitialStateKeysFantasy, InitialState as InitialStateFantasy, stateController as FantasyStateController } from '@/redux/features/fantasy-slice';
 import { resetDataKey as resetDataKeyUser, setDataKey as setDataKeyUser, InitialStateKeys as InitialStateKeysUser, InitialState as InitialStateUser, stateController as UserStateController } from '@/redux/features/user-slice';
@@ -83,7 +83,7 @@ class Navigation {
   /**
    * Navigate to something on a player view. Must already be on player view
    */
-  public playerView<K extends InitialStateKeys>(args: Pick<InitialState, K>, onRouter: null | undefined | (() => void) = null) {
+  public playerView<K extends InitialStateKeysPlayer>(args: Pick<InitialStatePlayer, K>, onRouter: null | undefined | (() => void) = null) {
     if (!this.pathName.includes('player')) {
       throw new Error('playerView only usable when already navigated to player');
     }
@@ -202,13 +202,13 @@ class Navigation {
     });
   }
 
-  public rankingView<K extends InitialStateKeys>(args: Pick<InitialState, K>, onRouter: null | undefined | (() => void) = null) {
+  public rankingView<K extends InitialStateKeysRanking>(args: Pick<InitialStateRanking, K>, onRouter: null | undefined | (() => void) = null) {
     if (!this.pathName.includes('ranking')) {
       throw new Error('rankingView only usable when already navigated to ranking');
     }
 
     for (const key in args) {
-      this.dispatch(setDataKeyPlayer({ key, value: args[key] }));
+      this.dispatch(setDataKeyRanking({ key, value: args[key] }));
     }
 
 
@@ -223,10 +223,12 @@ class Navigation {
       this.dispatch(resetDataKeyRanking('columnView'));
       this.dispatch(resetDataKeyRanking('filteredRows'));
       this.dispatch(resetDataKeyRanking('searchValue'));
+      this.dispatch(resetDataKeyRanking('career'));
+      this.dispatch(resetDataKeyRanking('career_active'));
     }
 
 
-    this.dispatch(setDataKeyPlayer({ key: 'loadingView', value: true }));
+    this.dispatch(setDataKeyRanking({ key: 'loadingView', value: true }));
 
     // player slice handles this now, but just refetch it here for stupid nextjs router
     const current = new URLSearchParams(window.location.search);

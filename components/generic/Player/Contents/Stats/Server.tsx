@@ -19,6 +19,8 @@ const Server = async ({ organization_id, division_id, season, player_id, player_
       player_id,
       player_team_season_id,
       current: '1',
+      career: 0,
+      career_active: 0,
     },
     cache: revalidateSeconds,
   }) as Basketball.PlayerStatisticRanking | Football.PlayerStatisticRanking;
@@ -35,6 +37,8 @@ const Server = async ({ organization_id, division_id, season, player_id, player_
         season,
         player_id,
         player_team_season_id,
+        career: 0,
+        career_active: 0,
       },
       cache: revalidateSeconds,
     }) as Basketball.PlayerStatisticRankings | Football.PlayerStatisticRankings;

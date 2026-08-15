@@ -40,6 +40,7 @@ stateController.set_url_param_type_x_keys({
     'trendsColumn',
     'player_team_season_id',
   ],
+  number: [],
   array: [
     'trendsSeasons',
   ],

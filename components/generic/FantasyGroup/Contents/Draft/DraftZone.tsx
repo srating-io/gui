@@ -25,7 +25,7 @@ const DraftZone = () => {
   const [selectedTeamID, setSelectedTeamID] = useState<string | null>(null);
 
 
-  const cached_key = getCachedDataKey({ organization_id: fantasy_group.organization_id, division_id: fantasy_group.division_id, season: fantasy_group.season, view: 'player' });
+  const cached_key = getCachedDataKey({ organization_id: fantasy_group.organization_id, division_id: fantasy_group.division_id, season: fantasy_group.season, view: 'player', career: 0, career_active: 0 });
 
   const data: object = (
     rankingData &&
@@ -66,7 +66,7 @@ const DraftZone = () => {
   }
 
   const columns = TableColumns.getColumns({ organization_id: fantasy_group.organization_id, view: 'player' });
-  const displayColumns = TableColumns.getViewableColumns({ organization_id: fantasy_group.organization_id, view: 'player', columnView: 'composite', customColumns: [], positions: [] });
+  const displayColumns = TableColumns.getViewableColumns({ organization_id: fantasy_group.organization_id, view: 'player', columnView: 'composite', customColumns: [], positions: [], career: false });
 
 
   const inputHandler = new Inputs();

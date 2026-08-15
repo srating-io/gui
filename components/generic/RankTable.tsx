@@ -287,15 +287,15 @@ const RankTable = (
               tdStyle.borderRight = `3px solid ${theme.mode === 'light' ? theme.info.light : theme.info.dark}`;
             }
 
-            let label = headCell.getLabel ? headCell.getLabel() : headCell.label;
+            let label = headCell.getLabel();
 
-            if (useAlternateLabel && (headCell.getAltLabel || headCell.alt_label)) {
-              label = headCell.getAltLabel ? headCell.getAltLabel() : headCell.alt_label as string;
+            if (useAlternateLabel && headCell.getAltLabel) {
+              label = headCell.getAltLabel();
             }
 
 
             return (
-              <Tooltip key={headCell.id} position = 'top' text={headCell.getTooltip ? headCell.getTooltip() : headCell.tooltip}>
+              <Tooltip key={headCell.id} position = 'top' text={headCell.getTooltip()}>
                 <Th
                   style = {tdStyle}
                   key={headCell.id}

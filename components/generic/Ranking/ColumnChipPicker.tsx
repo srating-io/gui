@@ -38,8 +38,10 @@ const ColumnChipPicker = ({ organization_id, view }) => {
   const dispatch = useAppDispatch();
   const columnView = useAppSelector((state) => state.rankingReducer.columnView);
   const customColumns = useAppSelector((state) => state.rankingReducer.customColumns);
+  const career = useAppSelector((state) => state.rankingReducer.career);
+  const career_active = useAppSelector((state) => state.rankingReducer.career_active);
 
-  const headCells = TableColumns.getColumns({ organization_id, view });
+  const headCells = TableColumns.getColumns({ organization_id, view, career: (career === 1 || career_active === 1) });
 
   const handleCustomColumns = (value: string) => {
     const newColumns = [...customColumns];

@@ -165,7 +165,7 @@ const Client = ({ player_statistic_rankings, players, player_team_seasons }) => 
         return ['rank', 'name', 'team_name', 'offensive_rebound_percentage', 'defensive_rebound_percentage', 'steal_percentage', 'block_percentage'];
       }
     }
-    return TableColumns.getViewableColumns({ organization_id, view: 'compare', columnView, customColumns: [], positions: [position] });
+    return TableColumns.getViewableColumns({ organization_id, view: 'compare', columnView, customColumns: [], positions: [position], career: false });
   };
 
   const handleClick = (player_id: string) => {

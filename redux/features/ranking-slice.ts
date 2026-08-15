@@ -4,7 +4,7 @@ import { RankingTable } from '@/types/general';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 
-type InitialState = {
+export type InitialState = {
   view: string,
   season: number | null,
   order: string,
@@ -23,9 +23,11 @@ type InitialState = {
   filteredRows: RankingTable[] | null | boolean,
   searchValue: string,
   loadingView: boolean,
+  career: number,
+  career_active: number,
 };
 
-type InitialStateKeys = keyof InitialState;
+export type InitialStateKeys = keyof InitialState;
 
 type ActionPayload<K extends InitialStateKeys> = {
   key: K;
@@ -43,6 +45,10 @@ stateController.set_url_param_type_x_keys({
     'order',
     'orderBy',
     'columnView',
+  ],
+  number: [
+    'career',
+    'career_active',
   ],
   array: [
     'customColumns',
@@ -75,6 +81,8 @@ stateController.setInitialState({
   filteredRows: null,
   searchValue: '',
   loadingView: true,
+  career: 0,
+  career_active: 0,
 } as InitialState);
 
 

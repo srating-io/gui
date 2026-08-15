@@ -87,7 +87,7 @@ const StatsGraph = (
         filled = {trendsColumn === column.id}
         value = {column.id}
         onClick = {() => { handleColumn(column.id); }}
-        title = {column.label}
+        title = {column.getLabel()}
       />,
     );
   }
@@ -303,7 +303,7 @@ const StatsGraph = (
     const lines: LineProps[] = [
       {
         type: 'monotone',
-        name: statistic.label,
+        name: statistic.getLabel(),
         dataKey: statistic.id,
         stroke: theme.info.main,
         strokeWidth: 2,
@@ -313,7 +313,7 @@ const StatsGraph = (
       },
       {
         type: 'monotone',
-        name: `${leagueName} ${statistic.label}`,
+        name: `${leagueName} ${statistic.getLabel()}`,
         dataKey: `league_${statistic.id}`,
         stroke: theme.secondary.dark,
         strokeWidth: 2,
@@ -322,7 +322,7 @@ const StatsGraph = (
       },
       {
         type: 'monotone',
-        name: `Conf ${statistic.label}`,
+        name: `Conf ${statistic.getLabel()}`,
         dataKey: `conf_${statistic.id}`,
         stroke: theme.warning.dark,
         strokeWidth: 2,
@@ -335,7 +335,7 @@ const StatsGraph = (
       // insert the line in the second position
       lines.splice(1, 0, {
         type: 'bump',
-        name: `Box. ${statistic.label}`,
+        name: `Box. ${statistic.getLabel()}`,
         dataKey: `player_boxscore_${statistic.id}`,
         stroke: theme.success.dark,
         strokeWidth: 2,
@@ -348,7 +348,7 @@ const StatsGraph = (
     if (minYaxis !== null && maxYaxis !== null) {
       YAxisProps.domain = [minYaxis, maxYaxis];
     }
-    chart = <Chart XAxisDataKey={trendsSeasons.length > 1 ? 'season' : 'date_friendly'} tooltipLabel={'date_friendly'} YAxisLabel={statistic.label} rows={formattedData} lines={lines} YAxisProps={YAxisProps} rankMax = {max} />;
+    chart = <Chart XAxisDataKey={trendsSeasons.length > 1 ? 'season' : 'date_friendly'} tooltipLabel={'date_friendly'} YAxisLabel={statistic.getLabel()} rows={formattedData} lines={lines} YAxisProps={YAxisProps} rankMax = {max} />;
   }
 
 

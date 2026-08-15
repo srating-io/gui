@@ -43,6 +43,7 @@ stateController.set_url_param_type_x_keys({
   string: [
     'view',
   ],
+  number: [],
   array: [],
   boolean: [],
 });

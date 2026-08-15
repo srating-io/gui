@@ -38,10 +38,12 @@ const Base = (
   const tableFullscreen = useAppSelector((state) => state.rankingReducer.tableFullscreen);
   const columnView = useAppSelector((state) => state.rankingReducer.columnView);
   const customColumns = useAppSelector((state) => state.rankingReducer.customColumns);
+  const career = useAppSelector((state) => state.rankingReducer.career);
+  const career_active = useAppSelector((state) => state.rankingReducer.career_active);
 
   const [legendOpen, setLegendOpen] = useState(false);
 
-  const columns = TableColumns.getViewableColumns({ organization_id, view, columnView, customColumns, positions });
+  const columns = TableColumns.getViewableColumns({ organization_id, view, columnView, customColumns, positions, career: (career === 1 || career_active === 1) });
 
   let seasons = (
     organization_id in organization_id_x_division_id_x_ranking_seasons &&

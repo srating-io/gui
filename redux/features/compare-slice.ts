@@ -38,6 +38,7 @@ stateController.set_url_param_type_x_keys({
     'home_team_id',
     'away_team_id',
   ],
+  number: [],
   array: [],
   boolean: [
     'neutral_site',

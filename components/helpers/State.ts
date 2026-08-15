@@ -6,6 +6,7 @@ import { WritableDraft } from '@reduxjs/toolkit';
 
 type url_param_type_x_keysType = {
   string: string[];
+  number: string[];
   array: string[];
   boolean: string[];
 }
@@ -131,6 +132,14 @@ class State<T extends object> {
           const value = urlParams.get(key);
           if (value !== null) {
             state[key] = value;
+          } else if (key in this.getDefaultState()) {
+            state[key] = this.getDefaultState()[key];
+          }
+        }
+        if (type === 'number') {
+          const value = urlParams.get(key);
+          if (value !== null) {
+            state[key] = Number(value);
           } else if (key in this.getDefaultState()) {
             state[key] = this.getDefaultState()[key];
           }

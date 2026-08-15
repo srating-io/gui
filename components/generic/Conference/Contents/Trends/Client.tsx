@@ -120,7 +120,7 @@ const Client = ({ organization_id, conference_id, data }: { organization_id: str
         filled = {selectedChip === column.id}
         value = {column.id}
         onClick = {() => { setSelectedChip(column.id); }}
-        title = {column.label}
+        title = {column.getLabel()}
       />,
     );
   }
@@ -382,7 +382,7 @@ const Client = ({ organization_id, conference_id, data }: { organization_id: str
               <CartesianGrid strokeDasharray = '3 3' />
               <XAxis dataKey = {'date_friendly'} minTickGap={20} tickLine = {false} axisLine = {false} type='category' />
               <YAxis {...YAxisProps}>
-                <Label offset={10} value={(selectedChip in allColumns ? allColumns[selectedChip].label : 'Rank')} angle={-90} position="insideLeft" style={{ textAnchor: 'middle', fill: theme.info.main, fontSize: 18 }} />
+                <Label offset={10} value={(selectedChip in allColumns ? allColumns[selectedChip].getLabel() : 'Rank')} angle={-90} position="insideLeft" style={{ textAnchor: 'middle', fill: theme.info.main, fontSize: 18 }} />
               </YAxis>
               {
                 width > breakPoint ?

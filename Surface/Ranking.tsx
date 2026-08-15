@@ -14,6 +14,8 @@ export type getDecorateRanking ={
   view: string;
   season?: number;
   division_id?: string;
+  career?: number;
+  career_active?: number;
 };
 
 class Ranking extends Surface {
@@ -60,7 +62,13 @@ class Ranking extends Surface {
 
 
   async getDecorate(
-    { season = this.getCurrentSeason(), view, division_id = this.getDivisionID() }:
+    {
+      season = this.getCurrentSeason(),
+      view,
+      division_id = this.getDivisionID(),
+      career = 0,
+      career_active = 0,
+    }:
     getDecorateRanking,
   ) {
     const organization_id = this.getOrganizationID();
@@ -70,7 +78,15 @@ class Ranking extends Surface {
     return (
       <>
         <Base organization_id = {organization_id} division_id = {division_id} season = {season} view = {view}>
-          <Loader key ={organization_id + division_id + season + view} organization_id = {organization_id} division_id = {division_id} season = {season} view = {view} />
+          <Loader
+            key = {organization_id + division_id + season + view + career + career_active}
+            organization_id = {organization_id}
+            division_id = {division_id}
+            season = {season}
+            view = {view}
+            career = {career}
+            career_active = {career_active}
+          />
           <ContentsClientWrapper>
             <Client generated = {generated} organization_id = {organization_id} division_id = {division_id} season = {season} view = {view} />
             {/* <Suspense key={organization_id + division_id + season + view} fallback = {<ContentsClientSkeleton />}>
