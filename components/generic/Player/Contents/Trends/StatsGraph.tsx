@@ -60,6 +60,7 @@ const StatsGraph = (
 
   const allColumns = TableColumns.getColumns({ organization_id, view: 'player', graphable: true, disabled: false });
 
+
   const theme = useTheme();
 
   const handleColumn = (value: string) => {
@@ -86,7 +87,7 @@ const StatsGraph = (
         filled = {trendsColumn === column.id}
         value = {column.id}
         onClick = {() => { handleColumn(column.id); }}
-        title = {column.label}
+        title = {column.getLabel()}
       />,
     );
   }
@@ -196,7 +197,7 @@ const StatsGraph = (
       if (!(date in date_of_rank_x_data)) {
         date_of_rank_x_data[date] = {
           date_of_rank: date,
-          date_friendly: Dates.format(row.date, date_friendly_format),
+          date_friendly: Dates.format(date, date_friendly_format),
         };
       }
 
@@ -294,13 +295,15 @@ const StatsGraph = (
 
   let chart: React.JSX.Element | null = null;
 
+  const leagueName = organization_id === Organization.getNBAID() ? 'NBA' : 'NCAA';
+
   if (trendsColumn in allColumns) {
     const statistic = allColumns[trendsColumn];
 
     const lines: LineProps[] = [
       {
         type: 'monotone',
-        name: statistic.label,
+        name: statistic.getLabel(),
         dataKey: statistic.id,
         stroke: theme.info.main,
         strokeWidth: 2,
@@ -310,7 +313,7 @@ const StatsGraph = (
       },
       {
         type: 'monotone',
-        name: `NCAA ${statistic.label}`,
+        name: `${leagueName} ${statistic.getLabel()}`,
         dataKey: `league_${statistic.id}`,
         stroke: theme.secondary.dark,
         strokeWidth: 2,
@@ -319,7 +322,7 @@ const StatsGraph = (
       },
       {
         type: 'monotone',
-        name: `Conf ${statistic.label}`,
+        name: `Conf ${statistic.getLabel()}`,
         dataKey: `conf_${statistic.id}`,
         stroke: theme.warning.dark,
         strokeWidth: 2,
@@ -331,8 +334,8 @@ const StatsGraph = (
     if (trendsBoxscoreLine) {
       // insert the line in the second position
       lines.splice(1, 0, {
-        type: 'monotone',
-        name: `Box. ${statistic.label}`,
+        type: 'bump',
+        name: `Box. ${statistic.getLabel()}`,
         dataKey: `player_boxscore_${statistic.id}`,
         stroke: theme.success.dark,
         strokeWidth: 2,
@@ -345,7 +348,7 @@ const StatsGraph = (
     if (minYaxis !== null && maxYaxis !== null) {
       YAxisProps.domain = [minYaxis, maxYaxis];
     }
-    chart = <Chart XAxisDataKey={trendsSeasons.length > 1 ? 'season' : 'date_friendly'} tooltipLabel={'date_friendly'} YAxisLabel={statistic.label} rows={formattedData} lines={lines} YAxisProps={YAxisProps} rankMax = {max} />;
+    chart = <Chart XAxisDataKey={trendsSeasons.length > 1 ? 'season' : 'date_friendly'} tooltipLabel={'date_friendly'} YAxisLabel={statistic.getLabel()} rows={formattedData} lines={lines} YAxisProps={YAxisProps} rankMax = {max} />;
   }
 
 

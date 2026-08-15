@@ -42,6 +42,10 @@ class Game {
     return (+this.getGame().neutral_site === 1);
   }
 
+  isPreSeason(): boolean {
+    return (this.getGame().game_type_terminology_id === '068b22b0-5623-11f1-8ce7-46e166b0a263');
+  }
+
   /**
    * Get the friendly formatted start date of the game
    */

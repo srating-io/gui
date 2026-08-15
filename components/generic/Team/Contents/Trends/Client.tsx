@@ -10,26 +10,21 @@ import LinearScaleIcon from '@esmalley/react-material-icons/LinearScale';
 
 
 import { Payload } from 'recharts/types/component/DefaultLegendContent';
-import {
-  Boxscores as BoxscoresCBB,
-  ConferenceStatisticRankings, LeagueStatisticRankings, StatisticRankings,
-} from '@/types/cbb';
 import StatsGraph from './StatsGraph';
 import { useSearchParams } from 'next/navigation';
 import { footerNavigationHeight } from '@/components/generic/FooterNavigation';
 import { headerBarHeight } from '@/components/generic/Header';
-import { Games } from '@/types/general';
 import Organization from '@/components/helpers/Organization';
-import { Boxscores as BoxscoreCFB } from '@/types/cfb';
 import { Dates } from '@esmalley/ts-utils';
 import { LinearProgress, Paper, Typography, useTheme, useWindowDimensions } from '@esmalley/react-material-ui';
+import { Basketball, Football, General } from '@srating-io/types';
 
 export interface TrendsType {
-  games: Games;
-  statistic_rankings: StatisticRankings;
-  conference_statistic_rankings: ConferenceStatisticRankings;
-  league_statistic_rankings: LeagueStatisticRankings;
-  boxscores: BoxscoresCBB | BoxscoreCFB;
+  games: General.Games;
+  statistic_rankings: Basketball.StatisticRankings | Football.StatisticRankings;
+  conference_statistic_rankings: Basketball.ConferenceStatisticRankings | Football.ConferenceStatisticRankings;
+  league_statistic_rankings: Basketball.LeagueStatisticRankings | Football.LeagueStatisticRankings;
+  boxscores: Basketball.Boxscores | Football.Boxscores;
 }
 
 const padding = 5;

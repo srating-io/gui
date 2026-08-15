@@ -1,14 +1,15 @@
 
 import State from '@/components/helpers/State';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { Game, General } from '@srating-io/types';
 
 
 // this is the /sport/games/abc path
 
 type InitialState = {
-  game: object,
-  coaches: object,
-  coach_team_seasons: object,
+  game: Game.GameWithOddsAndTeams,
+  coaches: General.Coaches,
+  coach_team_seasons: General.CoachTeamSeasons,
   gameStats: object,
   coachStats: object,
   conferenceStats: object,
@@ -43,12 +44,13 @@ stateController.set_url_param_type_x_keys({
     'subview',
     'trendsColumn',
   ],
+  number: [],
   array: [],
   boolean: [],
 });
 
 stateController.setInitialState({
-  game: {},
+  game: {} as Game.GameWithOddsAndTeams,
   coaches: {},
   coach_team_seasons: {},
   gameStats: {},

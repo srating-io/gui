@@ -11,8 +11,8 @@ import { setLoading } from '@/redux/features/loading-slice';
 import Rank from './Rank';
 import { getBreakPoint } from './ClientWrapper';
 import Record from './Record';
-import { ConferenceStatisticRankings } from '@/types/cbb';
 import { Typography, useWindowDimensions } from '@esmalley/react-material-ui';
+import { Basketball, Football } from '@srating-io/types';
 
 
 const Client = (
@@ -23,7 +23,7 @@ const Client = (
     seasons,
   }:
   {
-    conference_statistic_ranking: ConferenceStatisticRankings,
+    conference_statistic_ranking: Basketball.ConferenceStatisticRankings | Football.ConferenceStatisticRankings,
     season: number,
     conference_id: string,
     seasons: number[],

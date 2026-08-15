@@ -3,6 +3,7 @@
 import { useClientAPI } from '@/components/clientAPI';
 import { setDataKey } from '@/redux/features/game-slice';
 import { useAppDispatch } from '@/redux/hooks';
+import { Game } from '@srating-io/types';
 import { useEffect, useState } from 'react';
 
 
@@ -27,7 +28,7 @@ const PredictionLoader = ({ game_id }) => {
       arguments: {
         game_id,
       },
-    }).then((response) => {
+    }).then((response: Game.getScoresResults) => {
       dispatch(setDataKey({ key: 'gamePrediction', value: response }));
       dispatch(setDataKey({ key: 'gamePredictionLoading', value: false }));
       setLoading(false);

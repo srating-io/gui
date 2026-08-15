@@ -1,13 +1,13 @@
 'use server';
 
-import Surface from 'Surface';
 import { useServerAPI } from '@/components/serverAPI';
-import { PaymentRouter as PaymentRouterType } from '@/types/general';
 import { notFound } from 'next/navigation';
 import Footer from '@/components/generic/Footer';
 import ContentsWrapper from '@/components/generic/PaymentRouter/ContentsWrapper';
 import ReduxWrapper from '@/components/generic/PaymentRouter/ReduxWrapper';
 import ClientWrapper from '@/components/generic/PaymentRouter/Contents/ClientWrapper';
+import Surface from '../Surface';
+import { General } from '@srating-io/types';
 
 
 export type getDecoratePaymentRouter = {
@@ -43,7 +43,7 @@ class PaymentRouter extends Surface {
   async getData({ payment_router_id }) {
     // const revalidateSeconds = 12 * 60 * 60; // 12 hours
 
-    const payment_router: PaymentRouterType = await useServerAPI({
+    const payment_router: General.PaymentRouter = await useServerAPI({
       class: 'payment_router',
       function: 'get',
       arguments: {

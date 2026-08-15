@@ -1,7 +1,7 @@
 'use server';
 
 import { Metadata, ResolvingMetadata } from 'next';
-import Ranking, { getDecorateRanking } from 'Surface/Ranking';
+import Ranking, { getDecorateRanking } from '../../../Surface/Ranking';
 
 
 type Props = {
@@ -38,6 +38,8 @@ export default async function Page({ params, searchParams }: Props) {
   const season = searchParameters?.season || undefined;
   const view = getView({ searchParameters });
   const division_id = searchParameters?.division_id || undefined;
+  const career = searchParameters?.career || undefined;
+  const career_active = searchParameters?.career_active || undefined;
 
   const Surface = new Ranking({
     sport: parameters.sport,
@@ -50,6 +52,14 @@ export default async function Page({ params, searchParams }: Props) {
 
   if (season) {
     args.season = +season;
+  }
+
+  if (career) {
+    args.career = +career;
+  }
+
+  if (career_active) {
+    args.career_active = +career_active;
   }
 
   return Surface.getDecorate(args);

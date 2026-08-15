@@ -1,6 +1,6 @@
 'use server';
 
-import Surface from 'Surface';
+
 import ContentsClientWrapper from '@/components/generic/Ranking/Contents/ClientWrapper';
 // import ContentsServer from '@/components/generic/Ranking/Contents/Server';
 import { Client, ClientSkeleton as ContentsClientSkeleton } from '@/components/generic/Ranking/Contents/Client';
@@ -8,11 +8,14 @@ import { Client, ClientSkeleton as ContentsClientSkeleton } from '@/components/g
 import Base from '@/components/generic/Ranking/Base';
 import Organization from '@/components/helpers/Organization';
 import Loader from '@/components/generic/Ranking/Contents/Loader';
+import Surface from '../Surface';
 
 export type getDecorateRanking ={
   view: string;
   season?: number;
   division_id?: string;
+  career?: number;
+  career_active?: number;
 };
 
 class Ranking extends Surface {
@@ -24,13 +27,7 @@ class Ranking extends Surface {
   async getMetaData({ view }) {
     const organization_id = this.getOrganizationID();
 
-    let sportText = '';
-
-    if (organization_id === Organization.getCBBID()) {
-      sportText = 'College basketball';
-    } else if (organization_id === Organization.getCFBID()) {
-      sportText = 'College football';
-    }
+    const sportText = Organization.getSportText({ organization_id });
 
     let title = `sRating | ${sportText} team ranking`;
     let description = 'View statistic ranking for all teams';
@@ -65,7 +62,13 @@ class Ranking extends Surface {
 
 
   async getDecorate(
-    { season = this.getCurrentSeason(), view, division_id = this.getDivisionID() }:
+    {
+      season = this.getCurrentSeason(),
+      view,
+      division_id = this.getDivisionID(),
+      career = 0,
+      career_active = 0,
+    }:
     getDecorateRanking,
   ) {
     const organization_id = this.getOrganizationID();
@@ -75,7 +78,15 @@ class Ranking extends Surface {
     return (
       <>
         <Base organization_id = {organization_id} division_id = {division_id} season = {season} view = {view}>
-          <Loader key ={organization_id + division_id + season + view} organization_id = {organization_id} division_id = {division_id} season = {season} view = {view} />
+          <Loader
+            key = {organization_id + division_id + season + view + career + career_active}
+            organization_id = {organization_id}
+            division_id = {division_id}
+            season = {season}
+            view = {view}
+            career = {career}
+            career_active = {career_active}
+          />
           <ContentsClientWrapper>
             <Client generated = {generated} organization_id = {organization_id} division_id = {division_id} season = {season} view = {view} />
             {/* <Suspense key={organization_id + division_id + season + view} fallback = {<ContentsClientSkeleton />}>

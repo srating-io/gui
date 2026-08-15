@@ -2,11 +2,11 @@
 
 import { useClientAPI } from '@/components/clientAPI';
 import useDebounce from '@/components/hooks/useDebounce';
-import { FantasyGroup, Team } from '@/types/general';
 import { useState } from 'react';
 import SearchIcon from '@esmalley/react-material-icons/Search';
 import { Textor } from '@esmalley/ts-utils';
 import { Inputs, Menu, MenuOption, TextInput } from '@esmalley/react-material-ui';
+import { General } from '@srating-io/types';
 
 
 const TeamSearch = (
@@ -17,12 +17,12 @@ const TeamSearch = (
   }:
   {
     inputHandler: Inputs;
-    fantasy_group: FantasyGroup;
+    fantasy_group: General.FantasyGroup;
     handleSelect: (team_id: string) => void;
   },
 ) => {
   const [teamSearchValue, setTeamSearchValue] = useState('');
-  const [teams, setTeams] = useState<Team[]>([]);
+  const [teams, setTeams] = useState<General.Team[]>([]);
   const [anchorTeam, setAnchorTeam] = useState<HTMLInputElement | HTMLTextAreaElement | null>(null);
   const [teamMenuOpen, setTeamMenuOpen] = useState(false);
   const [loading, setLoading] = useState(false);

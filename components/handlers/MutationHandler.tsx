@@ -1,7 +1,7 @@
 'use client';
 
 import { setLoading } from '@/redux/features/loading-slice';
-import { useAppDispatch } from '@/redux/hooks';
+import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import Organization from '../helpers/Organization';
 import { updateOrganizationID } from '@/redux/features/organization-slice';
 import { setDataKey } from '@/redux/features/games-slice';
@@ -10,6 +10,7 @@ import { getStore } from '@/app/StoreProvider';
 
 const MutationHandler = () => {
   const dispatch = useAppDispatch();
+  const organizations = useAppSelector((state) => state.dictionaryReducer.organization) || {};
   let previousUrl = '';
 
   if (typeof window === 'undefined') {
@@ -18,7 +19,6 @@ const MutationHandler = () => {
 
   const observer = new MutationObserver(() => {
     if (window.location.href !== previousUrl) {
-      // console.log(`URL changed from ${previousUrl} to ${window.location.href}`);
       previousUrl = window.location.href;
 
       // update the organization_id, if it changed
@@ -27,11 +27,12 @@ const MutationHandler = () => {
 
       let organization_id: string | null = null;
       if (splat.length > 1) {
-        if (splat[1] === 'cfb') {
-          organization_id = Organization.getCFBID();
-        }
-        if (splat[1] === 'cbb') {
-          organization_id = Organization.getCBBID();
+        for (const id in organizations) {
+          const pathCode = Organization.getPathCode(organizations[id]);
+
+          if (pathCode === splat[1]) {
+            organization_id = id;
+          }
         }
         const store = getStore();
 

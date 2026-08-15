@@ -1,7 +1,7 @@
 'use server';
 
 import { Metadata, ResolvingMetadata } from 'next';
-import Fantasy from 'Surface/Fantasy';
+import Fantasy from '../../../Surface/Fantasy';
 
 type Props = {
   params: Promise<{ sport: string }>;

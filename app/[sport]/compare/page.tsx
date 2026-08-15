@@ -1,7 +1,7 @@
 'use server';
 
 import { Metadata, ResolvingMetadata } from 'next';
-import Compare, { getDecorateCompare } from 'Surface/Compare';
+import Compare, { getDecorateCompare } from '../../../Surface/Compare';
 
 type Props = {
   params: Promise<{ sport: string; }>;

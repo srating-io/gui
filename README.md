@@ -1,5 +1,5 @@
 ![build](https://github.com/esmalleydev/srating.io-gui/actions/workflows/build.js.yml/badge.svg)
-![version](https://img.shields.io/github/package-json/v/esmalleydev/srating.io-gui)
+![version](https://img.shields.io/github/package-json/v/srating-io/gui)
 # [srating.io](https://srating.io)
 
 This is the open-source GUI project for [srating.io](https://srating.io). This project uses [nextjs](https://nextjs.org/), [reactjs](https://reactjs.org/).
@@ -17,7 +17,7 @@ Prerequisites: typescript, nodejs, npm.
 1. Clone or download this repository.
 
     ```sh
-    git clone https://github.com/esmalleydev/srating.io-gui
+    git clone https://github.com/srating-io/gui
     cd srating.io-gui
     ```
 
@@ -33,6 +33,7 @@ Prerequisites: typescript, nodejs, npm.
     SERVER_HOST=localhost
     SERVER_PORT=3500
     SERVER_SECRET=my_unrestricted_api_key
+    SERVER_ENVIRONMENT=development
 
     NEXT_PUBLIC_CLIENT_PROTOCAL=http
     NEXT_PUBLIC_CLIENT_HOST=localhost
@@ -40,6 +41,7 @@ Prerequisites: typescript, nodejs, npm.
     NEXT_PUBLIC_CLIENT_USE_ORIGIN=false
     NEXT_PUBLIC_CLIENT_PATH=''
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=foo
+    NEXT_PUBLIC_ENV=dev
 
     NEXT_PUBLIC_WS_HOST=localhost
     NEXT_PUBLIC_WS_PORT=8080

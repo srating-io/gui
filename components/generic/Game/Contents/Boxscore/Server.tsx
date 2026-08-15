@@ -2,25 +2,23 @@
 
 import { Client } from '@/components/generic/Game/Contents/Boxscore/Client';
 import { useServerAPI } from '@/components/serverAPI';
-import { Boxscore as BoxscoreCBB, PlayerBoxscores } from '@/types/cbb';
-import { Boxscore as BoxscoreCFB } from '@/types/cfb';
-import { Game } from '@/types/general';
+import { Basketball, Football, General } from '@srating-io/types';
 
 const Server = async (
   { game }:
-  { game: Game },
+  { game: General.Game },
 ) => {
   const { game_id, organization_id, division_id } = game;
   const revalidateSeconds = 30;
 
-  const boxscores: BoxscoreCBB[] | BoxscoreCFB[] = await useServerAPI({
+  const boxscores: Basketball.Boxscores | Football.Boxscores = await useServerAPI({
     class: 'boxscore',
     function: 'readBoxscore',
     arguments: { game_id, organization_id, division_id },
     cache: revalidateSeconds,
   });
 
-  const player_boxscores: PlayerBoxscores = await useServerAPI({
+  const player_boxscores: Basketball.PlayerBoxscores | Football.PlayerBoxscores = await useServerAPI({
     class: 'player_boxscore',
     function: 'readPlayerBoxscore',
     arguments: { game_id, organization_id, division_id },

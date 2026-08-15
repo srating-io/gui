@@ -71,6 +71,10 @@ async function executeFetch(url: string, fetchArgs: RequestInit, isRetry: boolea
     const json = await response.json();
     return handleResponse(json, isRetry);
   } catch (error) {
+    // Re-throw AbortErrors so the caller component's catch block receives it
+    if (error.name === 'AbortError') {
+      throw error;
+    }
     console.log(error);
     return {};
   }

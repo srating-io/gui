@@ -1,7 +1,7 @@
 'use server';
 
 import { Metadata, ResolvingMetadata } from 'next';
-import FantasyEntry, { getDecorateFantasyEntry } from 'Surface/FantasyEntry';
+import FantasyEntry, { getDecorateFantasyEntry } from '../../../Surface/FantasyEntry';
 
 
 type Props = {

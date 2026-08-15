@@ -9,11 +9,8 @@ import LinearScaleIcon from '@esmalley/react-material-icons/LinearScale';
 
 
 import { Payload } from 'recharts/types/component/DefaultLegendContent';
-import { StatisticRankings as CBBStatisticRankings } from '@/types/cbb';
-import { StatisticRankings as CFBStatisticRanking } from '@/types/cfb';
 import { footerNavigationHeight } from '@/components/generic/FooterNavigation';
 import { headerBarHeight } from '@/components/generic/Header';
-import { Elos, Games, TeamSeasonConferences } from '@/types/general';
 import Organization from '@/components/helpers/Organization';
 import { useAppSelector } from '@/redux/hooks';
 import Team from '@/components/helpers/Team';
@@ -21,12 +18,13 @@ import TableColumns from '@/components/helpers/TableColumns';
 import { Color, Dates } from '@esmalley/ts-utils';
 import ColumnPicker from '@/components/generic/ColumnPicker';
 import { Chip, LinearProgress, Paper, Typography, useTheme, useWindowDimensions } from '@esmalley/react-material-ui';
+import { Basketball, Football, General } from '@srating-io/types';
 
 export interface TrendsType {
-  elos: Elos;
-  games: Games;
-  statistic_rankings: CBBStatisticRankings | CFBStatisticRanking
-  team_season_conferences: TeamSeasonConferences
+  elos: General.Elos;
+  games: General.Games;
+  statistic_rankings: Basketball.StatisticRankings | Football.StatisticRankings;
+  team_season_conferences: General.TeamSeasonConferences;
 }
 
 const padding = 5;
@@ -122,7 +120,7 @@ const Client = ({ organization_id, conference_id, data }: { organization_id: str
         filled = {selectedChip === column.id}
         value = {column.id}
         onClick = {() => { setSelectedChip(column.id); }}
-        title = {column.label}
+        title = {column.getLabel()}
       />,
     );
   }
@@ -384,7 +382,7 @@ const Client = ({ organization_id, conference_id, data }: { organization_id: str
               <CartesianGrid strokeDasharray = '3 3' />
               <XAxis dataKey = {'date_friendly'} minTickGap={20} tickLine = {false} axisLine = {false} type='category' />
               <YAxis {...YAxisProps}>
-                <Label offset={10} value={(selectedChip in allColumns ? allColumns[selectedChip].label : 'Rank')} angle={-90} position="insideLeft" style={{ textAnchor: 'middle', fill: theme.info.main, fontSize: 18 }} />
+                <Label offset={10} value={(selectedChip in allColumns ? allColumns[selectedChip].getLabel() : 'Rank')} angle={-90} position="insideLeft" style={{ textAnchor: 'middle', fill: theme.info.main, fontSize: 18 }} />
               </YAxis>
               {
                 width > breakPoint ?

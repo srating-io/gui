@@ -8,7 +8,6 @@ import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import InfoIcon from '@esmalley/react-material-icons/Info';
 import { useClientAPI } from '@/components/clientAPI';
 import { setLoading } from '@/redux/features/loading-slice';
-import { FantasyGroup } from '@/types/general';
 import { Dates } from '@esmalley/ts-utils';
 import { useNavigation } from '@/components/hooks/useNavigation';
 import {
@@ -26,7 +25,8 @@ import {
   useTheme,
   Wizard,
 } from '@esmalley/react-material-ui';
-import General from '@/components/helpers/General';
+import HelperGeneral from '@/components/helpers/General';
+import { General } from '@srating-io/types';
 // import InfoOutlineIcon from '@esmalley/react-material-icons/InfoOutline'; need to upgrade MUI for this icon... >.>
 
 
@@ -109,7 +109,7 @@ const Client = () => {
 
   // the inputs return strings, but internally they are formatted as a number, so just overwrite to allow string in a few of these columns
   type FantasyGroupForm = Omit<
-    FantasyGroup,
+    General.FantasyGroup,
     'fantasy_group_id' | 'guid' | 'deleted' | 'locked' | 'entry_fee' | 'entries_per_user' | 'date_of_entry' | 'started' | 'notified_24_hours' | 'notified_15_mins' | 'drafted' | 'finished' | 'notified_finished'
   > & {
     entry_fee: string | number | null;
@@ -175,7 +175,7 @@ const Client = () => {
             label='What type of league is this?'
             onChange={(val) => onChange('fantasy_group_type_terminology_id', val as string)}
             required
-            options={General.getTerminologyOptions('fantasy_group_type')}
+            options={HelperGeneral.getTerminologyOptions('fantasy_group_type')}
             selected={formData.fantasy_group_type_terminology_id ? [formData.fantasy_group_type_terminology_id] : []}
             isRadio
             triggerValidation={triggerValidation}
@@ -275,7 +275,7 @@ const Client = () => {
               setDraftMinutes(initialDraftMinutes);
             }}
             required
-            options={General.getTerminologyOptions('draft_type')}
+            options={HelperGeneral.getTerminologyOptions('draft_type')}
             selected={formData.draft_type_terminology_id ? [formData.draft_type_terminology_id] : []}
             isRadio
             triggerValidation={triggerValidation}
@@ -297,7 +297,7 @@ const Client = () => {
                 label = 'When does the draft start?'
                 placeholder='Draft start date and time'
                 onChange={(val) => {
-                  onChange('draft_start_datetime', val ? Dates.format(Dates.utc(val), 'Y-m-d H:i:s') : null);
+                  onChange('draft_start_datetime', val ? Dates.format(Dates.parse(val), 'Y-m-d H:i:s', true) : null);
                 }}
                 triggerValidation={triggerValidation}
                 value = {formData.draft_start_datetime ? Dates.format(Dates.parse(formData.draft_start_datetime, true), 'Y-m-d H:i:s') : undefined}
@@ -333,7 +333,7 @@ const Client = () => {
             label='How will scoring work?'
             onChange={(val) => onChange('draft_scoring_terminology_id', val as string)}
             required
-            options={General.getTerminologyOptions('draft_scoring')}
+            options={HelperGeneral.getTerminologyOptions('draft_scoring')}
             selected={formData.draft_scoring_terminology_id ? [formData.draft_scoring_terminology_id] : []}
             isRadio
             triggerValidation={triggerValidation}
@@ -353,7 +353,7 @@ const Client = () => {
               required
               label = 'When does the league start?'
               placeholder='Start date'
-              onChange={(val) => onChange('start_date', val ? Dates.format(Dates.utc(val), 'Y-m-d H:i:s') : null)}
+              onChange={(val) => onChange('start_date', val ? Dates.format(Dates.parse(val), 'Y-m-d H:i:s', true) : null)}
               triggerValidation={triggerValidation}
               value = {formData.start_date ? Dates.format(Dates.parse(formData.start_date, true), 'Y-m-d H:i:s') : undefined}
               minDate = {minDate}
@@ -369,7 +369,7 @@ const Client = () => {
               minDate = {minDate}
               maxDate = {maxDate}
               onChange={(val) => {
-                onChange('end_date', val ? Dates.format(Dates.utc(val), 'Y-m-d H:i:s') : null);
+                onChange('end_date', val ? Dates.format(Dates.parse(val), 'Y-m-d H:i:s', true) : null);
               }}
               value = {formData.end_date ? Dates.format(Dates.parse(formData.end_date, true), 'Y-m-d H:i:s') : undefined}
               enableTime

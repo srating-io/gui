@@ -1,17 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import useDebounce from '@/components/hooks/useDebounce';
 import SearchIcon from '@esmalley/react-material-icons/Search';
 
 import { useClientAPI } from '../clientAPI';
-import { Coach, Player, Team } from '@/types/general';
 import { useAppSelector } from '@/redux/hooks';
 import Organization from '../helpers/Organization';
 import Division from '../helpers/Division';
 import { Color, Textor } from '@esmalley/ts-utils';
 import { useNavigation } from '../hooks/useNavigation';
 import { Inputs, Menu, MenuOption, TextInput, useTheme } from '@esmalley/react-material-ui';
+import { General } from '@srating-io/types';
 
 
 
@@ -25,21 +25,32 @@ const Search = (
   const organizations = useAppSelector((state) => state.dictionaryReducer.organization);
   const path = Organization.getPath({ organizations, organization_id });
 
-  const division_id = Organization.getCBBID() === organization_id ? Division.getD1() : Division.getFBS();
+  const abortControllerRef = useRef<AbortController | null>(null);
 
-  type searchPlayer = Player & {
+  let division_id: string | null = null;
+
+  if (Organization.getCBBID() === organization_id) {
+    division_id = Division.getD1();
+  } else if (Organization.getNBAID() === organization_id) {
+    division_id = Division.getNBA();
+  } else if (Organization.getCFBID() === organization_id) {
+    division_id = Division.getFBS();
+  }
+
+
+  type searchPlayer = General.Player & {
     begin: string;
     end: string;
   };
 
-  type searchCoach = Coach & {
+  type searchCoach = General.Coach & {
     begin: string;
     end: string;
   };
 
   const [value, setValue] = useState('');
   // const [autoCompleteValue, setAutoCompleteValue] = useState(null);
-  const [teams, setTeams] = useState<Team[]>([]);
+  const [teams, setTeams] = useState<General.Team[]>([]);
   const [players, setPlayers] = useState<searchPlayer[]>([]);
   const [coaches, setCoaches] = useState<searchCoach[]>([]);
   const conferences = useAppSelector((state) => state.dictionaryReducer.conference);
@@ -57,6 +68,15 @@ const Search = (
 
 
   const debouncedRequest = useDebounce(() => {
+    // Abort the previous request if it's still pending
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // Create a new AbortController for this request
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     useClientAPI({
       class: 'search',
       function: 'search',
@@ -65,12 +85,17 @@ const Search = (
         division_id,
         name: value,
       },
+      signal: controller.signal,
     }).then((response) => {
       setTeams((response && response.teams) || []);
       setPlayers((response && response.players) || []);
       setCoaches((response && response.coaches) || []);
       setLoading(false);
     }).catch((e) => {
+      // Ignore the error if we intentionally aborted it
+      if (e.name === 'AbortError') {
+        return;
+      }
       setTeams([]);
       setPlayers([]);
       setCoaches([]);
@@ -104,7 +129,7 @@ const Search = (
       group: 'Teams',
       value: team.team_id,
       selectable: true,
-      label: team.alt_name,
+      label: team.alt_name || team.name,
       team_id: team.team_id,
       onSelect: handleClick,
     };

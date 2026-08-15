@@ -1,9 +1,9 @@
 'use client';
 
-import { FantasyGroup } from '@/types/general';
 import AttachMoneyIcon from '@esmalley/react-material-icons/AttachMoney';
 import { getTitle, innerBreakPoint, paperStyle } from '../Card';
 import { Columns, Paper, Slab, useTheme } from '@esmalley/react-material-ui';
+import { General } from '@srating-io/types';
 
 
 const EntriesAndFees = (
@@ -11,7 +11,7 @@ const EntriesAndFees = (
     fantasy_group,
   } :
   {
-    fantasy_group: FantasyGroup
+    fantasy_group: General.FantasyGroup
   },
 ) => {
   const theme = useTheme();

@@ -59,6 +59,7 @@ stateController.set_checkType(false);
 stateController.set_url_param_type_x_keys({
   string: [
   ],
+  number: [],
   array: [
     'conferences',
     'positions',

@@ -3,13 +3,13 @@
 import HelperTeam from '@/components/helpers/Team';
 
 import PreviousMatchupTile from '@/components/generic/Game/Contents/PreviousMatchups/Tile';
-import { Game, Games } from '@/types/general';
 import { getHeaderHeight } from '@/components/generic/Compare/Header/ClientWrapper';
 import { getNavHeaderHeight, getSubNavHeaderHeight } from '@/components/generic/Compare/NavBar';
 import { footerNavigationHeight } from '@/components/generic/FooterNavigation';
 import { headerBarHeight } from '@/components/generic/Header';
 import { useAppSelector } from '@/redux/hooks';
 import { LinearProgress, Paper, Typography, useTheme } from '@esmalley/react-material-ui';
+import { General } from '@srating-io/types';
 
 /**
  * The main wrapper div for all the contents
@@ -43,7 +43,7 @@ const ClientSkeleton = () => {
   );
 };
 
-const Client = ({ games }: {games: Games }) => {
+const Client = ({ games }: {games: General.Games }) => {
   const home_team_id = useAppSelector((state) => state.compareReducer.home_team_id);
   const away_team_id = useAppSelector((state) => state.compareReducer.away_team_id);
   const teams = useAppSelector((state) => state.compareReducer.teams);
@@ -54,7 +54,7 @@ const Client = ({ games }: {games: Games }) => {
   if (games && !Object.keys(games).length) {
     previousMatchupContainers.push(<Paper key = {1} elevation = {3} style = {{ padding: 10 }}><Typography type = 'body1'>Could not find any previous games :(</Typography></Paper>);
   } else if (games) {
-    const sorted_matchups: Game[] = Object.values(games).sort((a, b) => {
+    const sorted_matchups: General.Game[] = Object.values(games).sort((a, b) => {
       return a.start_date > b.start_date ? -1 : 1;
     });
 

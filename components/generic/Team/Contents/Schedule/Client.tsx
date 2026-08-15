@@ -7,9 +7,9 @@ import { useAppSelector } from '@/redux/hooks';
 import Differentials from './Differentials';
 // import { useScrollContext } from '@/contexts/scrollContext';
 import TableView from './TableView';
-import { Games } from '@/types/general';
 import { Dates } from '@esmalley/ts-utils';
 import { Skeleton, Typography } from '@esmalley/react-material-ui';
+import { General, Team } from '@srating-io/types';
 
 
 /**
@@ -37,7 +37,15 @@ const ClientSkeleton = () => {
   );
 };
 
-const Client = ({ games, team_id }: {games: Games, team_id: string}) => {
+export type ScheduleGameWithPrediction = Team.getScheduleResults[string] & {
+  prediction?: General.Prediction;
+};
+
+export type ScheduleResultsWithPrediction = {
+  [K in keyof Team.getScheduleResults]: ScheduleGameWithPrediction;
+};
+
+const Client = ({ games, team_id }: {games: ScheduleResultsWithPrediction, team_id: string}) => {
   const predictions = useAppSelector((state) => state.teamReducer.schedulePredictions);
   const scheduleView = useAppSelector((state) => state.teamReducer.scheduleView);
   const showScheduleDifferentials = useAppSelector((state) => state.teamReducer.showScheduleDifferentials);

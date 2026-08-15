@@ -3,12 +3,14 @@
 // import FavoritePicker from '@/components/generic/FavoritePicker';
 import HelperTeam from '@/components/helpers/Team';
 import { useAppSelector } from '@/redux/hooks';
-import { Coach } from '@/types/general';
 import Organization from '@/components/helpers/Organization';
-import General from '@/components/helpers/General';
+import GeneralHelper from '@/components/helpers/General';
 import { Color } from '@esmalley/ts-utils';
 import { useNavigation } from '@/components/hooks/useNavigation';
 import { Skeleton, Typography, useTheme, useWindowDimensions } from '@esmalley/react-material-ui';
+import OptionPicker from '../../OptionPicker';
+
+import type { General } from '@srating-io/types';
 
 
 /**
@@ -63,7 +65,7 @@ const Client = ({ organization_id, division_id, coach_statistic_rankings, season
   const { width } = useWindowDimensions();
   const theme = useTheme();
   const navigation = useNavigation();
-  const coach: Coach = useAppSelector((state) => state.coachReducer.coach);
+  const coach: General.Coach = useAppSelector((state) => state.coachReducer.coach);
   const coach_team_seasons = useAppSelector((state) => state.coachReducer.coach_team_seasons);
   const teams = useAppSelector((state) => state.coachReducer.teams);
   const statistic_rankings = useAppSelector((state) => state.coachReducer.statistic_rankings);
@@ -83,6 +85,10 @@ const Client = ({ organization_id, division_id, coach_statistic_rankings, season
       maxSeason = row.season;
     }
   }
+
+  console.log('coach_team_seasons', coach_team_seasons)
+  console.log('maxSeason', maxSeason)
+  console.log('Object.keys(teams)[0]', Object.keys(teams)[0])
 
   const lastSeason = (season in season_x_team_id ? season : (
     maxSeason || Object.keys(teams)[0]
@@ -109,14 +115,17 @@ const Client = ({ organization_id, division_id, coach_statistic_rankings, season
   const coach_statistic_ranking = coach_statistic_rankings[season_x_coach_statistic_ranking_id[lastSeason]];
   const statistic_ranking = statistic_rankings[season_x_statistic_ranking_id[lastSeason]];
 
-  const team = teams[season_x_team_id[lastSeason]];
+  let team: General.Team = teams[season_x_team_id[lastSeason]];
+  if (season && season_x_team_id[season]) {
+    team = teams[season_x_team_id[season]];
+  }
   const breakPoint = 475;
 
 
   const teamHelper = new HelperTeam({ team });
 
-  const bestColor = General.getBestColor();
-  const worstColor = General.getWorstColor();
+  const bestColor = GeneralHelper.getBestColor();
+  const worstColor = GeneralHelper.getWorstColor();
 
 
   const supStyle: React.CSSProperties = {
@@ -156,6 +165,25 @@ const Client = ({ organization_id, division_id, coach_statistic_rankings, season
     navigation.team(getTeamHref());
   };
 
+  const handleSeason = (season_) => {
+    // navigation.coachView({ season });
+  };
+
+  const seasonOptions = Object.values(Object.keys(season_x_team_id)).sort((a, b) => +b - +a).map((season_) => {
+    const team = teams[season_x_team_id[season_]] || null;
+    const tHelper = new HelperTeam({ team });
+    return {
+      value: season_.toString(),
+      label: `${+season_ - 1} - ${+season_}`,
+      sublabel: tHelper.getName(),
+    };
+  });
+
+  console.log('season', season);
+  console.log('lastSeason', lastSeason);
+
+  // throw new Error(' todo start here do coachView navigation next')
+
 
   return (
     <Contents>
@@ -173,6 +201,7 @@ const Client = ({ organization_id, division_id, coach_statistic_rankings, season
           {teamRank ? <span style = {teamSupStyle}>{teamRank} </span> : ''}
           <a style = {{ cursor: 'pointer', color: theme.link.primary }} onClick={handleTeamClick} href = {getTeamHref()}>{teamHelper.getName()}</a>
         </Typography>
+        {!maxSeason ? <div>loading...</div> : <OptionPicker buttonName = {lastSeason ? lastSeason.toString() : 'Loading...'} options = {seasonOptions} selected = {[lastSeason.toString()]} actionHandler = {handleSeason} isRadio = {true} />}
       </SecondaryLine>
     </Contents>
   );

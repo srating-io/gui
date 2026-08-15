@@ -2,14 +2,12 @@
 
 import { Client } from '@/components/generic/Team/Contents/Stats/Client';
 import { useServerAPI } from '@/components/serverAPI';
-import { StatisticRanking as CBBStatisticRanking } from '@/types/cbb';
-import { StatisticRanking as CFBStatisticRanking } from '@/types/cfb';
-import { Players } from '@/types/general';
+import { Basketball, Football, General } from '@srating-io/types';
 
 const Server = async ({ organization_id, division_id, season, team_id }) => {
   const revalidateSeconds = 60 * 30; // 30 mins
 
-  const teamStats: CBBStatisticRanking | CFBStatisticRanking = await useServerAPI({
+  const teamStats: Basketball.StatisticRanking | Football.StatisticRanking = await useServerAPI({
     class: 'team',
     function: 'getStats',
     arguments: {
@@ -22,8 +20,8 @@ const Server = async ({ organization_id, division_id, season, team_id }) => {
   });
 
   type RosterStats = {
-    players: Players,
-    player_statistic_rankings: object,
+    players: General.Players,
+    player_statistic_rankings: Basketball.PlayerStatisticRankings | Football.PlayerStatisticRankings,
   }
 
   const rosterStats: RosterStats = await useServerAPI({

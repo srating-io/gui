@@ -1,12 +1,12 @@
 'use client';
 
 import { useAppSelector } from '@/redux/hooks';
-import { Game } from '@/types/general';
 import { Skeleton, Typography, useTheme } from '@esmalley/react-material-ui';
+import { Game } from '@srating-io/types';
 
 const CoachRecord = (
   { game, coach_id }:
-  { game: Game; coach_id: string; },
+  { game: Game.GameWithOddsAndTeams; coach_id: string; },
 ) => {
   const theme = useTheme();
   const coachStats = useAppSelector((state) => state.gameReducer.coachStats);

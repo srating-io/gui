@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { useAppSelector } from '@/redux/hooks';
-import { Game } from '@/types/general';
 import { getHeaderHeight } from '@/components/generic/Games/SubNavBar';
 import Tile, { getTileBaseStyle } from '@/components/generic/Games/Tile';
 import { useScrollContext } from '@/contexts/scrollContext';
 import { getDateBarHeight } from '../../DateBar';
 import ConferenceChips from '../../ConferenceChips';
 import { Paper, Skeleton, Typography } from '@esmalley/react-material-ui';
+import { Game, General } from '@srating-io/types';
 
 const Contents = ({ children, childStyle = {} }) => {
   const gameContainerStyle: React.CSSProperties = {
@@ -77,7 +77,7 @@ const ClientSkeletonUnknown = () => {
 };
 */
 
-const Client = ({ games, date }) => {
+const Client = ({ games, date }: { games: Game.getGamesResults; date: string; }) => {
   const skip_sort_game_ids = useAppSelector((state) => state.favoriteReducer.skip_sort_game_ids);
   const favorite_team_ids = useAppSelector((state) => state.favoriteReducer.team_ids);
   const favorite_game_ids = useAppSelector((state) => state.favoriteReducer.game_ids);
@@ -143,7 +143,7 @@ const Client = ({ games, date }) => {
 
   const gameContainers: React.JSX.Element[] = [];
 
-  const sorted_games: Game[] = Object.values(games);
+  const sorted_games = Object.values(games);
 
   sorted_games.sort((a, b) => {
     const aIsPinned = (
@@ -240,8 +240,8 @@ const Client = ({ games, date }) => {
 
     if (
       selectedConferences.length &&
-      selectedConferences.indexOf(sortedGame.teams[sortedGame.away_team_id].conference_id) === -1 &&
-      selectedConferences.indexOf(sortedGame.teams[sortedGame.home_team_id].conference_id) === -1
+      selectedConferences.indexOf(sortedGame.teams[sortedGame.away_team_id].conference_id || '') === -1 &&
+      selectedConferences.indexOf(sortedGame.teams[sortedGame.home_team_id].conference_id || '') === -1
     ) {
       continue;
     }

@@ -1,12 +1,12 @@
 'use client';
 
 import Organization from '@/components/helpers/Organization';
-import { FantasyGroup } from '@/types/general';
 import InfoIcon from '@esmalley/react-material-icons/Info';
 import { getTitle, innerBreakPoint, paperStyle } from '../Card';
 import { useAppSelector } from '@/redux/hooks';
 import { Dates } from '@esmalley/ts-utils';
 import { Columns, Paper, Slab, useTheme } from '@esmalley/react-material-ui';
+import { General } from '@srating-io/types';
 
 
 const GeneralDetails = (
@@ -14,7 +14,7 @@ const GeneralDetails = (
     fantasy_group,
   } :
   {
-    fantasy_group: FantasyGroup
+    fantasy_group: General.FantasyGroup
   },
 ) => {
   const theme = useTheme();

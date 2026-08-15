@@ -13,9 +13,9 @@ import DraftSettings from '../FantasyGroup/Card/DraftSettings';
 import BracketInfo from '../FantasyGroup/Card/BracketInfo';
 import PayoutInfo from '../FantasyGroup/Card/PayoutInfo';
 import FantasyGroup from '@/components/helpers/FantasyGroup';
-import { FantasyEntrys, FantasyGroup as FantasyGroupType } from '@/types/general';
 import { useNavigation } from '@/components/hooks/useNavigation';
 import { Button, Columns, ErrorModal, LinearProgress, Typography, useTheme } from '@esmalley/react-material-ui';
+import { General } from '@srating-io/types';
 
 
 
@@ -59,8 +59,8 @@ const Client = (
     code,
   }:
   {
-    fantasy_group: FantasyGroupType;
-    fantasy_entrys?: FantasyEntrys;
+    fantasy_group: General.FantasyGroup;
+    fantasy_entrys?: General.FantasyEntrys;
     fantasy_group_invite_id: string;
     code: string;
   },

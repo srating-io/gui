@@ -6,6 +6,7 @@ import Organization from '@/components/helpers/Organization';
 import RankTable from '@/components/generic/RankTable';
 import TableColumns from '@/components/helpers/TableColumns';
 import { useNavigation } from '@/components/hooks/useNavigation';
+import { Basketball, Football } from '@srating-io/types';
 
 
 
@@ -16,7 +17,16 @@ const Client = ({ organization_id, division_id, coach_team_seasons, teams, stati
   const path = Organization.getPath({ organizations, organization_id });
   const sessionStorageKey = `${path}.COACH.SEASONS`;
 
-  const rows: any = [];
+  type Row = {
+    coach_team_season_id: string;
+    season: number;
+    team_id: string;
+    name?: string;
+    record?: string;
+    conf_record?: string;
+  } & Partial<Basketball.StatisticRanking & Football.StatisticRanking>
+
+  const rows: Row[] = [];
 
   const team_id_x_season_x_statistic_ranking = {};
 
@@ -33,7 +43,7 @@ const Client = ({ organization_id, division_id, coach_team_seasons, teams, stati
   for (const coach_team_season_id in coach_team_seasons) {
     const coach_team_season = coach_team_seasons[coach_team_season_id];
 
-    const row: any = {
+    const row: Row = {
       coach_team_season_id,
       season: coach_team_season.season,
       team_id: coach_team_season.team_id,
@@ -73,12 +83,12 @@ const Client = ({ organization_id, division_id, coach_team_seasons, teams, stati
   columns.season = {
     id: 'season',
     numeric: true,
-    label: 'Season',
-    tooltip: 'Season',
+    getLabel: () => 'Season',
+    getTooltip: () => 'Season',
     sort: 'higher',
     sticky: true,
     organization_ids: [],
-    views: [],
+    getViews: () => [],
     graphable: false,
     widths: {
       default: 70,

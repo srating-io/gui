@@ -2,7 +2,7 @@
 
 import { Client } from '@/components/generic/Game/Contents/PreviousMatchups/Client';
 import { useServerAPI } from '@/components/serverAPI';
-import { Games } from '@/types/general';
+import { General } from '@srating-io/types';
 
 const Server = async ({ game }) => {
   // const tag = 'cbb.games.'+ game_id;
@@ -10,7 +10,7 @@ const Server = async ({ game }) => {
   const { game_id } = game;
   const revalidateSeconds = 3600; // 60 * 60; // 1 hour
 
-  const previousMatchups: Games = await useServerAPI({
+  const previousMatchups: General.Games = await useServerAPI({
     class: 'game',
     function: 'getPreviousMatchups',
     arguments: {

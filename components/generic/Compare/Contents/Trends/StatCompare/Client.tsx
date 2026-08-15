@@ -147,7 +147,7 @@ const Client = ({ statistic_rankings }) => {
         filled = {trendsColumn === column.id}
         value = {column.id}
         onClick = {() => { handleColumn(column.id); }}
-        title = {column.label}
+        title = {column.getLabel()}
       />,
     );
   }
@@ -302,7 +302,7 @@ const Client = ({ statistic_rankings }) => {
     if (minYaxis !== null && maxYaxis !== null) {
       YAxisProps.domain = [minYaxis, maxYaxis];
     }
-    chart = <Chart XAxisDataKey={'date_friendly'} YAxisLabel={statistic.label} rows={formattedData} lines={lines} YAxisProps={YAxisProps} />;
+    chart = <Chart XAxisDataKey={'date_friendly'} YAxisLabel={statistic.getLabel()} rows={formattedData} lines={lines} YAxisProps={YAxisProps} />;
   }
 
   return (

@@ -7,17 +7,14 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import HelperTeam from '@/components/helpers/Team';
 import { useAppSelector } from '@/redux/hooks';
 import Organization from '@/components/helpers/Organization';
-import CBB from '@/components/helpers/CBB';
-import CFB from '@/components/helpers/CFB';
 import ButtonSwitch from '@/components/generic/ButtonSwitch';
 import Locked from '@/components/generic/Billing/Locked';
-import { StatisticRanking as CBBStatisticRanking } from '@/types/cbb';
-import { StatisticRanking as CFBStatisticRanking } from '@/types/cfb';
 import RankTable from '@/components/generic/RankTable';
 import TableColumns from '@/components/helpers/TableColumns';
 import { Objector } from '@esmalley/ts-utils';
 import { useNavigation } from '@/components/hooks/useNavigation';
 import { Skeleton } from '@esmalley/react-material-ui';
+import { Basketball, Football } from '@srating-io/types';
 
 
 
@@ -84,7 +81,7 @@ const Client = ({ organization_id, division_id, conference_id, season, subView }
     hasAccess: boolean;
   }
 
-  type StatsRows = CBBStatisticRanking & CFBStatisticRanking & AdditionalFields;
+  type StatsRows = (Basketball.StatisticRanking | Football.StatisticRanking) & AdditionalFields;
 
   const rows: StatsRows[] = [];
 

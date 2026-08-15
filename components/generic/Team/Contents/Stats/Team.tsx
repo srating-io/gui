@@ -2,13 +2,12 @@
 
 import RankSpan from '@/components/generic/RankSpan';
 import Organization from '@/components/helpers/Organization';
-import { StatisticRanking as CBBStatisticRanking } from '@/types/cbb';
-import { StatisticRanking as CFBStatisticRanking } from '@/types/cfb';
 import TableColumns from '@/components/helpers/TableColumns';
 import { Tooltip, Typography, useTheme } from '@esmalley/react-material-ui';
+import { Basketball, Football } from '@srating-io/types';
 
 
-const Team = ({ organization_id, division_id, season, teamStats }: { organization_id: string, division_id: string, season: number, teamStats: CBBStatisticRanking | CFBStatisticRanking }) => {
+const Team = ({ organization_id, division_id, season, teamStats }: { organization_id: string, division_id: string, season: number, teamStats: Basketball.StatisticRanking | Football.StatisticRanking }) => {
   const theme = useTheme();
   const getMax = () => {
     if (teamStats.max) {
@@ -84,7 +83,10 @@ const Team = ({ organization_id, division_id, season, teamStats }: { organizatio
       ];
     }
 
-    if (Organization.getCBBID() === organization_id) {
+    if (
+      Organization.getCBBID() === organization_id ||
+      Organization.getNBAID() === organization_id
+    ) {
       return [
         {
           name: 'Overview',
@@ -169,12 +171,12 @@ const Team = ({ organization_id, division_id, season, teamStats }: { organizatio
     const columnData = allColumns[column];
     const value = column in teamStats ? teamStats[column] : 0;
     const rank = `${column}_rank` in teamStats ? teamStats[`${column}_rank`] : null;
-    const label = columnData.alt_label || columnData.label;
+    const label = columnData.getAltLabel ? columnData.getAltLabel() : columnData.getLabel();
     return (
       <div key = {`${label}-div`} style = {{
         textAlign: 'center', flex: '1', minWidth: 100, maxWidth: 100, margin: 10,
       }}>
-        <Tooltip key={label} position = 'top' text={columnData.tooltip}><Typography style = {{ color: theme.text.secondary }} type ='body1'>{label}</Typography></Tooltip>
+        <Tooltip key={label} position = 'top' text={columnData.getTooltip()}><Typography style = {{ color: theme.text.secondary }} type ='body1'>{label}</Typography></Tooltip>
         {/* <hr style = {{'padding': 0, 'margin': 'auto', 'width': 50}} /> */}
         <div><Typography type='caption'>{value}</Typography>{rank ? <RankSpan rank = {rank} useOrdinal = {true} max = {maxTeams} /> : ''}</div>
       </div>

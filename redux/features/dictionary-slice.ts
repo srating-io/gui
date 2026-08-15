@@ -1,15 +1,16 @@
 
-import { Conferences, Divisions, FantasyPayoutRules, Organizations, Terminologies } from '@/types/general';
+
 import { Objector } from '@esmalley/ts-utils';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { General } from '@srating-io/types';
 
 
 type InitialState = {
-  conference: Conferences,
-  organization: Organizations,
-  division: Divisions,
-  terminology: Terminologies,
-  fantasy_payout_rule: FantasyPayoutRules,
+  conference: General.Conferences,
+  organization: General.Organizations,
+  division: General.Divisions,
+  terminology: General.Terminologies,
+  fantasy_payout_rule: General.FantasyPayoutRules,
   organization_id_x_division_id_x_season_x_count: object,
   organization_id_x_division_id_x_season_x_conference_id_x_true: object,
   organization_id_x_division_id_x_ranking_seasons: object,

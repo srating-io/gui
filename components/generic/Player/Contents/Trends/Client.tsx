@@ -2,19 +2,18 @@
 
 import { footerNavigationHeight } from '@/components/generic/FooterNavigation';
 import { headerBarHeight } from '@/components/generic/Header';
-import { ConferenceStatisticRankings, LeaguePlayerStatisticRankings, PlayerBoxscores, PlayerStatisticRankings } from '@/types/cbb';
-import { Games } from '@/types/general';
 import StatsGraph from './StatsGraph';
 import { LinearProgress, useTheme } from '@esmalley/react-material-ui';
+import { Basketball, Football, General } from '@srating-io/types';
 
 
 export interface TrendsType {
-  games: Games;
-  player_statistic_rankings: PlayerStatisticRankings;
-  league_player_statistic_rankings: LeaguePlayerStatisticRankings;
-  conference_statistic_rankings: ConferenceStatisticRankings;
-  conference_player_statistic_rankings: object;
-  player_boxscores: PlayerBoxscores;
+  games: General.Games;
+  player_statistic_rankings: Basketball.PlayerStatisticRankings | Football.PlayerStatisticRankings;
+  league_player_statistic_rankings: Basketball.LeaguePlayerStatisticRankings | Football.LeaguePlayerStatisticRankings;
+  conference_statistic_rankings: Basketball.ConferenceStatisticRankings | Football.ConferenceStatisticRankings;
+  conference_player_statistic_rankings: Basketball.ConferencePlayerStatisticRankings | Football.ConferencePlayerStatisticRankings;
+  player_boxscores: Basketball.PlayerBoxscores | Football.PlayerBoxscores;
 }
 
 const padding = 5;

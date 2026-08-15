@@ -47,7 +47,7 @@ const ColumnPicker = (
     }
   };
 
-  const mappedOptions = Object.values(options).map((r) => { return { value: r.id, label: r.label, sublabel: r.tooltip, disabled: r.disabled }; });
+  const mappedOptions = Object.values(options).map((r) => { return { value: r.id, label: r.getLabel(), sublabel: r.getTooltip(), disabled: r.disabled }; });
 
   // todo sort these some day
 

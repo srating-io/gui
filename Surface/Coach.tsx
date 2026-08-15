@@ -1,10 +1,6 @@
 'use server';
 
-import Surface from 'Surface';
 import { useServerAPI } from '@/components/serverAPI';
-import { StatisticRankings as StatsCBB } from '@/types/cbb';
-import { StatisticRankings as StatsCFB } from '@/types/cfb';
-import { Coach as CoachType, CoachTeamSeasons, Teams, TeamSeasonConference } from '@/types/general';
 import HeaderServer from '@/components/generic/Coach/Header/Server';
 import HeaderClientWrapper from '@/components/generic/Coach/Header/ClientWrapper';
 import { ClientSkeleton as HeaderClientSkeleon } from '@/components/generic/Coach/Header/Client';
@@ -22,12 +18,14 @@ import NavBar from '@/components/generic/Coach/NavBar';
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import ContentsWrapper from '@/components/generic/Coach/ContentsWrapper';
+import Surface from '../Surface';
+import { Basketball, Football, General } from '@srating-io/types';
 
 type Data = {
-  coach: CoachType;
-  coach_team_seasons: CoachTeamSeasons;
-  teams: Teams;
-  statistic_rankings: StatsCBB | StatsCFB;
+  coach: General.Coach;
+  coach_team_seasons: General.CoachTeamSeasons;
+  teams: General.Teams;
+  statistic_rankings: Basketball.StatisticRankings | Football.StatisticRankings;
   division_id: string | null;
 }
 
@@ -64,7 +62,7 @@ class Coach extends Surface {
   }
 
   async getCoach({ coach_id }) {
-    const coach: CoachType = await useServerAPI({
+    const coach: General.Coach = await useServerAPI({
       class: 'coach',
       function: 'get',
       arguments: {
@@ -81,7 +79,7 @@ class Coach extends Surface {
 
     const coach = await this.getCoach({ coach_id });
 
-    const coach_team_seasons: CoachTeamSeasons = await useServerAPI({
+    const coach_team_seasons: General.CoachTeamSeasons = await useServerAPI({
       class: 'coach_team_season',
       function: 'read',
       arguments: {
@@ -90,7 +88,7 @@ class Coach extends Surface {
       cache: revalidateSeconds,
     });
 
-    const team_season_conference: TeamSeasonConference = await useServerAPI({
+    const team_season_conference: General.TeamSeasonConference = await useServerAPI({
       class: 'team_season_conference',
       function: 'get',
       arguments: {
@@ -103,7 +101,7 @@ class Coach extends Surface {
 
     const division_id = team_season_conference.division_id || null;
 
-    const teams: Teams = await useServerAPI({
+    const teams: General.Teams = await useServerAPI({
       class: 'team',
       function: 'read',
       arguments: {
@@ -112,7 +110,7 @@ class Coach extends Surface {
       cache: revalidateSeconds,
     });
 
-    const statistic_rankings: StatsCBB | StatsCFB = await useServerAPI({
+    const statistic_rankings: Basketball.StatisticRankings | Football.StatisticRankings = await useServerAPI({
       class: 'statistic_ranking',
       function: 'readStats',
       arguments: {

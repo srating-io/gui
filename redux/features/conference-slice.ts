@@ -1,18 +1,16 @@
 import State from '@/components/helpers/State';
-import { StatisticRankings as StatsCBB } from '@/types/cbb';
-import { StatisticRankings as StatsCFB } from '@/types/cfb';
-import { Elos, Teams, TeamSeasonConferences } from '@/types/general';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { Basketball, Football, General } from '@srating-io/types';
 
 type InitialState = {
   view: string,
   subview: string | null,
   scrollTop: number,
   // conference_id: string | null,
-  team_season_conferences: TeamSeasonConferences | object;
-  teams: Teams | object;
-  statistic_rankings: StatsCBB | StatsCFB;
-  elos: Elos | object;
+  team_season_conferences: General.TeamSeasonConferences;
+  teams: General.Teams;
+  statistic_rankings: Basketball.StatisticRankings | Football.StatisticRankings;
+  elos: General.Elos;
   predictions: object,
   predictionsLoading: boolean,
   loadingView: boolean,
@@ -34,6 +32,7 @@ stateController.set_url_param_type_x_keys({
     'view',
     'subview',
   ],
+  number: [],
   array: [],
   boolean: [],
 });

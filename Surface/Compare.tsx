@@ -2,7 +2,6 @@
 
 import { Suspense } from 'react';
 
-import Surface from 'Surface';
 import { useServerAPI } from '@/components/serverAPI';
 import Organization from '@/components/helpers/Organization';
 
@@ -29,9 +28,10 @@ import PreviousMatchupsServer from '@/components/generic/Compare/Contents/Trends
 import { ClientSkeleton as PreviousMatchupsClientSkeleton } from '@/components/generic/Compare/Contents/Trends/PreviousMatchups/Client';
 
 import PredictionLoader from '@/components/generic/Compare/Contents/Team/PredictionLoader';
-import { Teams } from '@/types/general';
 import ContentsWrapper from '@/components/generic/Compare/ContentsWrapper';
 import ReduxWrapper from '@/components/generic/Compare/ReduxWrapper';
+import Surface from '../Surface';
+import { General, Team } from '@srating-io/types';
 
 
 
@@ -54,14 +54,7 @@ class Compare extends Surface {
 
   async getMetaData() {
     const organization_id = this.getOrganizationID();
-
-    let sportText = '';
-
-    if (organization_id === Organization.getCBBID()) {
-      sportText = 'college basketball';
-    } else if (organization_id === Organization.getCFBID()) {
-      sportText = 'college football';
-    }
+    const sportText = Organization.getSportText({ organization_id });
 
     return {
       title: 'sRating | Compare tool',
@@ -79,7 +72,7 @@ class Compare extends Surface {
   }
 
 
-  async getData({ season, home_team_id, away_team_id }: {season: number; home_team_id: string | undefined; away_team_id: string | undefined;}): Promise<Teams> {
+  async getData({ season, home_team_id, away_team_id }: {season: number; home_team_id: string | undefined; away_team_id: string | undefined;}): Promise<{[team_id: string]: Team.loadTeamResults}> {
     const revalidateSeconds = 60 * 60 * 2; // 2 hours
 
     const organization_id = this.getOrganizationID();
@@ -88,7 +81,7 @@ class Compare extends Surface {
     const teams = {};
 
     if (home_team_id) {
-      const homeTeam = await useServerAPI({
+      const homeTeam: Team.loadTeamResults = await useServerAPI({
         class: 'team',
         function: 'loadTeam',
         arguments: {
@@ -104,7 +97,7 @@ class Compare extends Surface {
     }
 
     if (away_team_id) {
-      const awayTeam = await useServerAPI({
+      const awayTeam: Team.loadTeamResults = await useServerAPI({
         class: 'team',
         function: 'loadTeam',
         arguments: {

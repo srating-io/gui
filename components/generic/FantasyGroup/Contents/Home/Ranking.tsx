@@ -4,10 +4,10 @@ import RankTable from '@/components/generic/RankTable';
 import TableColumns from '@/components/helpers/TableColumns';
 import { useNavigation } from '@/components/hooks/useNavigation';
 import { useAppSelector } from '@/redux/hooks';
-import { FantasyRanking } from '@/types/general';
 import { Objector } from '@esmalley/ts-utils';
 import SentimentVeryDissatisfiedIcon from '@esmalley/react-material-icons/SentimentVeryDissatisfied';
 import { Paper, Typography, useTheme } from '@esmalley/react-material-ui';
+import { General } from '@srating-io/types';
 
 const Ranking = () => {
   const navigation = useNavigation();
@@ -16,7 +16,7 @@ const Ranking = () => {
   const fantasy_rankings = useAppSelector((state) => state.fantasyGroupReducer.fantasy_rankings);
   const fantasy_entrys = useAppSelector((state) => state.fantasyGroupReducer.fantasy_entrys);
 
-  type Row = FantasyRanking & {name: string; rank_delta_combo: string;}
+  type Row = General.FantasyRanking & {name: string; rank_delta_combo: string;}
 
   const rows: Row[] = [];
   for (const fantasy_ranking_id in fantasy_rankings) {

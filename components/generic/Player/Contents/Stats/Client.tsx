@@ -179,12 +179,12 @@ const Client = ({ organization_id, division_id, season, player_statistic_ranking
     const column = columns[key];
     const statistic = key in player_statistic_ranking ? player_statistic_ranking[key] : null;
     const rank = key in player_statistic_ranking ? player_statistic_ranking[`${key}_rank`] : null;
-    const label = column.alt_label || column.label;
+    const label = column.getAltLabel ? column.getAltLabel() : column.getLabel();
     return (
       <div key = {`${column.id}-div`} style = {{
         textAlign: 'center', flex: '1', minWidth: 100, maxWidth: 100, margin: 10,
       }}>
-        <Tooltip key={column.id} position = 'top' text={column.tooltip}><Typography type='body1' style = {{ color: theme.text.secondary }}>{label}</Typography></Tooltip>
+        <Tooltip key={column.id} position = 'top' text={column.getTooltip()}><Typography type='body1' style = {{ color: theme.text.secondary }}>{label}</Typography></Tooltip>
         {/* <hr style = {{'padding': 0, 'margin': 'auto', 'width': 50}} /> */}
         <div><Typography style = {{ display: 'inline-block' }} type='caption'>{statistic || 0}</Typography>{rank ? <RankSpan rank = {rank} useOrdinal = {true} max = {maxPlayers} /> : ''}</div>
       </div>

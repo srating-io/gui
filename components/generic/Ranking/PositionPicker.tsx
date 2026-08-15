@@ -19,7 +19,18 @@ const PositionPicker = ({ selected, isRadio = false }: { selected: string[]; isR
 
   const breakPoint = width <= 425;
 
-  if (Organization.getCBBID() === organization_id) {
+  if (Organization.getNBAID() === organization_id) {
+    options = [
+      { value: 'all', label: 'All' },
+      { value: 'G', label: 'Guard' },
+      { value: 'F', label: 'Forward' },
+      { value: 'C', label: 'Center' },
+      { value: 'C-F', label: 'Center - Forward' },
+      { value: 'F-C', label: 'Forward - Center' },
+      { value: 'F-G', label: 'Forward - Gaurd' },
+      { value: 'G-F', label: 'Guard - Forward' },
+    ];
+  } else if (Organization.getCBBID() === organization_id) {
     options = [
       { value: 'all', label: 'All' },
       { value: 'G', label: 'Guard' },

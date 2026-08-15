@@ -1,6 +1,5 @@
 'use client';
 
-import { FantasyGroups } from '@/types/general';
 import SentimentVeryDissatisfiedIcon from '@esmalley/react-material-icons/SentimentVeryDissatisfied';
 import { useState } from 'react';
 import SportsEsportsIcon from '@esmalley/react-material-icons/SportsEsports';
@@ -8,13 +7,14 @@ import { useNavigation } from '@/components/hooks/useNavigation';
 import Blank from '@/components/generic/Blank';
 import { Dates } from '@esmalley/ts-utils';
 import { Button, Paper, Tile, Typography, useTheme } from '@esmalley/react-material-ui';
+import { General } from '@srating-io/types';
 
 const MyGroups = (
   {
     fantasy_groups,
   }:
   {
-    fantasy_groups: FantasyGroups;
+    fantasy_groups: General.FantasyGroups;
   },
 ) => {
   const theme = useTheme();
@@ -23,9 +23,9 @@ const MyGroups = (
   const [limit, setLimit] = useState(initialLimit);
   // const [viewFinished, setViewFinished] = useState(false);
 
-  const active: FantasyGroups = {};
-  const future: FantasyGroups = {};
-  const finished: FantasyGroups = {};
+  const active: General.FantasyGroups = {};
+  const future: General.FantasyGroups = {};
+  const finished: General.FantasyGroups = {};
 
   for (const fantasy_group_id in fantasy_groups) {
     const row = fantasy_groups[fantasy_group_id];
@@ -44,7 +44,7 @@ const MyGroups = (
     navigation.fantasy_group(`/fantasy_group/${fantasy_group_id}`);
   };
 
-  const getRows = (rows: FantasyGroups) => {
+  const getRows = (rows: General.FantasyGroups) => {
     return Object.values(rows).map((row, index) => {
       if (index > limit) {
         return null;

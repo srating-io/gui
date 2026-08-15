@@ -1,18 +1,19 @@
 
 import State from '@/components/helpers/State';
-import { Player, PlayerTeamSeason, PlayerTeamSeasons, Team, Teams } from '@/types/general';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { General } from '@srating-io/types';
 
 export type InitialState = {
   view: string;
   subview: string | null;
   scrollTop: number;
-  player: Player;
-  player_team_season: PlayerTeamSeason | null;
-  player_team_seasons: PlayerTeamSeasons;
-  team: Team | null;
-  teams: Teams;
+  player: General.Player;
+  player_team_season: General.PlayerTeamSeason | null;
+  player_team_seasons: General.PlayerTeamSeasons;
+  team: General.Team | null;
+  teams: General.Teams;
   season: number | null;
+  player_team_season_id: string | null;
   loadingView: boolean,
   trendsBoxscoreLine: boolean,
   trendsColumn: string | null,
@@ -37,7 +38,9 @@ stateController.set_url_param_type_x_keys({
     'subview',
     'season',
     'trendsColumn',
+    'player_team_season_id',
   ],
+  number: [],
   array: [
     'trendsSeasons',
   ],
@@ -51,12 +54,13 @@ stateController.setInitialState({
   view: 'stats',
   subview: null,
   scrollTop: 0,
-  player: {} as Player,
+  player: {} as General.Player,
   player_team_season: null,
-  player_team_seasons: {} as PlayerTeamSeasons,
+  player_team_seasons: {} as General.PlayerTeamSeasons,
   team: null,
-  teams: {} as Teams,
+  teams: {} as General.Teams,
   season: null,
+  player_team_season_id: null,
   loadingView: true,
   trendsBoxscoreLine: true,
   trendsColumn: null,

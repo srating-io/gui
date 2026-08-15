@@ -1,12 +1,11 @@
 'use server';
 
-import Surface from 'Surface';
+
 import HelperTeam from '@/components/helpers/Team';
 import { useServerAPI } from '@/components/serverAPI';
 import HeaderClientWrapper from '@/components/generic/Team/Header/ClientWrapper';
 import HeaderServer from '@/components/generic/Team/Header/Server';
 import NavBar from '@/components/generic/Team/NavBar';
-import { Team as TeamType, TeamSeasonConference } from '@/types/general';
 
 import ScheduleClientWrapper from '@/components/generic/Team/Contents/Schedule/ClientWrapper';
 import ScheduleServer from '@/components/generic/Team/Contents/Schedule/Server';
@@ -26,6 +25,8 @@ import Organization from '@/components/helpers/Organization';
 import { notFound } from 'next/navigation';
 import ContentsWrapper from '@/components/generic/Team/ContentsWrapper';
 import ReduxWrapper from '@/components/generic/Team/ReduxWrapper';
+import Surface from '../Surface';
+import { General } from '@srating-io/types';
 
 
 export type getDecorateTeam ={
@@ -77,9 +78,7 @@ class Team extends Surface {
   async getData({ team_id, season }) {
     const organization_id = this.getOrganizationID();
 
-    type TeamWithConference = TeamType & {conference: string;}
-
-    const team: TeamWithConference = await useServerAPI({
+    const team: General.Team & {conference_id: string;} = await useServerAPI({
       class: 'team',
       function: 'get',
       arguments: {
@@ -87,7 +86,7 @@ class Team extends Surface {
       },
     });
 
-    const team_season_conference: TeamSeasonConference = await useServerAPI({
+    const team_season_conference: General.TeamSeasonConference = await useServerAPI({
       class: 'team_season_conference',
       function: 'get',
       arguments: {

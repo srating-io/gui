@@ -1,7 +1,7 @@
 'use server';
 
 import { Metadata, ResolvingMetadata } from 'next';
-import Conference, { getDecorateConference } from 'Surface/Conference';
+import Conference, { getDecorateConference } from '../../../../Surface/Conference';
 
 
 type Props = {

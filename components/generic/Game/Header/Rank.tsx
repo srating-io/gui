@@ -2,15 +2,15 @@
 
 import { useAppSelector } from '@/redux/hooks';
 import Organization from '@/components/helpers/Organization';
-import { Game } from '@/types/general';
 import General from '@/components/helpers/General';
 import { Color } from '@esmalley/ts-utils';
 import { Skeleton } from '@esmalley/react-material-ui';
+import { Game } from '@srating-io/types';
 
 
 const Rank = (
   { game, team_id }:
-  { game: Game; team_id: string; },
+  { game: Game.GameWithOddsAndTeams; team_id: string; },
 ) => {
   const gameStats = useAppSelector((state) => state.gameReducer.gameStats);
   const gameStatsLoading = useAppSelector((state) => state.gameReducer.gameStatsLoading);

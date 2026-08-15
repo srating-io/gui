@@ -125,6 +125,12 @@ const Tile = ({ game, isLoadingWinPercentage }) => {
       );
     }
 
+    if (Game.isPreSeason()) {
+      indicators.push(
+        <Indicator key = {'P'} title = {'Preseason'} code = {'P'} color = {theme.purple[500]} />,
+      );
+    }
+
     return (
       <div style = {flexContainer} >
         {indicators}

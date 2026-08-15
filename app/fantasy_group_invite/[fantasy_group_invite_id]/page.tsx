@@ -1,7 +1,7 @@
 'use server';
 
 import { Metadata, ResolvingMetadata } from 'next';
-import FantasyGroupInvite from 'Surface/FantasyGroupInvite';
+import FantasyGroupInvite from '../../../Surface/FantasyGroupInvite';
 
 type Props = {
   params: Promise<{ fantasy_group_invite_id: string; }>;

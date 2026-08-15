@@ -1,6 +1,5 @@
 'use server';
 
-import Surface from 'Surface';
 import { useServerAPI } from '@/components/serverAPI';
 
 import ContentsClientWrapper from '@/components/generic/Games/Contents/ClientWrapper';
@@ -13,6 +12,8 @@ import FloatingButtons from '@/components/generic/Games/FloatingButtons';
 import Refresher from '@/components/generic/Games/Refresher';
 import Organization from '@/components/helpers/Organization';
 import { Dates } from '@esmalley/ts-utils';
+import Surface from '../Surface';
+import { Game } from '@srating-io/types';
 
 
 export type getDecorateGames = {
@@ -29,14 +30,7 @@ class Games extends Surface {
 
   async getMetaData() {
     const organization_id = this.getOrganizationID();
-
-    let sportText = '';
-
-    if (organization_id === Organization.getCBBID()) {
-      sportText = 'college basketball';
-    } else if (organization_id === Organization.getCFBID()) {
-      sportText = 'college football';
-    }
+    const sportText = Organization.getSportText({ organization_id });
 
     return {
       title: `sRating | ${sportText} live scores`,
@@ -72,7 +66,7 @@ class Games extends Surface {
   async getGames({ date, organization_id, division_id }) {
     const revalidateSeconds = 1200; // 60 * 20; // cache games for 20 mins
 
-    const games = await useServerAPI({
+    const games: Game.getGamesResults = await useServerAPI({
       class: 'game',
       function: 'getGames',
       arguments: {

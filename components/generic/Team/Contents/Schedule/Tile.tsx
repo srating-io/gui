@@ -14,11 +14,12 @@ import { useScrollContext } from '@/contexts/scrollContext';
 import Rank from './Tile/Rank';
 import Record from './Tile/Record';
 import Organization from '@/components/helpers/Organization';
-import { Game, Team } from '@/types/general';
-import General from '@/components/helpers/General';
+import HelperGeneral from '@/components/helpers/General';
 import { Color, Dates } from '@esmalley/ts-utils';
 import { useNavigation } from '@/components/hooks/useNavigation';
 import { IconButton, Paper, Skeleton, Tooltip, Typography, useTheme, useWindowDimensions } from '@esmalley/react-material-ui';
+import { General } from '@srating-io/types';
+import { ScheduleGameWithPrediction } from './Client';
 
 
 const Tile = (
@@ -28,8 +29,8 @@ const Tile = (
     showPrediction = true,
   }:
   {
-    game: Game;
-    team: Team;
+    game: ScheduleGameWithPrediction;
+    team: General.Team;
     showPrediction?: boolean;
   },
 ) => {
@@ -63,8 +64,8 @@ const Tile = (
   );
   const otherSide = game.home_team_id === team.team_id ? 'away' : 'home';
 
-  const bestColor = General.getBestColor();
-  const worstColor = General.getWorstColor();
+  const bestColor = HelperGeneral.getBestColor();
+  const worstColor = HelperGeneral.getWorstColor();
 
   const Game = new HelperGame({
     game,
@@ -152,7 +153,7 @@ const Tile = (
   } else if (!hasAccessToPercentages) {
     predictionContainer.push(<Locked key = {1} iconFontSize = {(width < 475 ? '18px' : '20px')} />);
   } else {
-    const winPercentage = (game.home_team_id === team.team_id ? +(game.prediction.home_percentage * 100).toFixed(0) : +(game.prediction.away_percentage * 100).toFixed(0));
+    const winPercentage = (game.home_team_id === team.team_id ? +((game.prediction?.home_percentage || 0) * 100).toFixed(0) : +((game.prediction?.away_percentage || 0) * 100).toFixed(0));
     predictionContainer.push(<Typography key = {'win_percent'} type = 'caption' style = {{ color: Color.lerpColor(worstColor, bestColor, winPercentage / 100) }}>{winPercentage}%</Typography>);
   }
 

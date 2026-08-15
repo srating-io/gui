@@ -6,22 +6,22 @@ import { useRouter } from 'next/navigation';
 import { useClientAPI } from '@/components/clientAPI';
 import { useAppDispatch } from '@/redux/hooks';
 import { setLoading } from '@/redux/features/loading-slice';
-import { ApiKey, Pricing, Subscription as SubscriptionType } from '@/types/general';
 import { Dates } from '@esmalley/ts-utils';
 import { Button, Modal, Paper, Typography, useTheme } from '@esmalley/react-material-ui';
+import { General } from '@srating-io/types';
 
 
 const Subscription = (
   { subscription, pricing, api_key }:
-  { subscription: SubscriptionType; pricing: Pricing; api_key: ApiKey | null; },
+  { subscription: General.Subscription; pricing: General.Pricing; api_key: General.ApiKey | null; },
 ) => {
   const theme = useTheme();
   const router = useRouter();
   const dispatch = useAppDispatch();
 
   const [cancelOpen, setCancelOpen] = useState(false);
-  const [cancelledSub, setCancelledSub] = useState<SubscriptionType | null>(null);
-  const [apiKey, setApiKey] = useState<ApiKey | null>(api_key);
+  const [cancelledSub, setCancelledSub] = useState<General.Subscription | null>(null);
+  const [apiKey, setApiKey] = useState<General.ApiKey | null>(api_key);
 
   const renewDay = Dates.parse(subscription.renewed);
 

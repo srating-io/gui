@@ -2,9 +2,8 @@
 
 import { useAppSelector } from '@/redux/hooks';
 import Organization from '@/components/helpers/Organization';
-import { RankingTable as CBBRankingTable } from '@/types/cbb';
-import { RankingTable as CFBRankingTable } from '@/types/cfb';
 import { Dates, Objector } from '@esmalley/ts-utils';
+import { Basketball, Football } from '@srating-io/types';
 
 const getData = ({ view }) => {
   // console.time('getData')
@@ -18,6 +17,7 @@ const getData = ({ view }) => {
   const filterOriginalConf = useAppSelector((state) => state.rankingReducer.filterOriginalConf);
   const conferences = useAppSelector((state) => state.dictionaryReducer.conference);
   const isCBB = Organization.isCBB();
+  const isNBA = Organization.isNBA();
   const isCFB = Organization.isCFB();
 
   const args = {
@@ -25,10 +25,10 @@ const getData = ({ view }) => {
   };
 
   // you have to pass the functions the same arguments or on re-render it complains about hooks being different (re-rendering from CFB to CBB organization)
-  if (isCBB) {
-    // console.time('formatCBBData')
-    const d = formatCBBData(args);
-    // console.timeEnd('formatCBBData')
+  if (isCBB || isNBA) {
+    // console.time('formatBasketballData')
+    const d = formatBasketballData(args);
+    // console.timeEnd('formatBasketballData')
     return d;
   }
   if (isCFB) {
@@ -38,11 +38,11 @@ const getData = ({ view }) => {
   return { rows: [], lastUpdated: null };
 };
 
-const formatCBBData = (args) => {
+const formatBasketballData = (args) => {
   const {
     view, data, positions, selectedConferences, hideCommitted, hideUnderTwoMPG, filterCommittedConf, filterOriginalConf, conferences, class_years,
   } = args;
-  const rows: CBBRankingTable[] = [];
+  const rows: Basketball.RankingTable[] = [];
   let lastUpdated: string | null = null;
 
   const selectedConferencesSet = new Set(selectedConferences);
@@ -189,7 +189,7 @@ const formatCBBData = (args) => {
 
 const formatCFBData = (args) => {
   const { view, data, positions, selectedConferences, hideUnderTwoMPG, conferences, class_years } = args;
-  const rows: CFBRankingTable[] = [];
+  const rows: Football.RankingTable[] = [];
   let lastUpdated: string | null = null;
 
   const class_yearsSet = new Set(class_years);

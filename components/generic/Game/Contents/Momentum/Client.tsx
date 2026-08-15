@@ -3,7 +3,6 @@
 import CompareStatistic, { CompareStatisticRow } from '@/components/generic/CompareStatistic';
 
 import HelperGame from '@/components/helpers/Game';
-import { Game, Games } from '@/types/general';
 import { getNavHeaderHeight, getSubNavHeaderHeight } from '@/components/generic/Game/NavBar';
 import { footerNavigationHeight } from '@/components/generic/FooterNavigation';
 import { headerBarHeight } from '@/components/generic/Header';
@@ -11,6 +10,7 @@ import Organization from '@/components/helpers/Organization';
 import TableColumns from '@/components/helpers/TableColumns';
 import { Dates, Objector } from '@esmalley/ts-utils';
 import { LinearProgress, Paper, Typography, useTheme, useWindowDimensions } from '@esmalley/react-material-ui';
+import { General } from '@srating-io/types';
 
 /**
  * The main wrapper div for all the contents
@@ -63,8 +63,8 @@ const Client = ({ game, momentumData, stats }) => {
   const awayMomentumStats = (momentumData && momentumData[game.away_team_id] && momentumData[game.away_team_id].stats) || {};
   const homeMomentumStats = (momentumData && momentumData[game.home_team_id] && momentumData[game.home_team_id].stats) || {};
 
-  const awayTeamGames: Games = (momentumData && momentumData[game.away_team_id] && momentumData[game.away_team_id].games) || {};
-  const homeTeamGames: Games = (momentumData && momentumData[game.home_team_id] && momentumData[game.home_team_id].games) || {};
+  const awayTeamGames: General.Games = (momentumData && momentumData[game.away_team_id] && momentumData[game.away_team_id].games) || {};
+  const homeTeamGames: General.Games = (momentumData && momentumData[game.home_team_id] && momentumData[game.home_team_id].games) || {};
 
   const columns = Objector.deepClone(TableColumns.getColumns({ organization_id: game.organization_id, view: 'team' }));
 
@@ -254,11 +254,11 @@ const Client = ({ game, momentumData, stats }) => {
 
   const sections = getSections();
 
-  const sortedHomeGames: Game[] = Object.values(homeTeamGames).sort((a, b) => {
+  const sortedHomeGames: General.Game[] = Object.values(homeTeamGames).sort((a, b) => {
     return a.start_date < b.start_date ? -1 : 1;
   });
 
-  const sortedAwayGames: Game[] = Object.values(awayTeamGames).sort((a, b) => {
+  const sortedAwayGames: General.Game[] = Object.values(awayTeamGames).sort((a, b) => {
     return a.start_date < b.start_date ? -1 : 1;
   });
 

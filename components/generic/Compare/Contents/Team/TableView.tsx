@@ -5,13 +5,12 @@ import { useState } from 'react';
 import Organization from '@/components/helpers/Organization';
 import RankTable from '@/components/generic/RankTable';
 import HelperTeam from '@/components/helpers/Team';
-import { StatisticRanking as CBBStatisticRanking } from '@/types/cbb';
-import { StatisticRanking as CFBStatisticRanking } from '@/types/cfb';
 import TableColumns from '@/components/helpers/TableColumns';
 import { getAvailableChips } from '@/components/generic/Ranking/ColumnChipPicker';
 import { useAppSelector } from '@/redux/hooks';
 import { Objector, Textor } from '@esmalley/ts-utils';
 import { Chip } from '@esmalley/react-material-ui';
+import { Basketball, Football } from '@srating-io/types';
 
 
 
@@ -24,7 +23,7 @@ const TableView = ({ statistic_rankings }) => {
   const numberOfTeams = Organization.getNumberOfTeams({ organization_id, division_id, season });
 
   const [view, setView] = useState<string>('composite');
-  const columns = TableColumns.getViewableColumns({ organization_id, view: 'team', columnView: view, customColumns: [], positions: [] });
+  const columns = TableColumns.getViewableColumns({ organization_id, view: 'team', columnView: view, customColumns: [], positions: [], career: false });
 
   for (let i = columns.length - 1; i >= 0; i--) {
     if (columns[i] === 'rank_delta_combo') {
@@ -56,7 +55,7 @@ const TableView = ({ statistic_rankings }) => {
     );
   });
 
-  const rows: CBBStatisticRanking[] | CFBStatisticRanking[] = [];
+  const rows: Basketball.StatisticRanking[] | Football.StatisticRanking[] = [];
 
   for (const statistic_ranking_id in statistic_rankings) {
     const row = statistic_rankings[statistic_ranking_id];

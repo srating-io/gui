@@ -1,7 +1,7 @@
 'use server';
 
 import { Metadata, ResolvingMetadata } from 'next';
-import Games, { getDecorateGames } from 'Surface/Games';
+import Games, { getDecorateGames } from '../../../Surface/Games';
 
 
 type Props = {

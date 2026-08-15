@@ -1,6 +1,5 @@
 'use server';
 
-import Surface from 'Surface';
 
 import Organization from '@/components/helpers/Organization';
 
@@ -8,9 +7,10 @@ import { useServerAPI } from '@/components/serverAPI';
 
 import ContentsWrapper from '@/components/generic/FantasyGroupInvite/ContentsWrapper';
 import { Client } from '@/components/generic/FantasyGroupInvite/Client';
-import { FantasyEntrys, FantasyGroup, FantasyGroupInvite as FantasyGroupInviteType } from '@/types/general';
 import { Dates } from '@esmalley/ts-utils';
 import { Typography } from '@esmalley/react-material-ui';
+import Surface from '../Surface';
+import { General } from '@srating-io/types';
 
 export type getDecorateFantasyGroupInvite = {
   fantasy_group_invite_id: string;
@@ -31,9 +31,9 @@ class FantasyGroupInvite extends Surface {
     },
   ) {
     type Data = {
-      fantasy_group_invite?: FantasyGroupInviteType;
-      fantasy_group?: FantasyGroup;
-      fantasy_entrys?: FantasyEntrys;
+      fantasy_group_invite?: General.FantasyGroupInvite;
+      fantasy_group?: General.FantasyGroup;
+      fantasy_entrys?: General.FantasyEntrys;
     };
 
     const data: Data = {};
@@ -74,13 +74,7 @@ class FantasyGroupInvite extends Surface {
   async getMetaData() {
     const organization_id = this.getOrganizationID();
 
-    let sportText = 'unknown';
-
-    if (organization_id === Organization.getCBBID()) {
-      sportText = 'college basketball';
-    } else if (organization_id === Organization.getCFBID()) {
-      sportText = 'college football';
-    }
+    const sportText = Organization.getSportText({ organization_id });
 
 
     return {

@@ -27,8 +27,8 @@ const Legend = ({ open, onClose, columns, view, organization_id }) => {
               }
               return (
                 <div key = {column} style = {{ display: 'flex', margin: '5px 0px' }}>
-                  <Typography type = 'subtitle2' style = {{ color: theme.info.main }}>{headers[column].label}:</Typography>
-                  <Typography style = {{ marginLeft: 10 }} type = 'body2'>{headers[column].tooltip}</Typography>
+                  <Typography type = 'subtitle2' style = {{ color: theme.info.main }}>{headers[column].getLabel()}:</Typography>
+                  <Typography style = {{ marginLeft: 10 }} type = 'body2'>{headers[column].getTooltip()}</Typography>
                 </div>
               );
             })

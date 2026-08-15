@@ -1,21 +1,17 @@
 'use server';
 
-import Surface from 'Surface';
-
 import { notFound } from 'next/navigation';
 import ReduxWrapper from '@/components/generic/FantasyEntry/ReduxWrapper';
 import Organization from '@/components/helpers/Organization';
 import ContentsWrapper from '@/components/generic/FantasyEntry/ContentsWrapper';
 
 import { useServerAPI } from '@/components/serverAPI';
-import {
-  FantasyEntry as FantasyEntryType,
-  FantasyGroup,
-} from '@/types/general';
 
 import HomeClientWrapper from '@/components/generic/FantasyEntry/Contents/Home/ClientWrapper';
 import { Client as HomeClient } from '@/components/generic/FantasyEntry/Contents/Home/Client';
 import NavBar from '@/components/generic/FantasyEntry/NavBar';
+import Surface from '../Surface';
+import { General } from '@srating-io/types';
 
 export type getDecorateFantasyEntry = {
   fantasy_entry_id: string;
@@ -32,7 +28,7 @@ class FantasyEntry extends Surface {
   // }
 
   async getData({ fantasy_entry_id }) {
-    const fantasy_entry: FantasyEntryType = await useServerAPI({
+    const fantasy_entry: General.FantasyEntry = await useServerAPI({
       class: 'fantasy_entry',
       function: 'get',
       arguments: {
@@ -40,7 +36,7 @@ class FantasyEntry extends Surface {
       },
     });
 
-    const fantasy_group: FantasyGroup = await useServerAPI({
+    const fantasy_group: General.FantasyGroup = await useServerAPI({
       class: 'fantasy_group',
       function: 'get',
       arguments: {
@@ -57,13 +53,7 @@ class FantasyEntry extends Surface {
 
     const { fantasy_entry } = await this.getData({ fantasy_entry_id });
 
-    let sportText = 'unknown';
-
-    if (organization_id === Organization.getCBBID()) {
-      sportText = 'college basketball';
-    } else if (organization_id === Organization.getCFBID()) {
-      sportText = 'college football';
-    }
+    const sportText = Organization.getSportText({ organization_id });
 
 
     return {

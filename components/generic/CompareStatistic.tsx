@@ -231,8 +231,8 @@ const CompareStatistic = (
 
 
       const getLabel = () => {
-        const l = row.getLabel ? row.getLabel() : row.label;
-        const t = row.getTooltip ? row.getTooltip() : row.tooltip;
+        const l = row.getLabel();
+        const t = row.getTooltip();
         return <Tooltip key={t} delay = {500} position = 'top' text={t}><Typography style = {titleStyle} type = 'body2'>{l}</Typography></Tooltip>;
       };
 

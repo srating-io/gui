@@ -3,13 +3,13 @@
 import HelperGame from '@/components/helpers/Game';
 import { getBreakPoint } from '@/components/generic/Game/Header/ClientWrapper';
 import Refresher from '../Refresher';
-import { Game } from '@/types/general';
 import { Typography, useTheme, useWindowDimensions } from '@esmalley/react-material-ui';
+import { General } from '@srating-io/types';
 
 
 const Client = (
   { game, tag }:
-  { game: Game; tag: string; },
+  { game: General.Game; tag: string; },
 ) => {
   const { width } = useWindowDimensions();
   const theme = useTheme();

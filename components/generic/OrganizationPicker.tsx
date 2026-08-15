@@ -23,6 +23,7 @@ const OrganizationPicker = () => {
   const organizations = useAppSelector((state) => state.dictionaryReducer.organization) || {};
   const organization_id = useAppSelector((state) => state.organizationReducer.organization_id);
   const selected = useAppSelector((state) => state.organizationReducer.organization_id);
+  const user = useAppSelector((state) => state.userReducer.user);
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
@@ -97,6 +98,16 @@ const OrganizationPicker = () => {
 
   for (const id in organizations) {
     const isSelected = selected.indexOf(id) > -1;
+
+
+    // todo remove me
+    if (
+      id === 'd36a29dc-5453-11f1-8ce7-46e166b0a263' &&
+      (!user || user.user_id !== '6b868ece-4450-11ee-a977-56234bcd142f')
+    ) {
+      continue;
+    }
+
     menuOptions.push({
       value: id,
       selectable: true,

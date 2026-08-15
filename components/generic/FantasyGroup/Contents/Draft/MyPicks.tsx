@@ -1,10 +1,10 @@
 'use client';
 
 import { useAppSelector } from '@/redux/hooks';
-import { FantasyDraftOrders, FantasyEntryPlayers } from '@/types/general';
 
 import SentimentVeryDissatisfiedIcon from '@esmalley/react-material-icons/SentimentVeryDissatisfied';
 import { Paper, Tile, Typography, useTheme } from '@esmalley/react-material-ui';
+import { General } from '@srating-io/types';
 
 
 const MyPicks = () => {
@@ -18,8 +18,8 @@ const MyPicks = () => {
   const user = useAppSelector((state) => state.userReducer.user);
 
 
-  const fantasy_entry_id_x_fantasy_entry_players: {[fantasy_entry_id: string]: FantasyEntryPlayers} = {};
-  const fantasy_entry_id_x_fantasy_draft_orders: {[fantasy_entry_id: string]: FantasyDraftOrders} = {};
+  const fantasy_entry_id_x_fantasy_entry_players: {[fantasy_entry_id: string]: General.FantasyEntryPlayers} = {};
+  const fantasy_entry_id_x_fantasy_draft_orders: {[fantasy_entry_id: string]: General.FantasyDraftOrders} = {};
 
   for (const fantasy_entry_player_id in fantasy_entry_players) {
     const row = fantasy_entry_players[fantasy_entry_player_id];

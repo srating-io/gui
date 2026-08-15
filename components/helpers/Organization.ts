@@ -1,6 +1,6 @@
 import { getStore } from '@/app/StoreProvider';
-import { Organizations } from '@/types/general';
 import { DEFAULT_CBB_ID, DEFAULT_CFB_ID, DEFAULT_NBA_ID, DEFAULT_ORGANIZATION_ID } from './Defaults';
+import { General } from '@srating-io/types';
 
 
 /**
@@ -37,11 +37,25 @@ class Organization {
     if (organization_id === Organization.getCFBID()) {
       emoji = '🏈';
     }
-    if (organization_id === Organization.getCBBID()) {
+    if (organization_id === Organization.getCBBID() || organization_id === Organization.getNBAID()) {
       emoji = '🏀';
     }
 
     return emoji;
+  }
+
+  public static getSportText({ organization_id }): string {
+    let text = '';
+
+    if (organization_id === Organization.getCBBID()) {
+      text = 'college basketball';
+    } else if (organization_id === Organization.getCFBID()) {
+      text = 'college football';
+    } else if (organization_id === Organization.getNBAID()) {
+      text = 'NBA';
+    }
+
+    return text;
   }
 
   /**
@@ -70,9 +84,13 @@ class Organization {
     return (store.getState().organizationReducer.organization_id === this.getCBBID());
   }
 
-  public static getPath({ organizations, organization_id }: { organizations: Organizations, organization_id: string}): string {
-    if (!organizations) {
-      return '';
+  public static getPathCode(organization: General.Organization): string {
+    return organization.code.toLowerCase();
+  }
+
+  public static getPath({ organizations, organization_id }: { organizations: General.Organizations, organization_id: string}): string {
+    if (!organizations || !Object.keys(organizations).length) {
+      return 'Loading...';
     }
     if (!organization_id) {
       throw new Error('organization_id required');
@@ -82,7 +100,7 @@ class Organization {
       throw new Error('organization_id not in organizations');
     }
 
-    return organizations[organization_id].code.toLowerCase();
+    return Organization.getPathCode(organizations[organization_id]);
   }
 
   public static getNumberOfTeams({ organization_id, division_id, season }: { organization_id: string, division_id: string, season: string | number}): number {

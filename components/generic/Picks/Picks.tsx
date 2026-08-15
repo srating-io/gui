@@ -5,15 +5,23 @@ import Tile from '@/components/generic/Picks/Tile';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import AdditionalOptions from '@/components/generic/Picks/AdditionalOptions';
 import ConferencePicker from '@/components/generic/ConferencePicker';
-import { Games } from '@/types/general';
 import ConferenceChips from '../ConferenceChips';
 import { setLoading } from '@/redux/features/loading-slice';
 import { useTransition } from 'react';
 import { useNavigation } from '@/components/hooks/useNavigation';
 import { Button, Typography } from '@esmalley/react-material-ui';
+import { Game, General } from '@srating-io/types';
+
+export type PicksGameWithPrediction = Game.getGamesResults[string] & {
+  prediction?: General.Prediction;
+};
+
+export type PickResultsWithPrediction = {
+  [K in keyof Game.getGamesResults]: PicksGameWithPrediction;
+};
 
 
-const Picks = ({ games }: {games: Games}) => {
+const Picks = ({ games }: {games: PickResultsWithPrediction}) => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const [isPending, startTransition] = useTransition();
@@ -70,8 +78,8 @@ const Picks = ({ games }: {games: Games}) => {
 
     if (
       selectedConferences.length &&
-      selectedConferences.indexOf(game.teams[game.away_team_id].conference_id) === -1 &&
-      selectedConferences.indexOf(game.teams[game.home_team_id].conference_id) === -1
+      selectedConferences.indexOf(game.teams[game.away_team_id].conference_id || '') === -1 &&
+      selectedConferences.indexOf(game.teams[game.home_team_id].conference_id || '') === -1
     ) {
       continue;
     }

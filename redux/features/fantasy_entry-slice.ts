@@ -1,32 +1,20 @@
 
 import State from '@/components/helpers/State';
-import { PlayerBoxscores, PlayerStatisticRanking } from '@/types/cbb';
-import {
-  BracketTeams,
-  FantasyBracketSlots,
-  FantasyEntry,
-  FantasyEntryPlayers,
-  FantasyEntryPlayerStatisticRanking,
-  FantasyGroup,
-  Games,
-  Players,
-  PlayerTeamSeasons,
-  Teams,
-} from '@/types/general';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { Basketball, General } from '@srating-io/types';
 
 export type InitialState = {
-  fantasy_entry: FantasyEntry;
-  fantasy_group: FantasyGroup;
-  fantasy_entry_players: FantasyEntryPlayers;
-  player_team_seasons: PlayerTeamSeasons;
-  players: Players;
-  fantasy_bracket_slots: FantasyBracketSlots;
-  bracket_teams: BracketTeams;
-  teams: Teams;
-  games: Games;
+  fantasy_entry: General.FantasyEntry;
+  fantasy_group: General.FantasyGroup;
+  fantasy_entry_players: General.FantasyEntryPlayers;
+  player_team_seasons: General.PlayerTeamSeasons;
+  players: General.Players;
+  fantasy_bracket_slots: General.FantasyBracketSlots;
+  bracket_teams: General.BracketTeams;
+  teams: General.Teams;
+  games: General.Games;
   fantasy_entry_player_statistic_rankings: {
-    [fantasy_entry_player_statistic_ranking_id: string]: FantasyEntryPlayerStatisticRanking & PlayerStatisticRanking
+    [fantasy_entry_player_statistic_ranking_id: string]: General.FantasyEntryPlayerStatisticRanking & Basketball.PlayerStatisticRanking
   };
   // player_boxscores: PlayerBoxscores;
   loadingView: boolean;
@@ -47,6 +35,7 @@ stateController.set_url_param_type_x_keys({
   string: [
     // 'view',
   ],
+  number: [],
   array: [
   ],
   boolean: [
@@ -58,18 +47,18 @@ stateController.set_url_param_type_x_keys({
 // });
 
 stateController.setInitialState({
-  fantasy_entry: {} as FantasyEntry,
-  fantasy_group: {} as FantasyGroup,
-  fantasy_entry_players: {} as FantasyEntryPlayers,
-  player_team_seasons: {} as PlayerTeamSeasons,
-  players: {} as Players,
-  fantasy_bracket_slots: {} as FantasyBracketSlots,
-  bracket_teams: {} as BracketTeams,
-  teams: {} as Teams,
-  games: {} as Games,
+  fantasy_entry: {} as General.FantasyEntry,
+  fantasy_group: {} as General.FantasyGroup,
+  fantasy_entry_players: {} as General.FantasyEntryPlayers,
+  player_team_seasons: {} as General.PlayerTeamSeasons,
+  players: {} as General.Players,
+  fantasy_bracket_slots: {} as General.FantasyBracketSlots,
+  bracket_teams: {} as General.BracketTeams,
+  teams: {} as General.Teams,
+  games: {} as General.Games,
   // player_boxscores: {} as PlayerBoxscores,
   fantasy_entry_player_statistic_rankings: {} as {
-    [fantasy_entry_player_statistic_ranking_id: string]: FantasyEntryPlayerStatisticRanking & PlayerStatisticRanking
+    [fantasy_entry_player_statistic_ranking_id: string]: General.FantasyEntryPlayerStatisticRanking & Basketball.PlayerStatisticRanking
   },
   loadingView: true,
 });

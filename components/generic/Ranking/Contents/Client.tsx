@@ -13,14 +13,13 @@ import Organization from '@/components/helpers/Organization';
 // import { CBBRankingTable } from '@/types/cbb';
 import { getConferenceChips } from '../../ConferenceChips';
 import TableColumns from '@/components/helpers/TableColumns';
-import { RankingTable as CBBRankingTable } from '@/types/cbb';
-import { RankingTable as CFBRankingTable } from '@/types/cfb';
 import ClassSpan from '../../ClassSpan';
 import { Arithmetic, Color, Objector } from '@esmalley/ts-utils';
 import { useNavigation } from '@/components/hooks/useNavigation';
 import {
   CustomDecorateHeaderRow, CustomDecorateRows, defaultSortOrderType, LinearProgress, Td, Th, Tooltip, Tr, Typography, useTheme, useWindowDimensions, VirtualTable,
 } from '@esmalley/react-material-ui';
+import { Basketball, Football } from '@srating-io/types';
 
 
 
@@ -54,7 +53,7 @@ const ClientSkeleton = () => {
   );
 };
 
-export const decorateRows = <T extends (CBBRankingTable | CFBRankingTable), >(
+export const decorateRows = <T extends (Basketball.RankingTable | Football.RankingTable), >(
   {
     rows,
     startIndex,
@@ -417,14 +416,14 @@ export const decorateHeaderRow = (
           showSortArrow = false;
         }
 
-        let label = headCell.getLabel ? headCell.getLabel() : headCell.label;
+        let label = headCell.getLabel();
 
-        if (useAlternateLabel && (headCell.getAltLabel || headCell.alt_label)) {
-          label = headCell.getAltLabel ? headCell.getAltLabel() : headCell.alt_label as string;
+        if (useAlternateLabel && headCell.getAltLabel) {
+          label = headCell.getAltLabel();
         }
 
         return (
-          <Tooltip key={headCell.id} position = 'top' text={headCell.getTooltip ? headCell.getTooltip() : headCell.tooltip}>
+          <Tooltip key={headCell.id} position = 'top' text={headCell.getTooltip()}>
             <Th
               style = {tdStyle}
               key={headCell.id}
@@ -460,7 +459,9 @@ const Client = ({ generated, organization_id, division_id, season, view }) => {
   const filteredRows = useAppSelector((state) => state.rankingReducer.filteredRows);
   const columnView = useAppSelector((state) => state.rankingReducer.columnView);
   const customColumns = useAppSelector((state) => state.rankingReducer.customColumns);
-  const tableColumns = TableColumns.getViewableColumns({ organization_id, view, columnView, customColumns, positions });
+  const career = useAppSelector((state) => state.rankingReducer.career);
+  const career_active = useAppSelector((state) => state.rankingReducer.career_active);
+  const tableColumns = TableColumns.getViewableColumns({ organization_id, view, columnView, customColumns, positions, career: (career === 1 || career_active === 1) });
   const confChipsLength = getConferenceChips().length;
   const currentPath = Organization.getPath({ organizations, organization_id });
   const [tableHorizontalScroll, setTableHorizontalScroll] = useState(0);
@@ -475,14 +476,14 @@ const Client = ({ generated, organization_id, division_id, season, view }) => {
     }
   }, [tableHorizontalScroll, order, orderBy]);
 
-  const headCells = TableColumns.getColumns({ organization_id, view });
+  const headCells = TableColumns.getColumns({ organization_id, view, career: (career === 1 || career_active === 1) });
 
   if (data === null) {
     return <ClientSkeleton />;
   }
 
 
-  let rows: (CFBRankingTable | CBBRankingTable)[] = allRows;
+  let rows: (Basketball.RankingTable | Football.RankingTable)[] = allRows;
 
   if (filteredRows !== null && filteredRows !== false && filteredRows !== true) {
     // creates a shallow copy, since redux freezes the array / object
@@ -628,7 +629,11 @@ const Client = ({ generated, organization_id, division_id, season, view }) => {
 
   let rowKey = 'team_id';
   if (view === 'player' || view === 'transfer') {
-    rowKey = 'player_id';
+    if (Organization.isNBA()) {
+      rowKey = 'player_statistic_ranking_id';
+    } else {
+      rowKey = 'player_id';
+    }
   } else if (view === 'conference') {
     rowKey = 'conference_id';
   } else if (view === 'coach') {
@@ -636,16 +641,16 @@ const Client = ({ generated, organization_id, division_id, season, view }) => {
   }
 
   // the keys should prob be the below, but the above helps me find bugs in data...
-  /*
-  let rowKey = 'statistic_ranking_id';
-  if (view === 'player' || view === 'transfer') {
-    rowKey = 'player_statistic_ranking_id';
-  } else if (view === 'conference') {
-    rowKey = 'conference_statistic_ranking_id';
-  } else if (view === 'coach') {
-    rowKey = 'coach_statistic_ranking_id';
-  }
-  */
+
+  // let rowKey = 'statistic_ranking_id';
+  // if (view === 'player' || view === 'transfer') {
+  //   rowKey = 'player_statistic_ranking_id';
+  // } else if (view === 'conference') {
+  //   rowKey = 'conference_statistic_ranking_id';
+  // } else if (view === 'coach') {
+  //   rowKey = 'coach_statistic_ranking_id';
+  // }
+
 
   return (
     <Profiler id="Ranking.Base.Contents.Client" onRender={(id, phase, actualDuration) => {

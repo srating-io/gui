@@ -1,5 +1,4 @@
-import { useAppSelector } from '@/redux/hooks';
-// import { Team as TeamType } from '@/types/general';
+
 
 class Team {
   constructor({ team }) {

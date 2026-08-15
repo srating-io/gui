@@ -4,7 +4,7 @@ import React, { useEffect } from 'react';
 import { useAppDispatch } from '@/redux/hooks';
 import { setDataKey } from '@/redux/features/compare-slice';
 import { updateOrganizationID, updateDivisionID } from '@/redux/features/organization-slice';
-import { Teams } from '@/types/general';
+import { Team } from '@srating-io/types';
 
 const ReduxWrapper = (
   {
@@ -27,7 +27,7 @@ const ReduxWrapper = (
     away_team_id?: string | null;
     season: number;
     neutral_site: boolean;
-    teams: Teams;
+    teams: {[team_id: string]: Team.loadTeamResults};
     view: string;
     subview?: string | null;
   },

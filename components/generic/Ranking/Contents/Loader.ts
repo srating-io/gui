@@ -8,11 +8,11 @@ import { useEffect, useState } from 'react';
 import { getStore } from '@/app/StoreProvider';
 import { Objector } from '@esmalley/ts-utils';
 
-export const getCachedDataKey = ({ organization_id, division_id, season, view }) => {
-  return `${organization_id}${division_id}${season}${view}_ranking_data`;
+export const getCachedDataKey = ({ organization_id, division_id, season, view, career, career_active }) => {
+  return `${organization_id}${division_id}${season}${view}${career}${career_active}_ranking_data`;
 };
 
-const Loader = ({ organization_id, division_id, season, view }) => {
+const Loader = ({ organization_id, division_id, season, view, career, career_active }) => {
   const dispatch = useAppDispatch();
 
   const [loading, setLoading] = useState(false);
@@ -20,6 +20,8 @@ const Loader = ({ organization_id, division_id, season, view }) => {
   const [lastView, setLastView] = useState(null);
   const [lastOrganization, setLastOrganization] = useState(null);
   const [lastDivision, setLastDivision] = useState(null);
+  const [lastCareer, setLastCareer] = useState(null);
+  const [lastCareerActive, setLastCareerActive] = useState(null);
 
   const seconds = 60 * 60; // cache for 1 hours
   let fxn = 'getTeamRanking';
@@ -41,6 +43,8 @@ const Loader = ({ organization_id, division_id, season, view }) => {
       division_id,
       season,
       fxn,
+      career,
+      career_active,
     },
     cache: seconds,
   };
@@ -54,12 +58,14 @@ const Loader = ({ organization_id, division_id, season, view }) => {
     setLastView(view);
     setLastOrganization(organization_id);
     setLastDivision(division_id);
+    setLastCareer(career);
+    setLastCareerActive(career_active);
 
     const store = getStore();
 
     const one_hour_ms = 60 * 60 * 1000;
     const requestTime = new Date().getTime();
-    const cachedDataKey = getCachedDataKey({ organization_id, division_id, season, view });
+    const cachedDataKey = getCachedDataKey({ organization_id, division_id, season, view, career, career_active });
 
     const { rankingData } = store.getState().cacheReducer;
 
@@ -74,6 +80,7 @@ const Loader = ({ organization_id, division_id, season, view }) => {
       if ((+requestTime - timerValue) < one_hour_ms) {
         if (data) {
           dispatch(setDataKey({ key: 'data', value: data }));
+          dispatch(setDataKey({ key: 'loadingView', value: false }));
           return;
         }
       }
@@ -109,11 +116,13 @@ const Loader = ({ organization_id, division_id, season, view }) => {
       lastSeason !== season ||
       lastView !== view ||
       lastOrganization !== organization_id ||
-      lastDivision !== division_id
+      lastDivision !== division_id ||
+      lastCareer !== career ||
+      lastCareerActive !== career_active
     ) {
       getData();
     }
-  }, [view, season, organization_id, division_id]);
+  }, [view, season, organization_id, division_id, career, career_active]);
 
   return null;
 };
