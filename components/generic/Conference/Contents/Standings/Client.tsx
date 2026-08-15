@@ -49,7 +49,7 @@ const Client = ({ organization_id, division_id, conference_id, season, subView }
   let statistic_rankings = Objector.deepClone(og_statistic_rankings);
 
   if (subView === 'predicted') {
-    statistic_rankings = Objector.extender(statistic_rankings, predictions);
+    statistic_rankings = Objector.extender(statistic_rankings, predictions as (Basketball.StatisticRankings | Football.StatisticRankings));
   }
 
   const hasConfGame = () => {
