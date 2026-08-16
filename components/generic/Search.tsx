@@ -228,6 +228,9 @@ const Search = (
     });
   }
 
+  const standardWidth = 200;
+  const expandedWidth = 250;
+
   const containerStyle: Record<string, unknown> = {
     height: 35,
     borderRadius: '4px',
@@ -238,21 +241,26 @@ const Search = (
     transition: 'width 300ms cubic-bezier(0.4, 0, 0.2, 1) 0ms',
     width: '100%',
     '@media (min-width:600px)': {
-      width: '200px',
+      width: value ? expandedWidth : standardWidth,
       '&:focus': {
-        width: '250px',
+        width: expandedWidth,
       },
     },
   };
 
   const placeholderStyle: Record<string, unknown> = {};
   const clearIconStyle: Record<string, unknown> = {};
+  const searchIconStyle: Record<string, unknown> = {
+    fontSize: 24,
+  };
 
   if (theme.mode === 'light') {
     placeholderStyle.color = '#fff';
     containerStyle.color = '#fff';
     clearIconStyle.color = theme.grey[300];
+    searchIconStyle.color = '#fff';
   }
+
 
   return (
     <div>
@@ -268,7 +276,7 @@ const Search = (
         value = {value}
         showError = {false}
         transformPlaceholder = {false}
-        icon = {<SearchIcon style = {{ fontSize: 24 }} />}
+        icon = {<SearchIcon style = {searchIconStyle} />}
         onClick={(e) => {
           setAnchorSearch(e.currentTarget);
           if (value.length) {
