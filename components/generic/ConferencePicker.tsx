@@ -7,6 +7,7 @@ import { updateDataKey } from '@/redux/features/display-slice';
 import { getStore } from '@/app/StoreProvider';
 import { Objector } from '@esmalley/ts-utils';
 import { useWindowDimensions } from '@esmalley/react-material-ui';
+import Organization from '../helpers/Organization';
 
 const ConferencePicker = () => {
   // console.time('ConferencePicker')
@@ -140,10 +141,17 @@ const ConferencePicker = () => {
     dispatch(updateDataKey({ key: 'conferences', value: v }));
   };
 
+  let buttonName = organization_id === Organization.getNBAID() ? 'Divisions' : 'Conferences';
+
+  if (width <= 475) {
+    buttonName = organization_id === Organization.getNBAID() ? 'Div.' : 'Conf.';
+  }
+
+
 
   return (
     <div>
-      <OptionPicker buttonName = {width <= 425 ? 'Conf.' : 'Conferences'} options = {conferenceOptions} selected = {selected.length ? selected : [null]} actionHandler = {handleClick} isRadio = {false} autoClose={true} />
+      <OptionPicker buttonName = {buttonName} options = {conferenceOptions} selected = {selected.length ? selected : [null]} actionHandler = {handleClick} isRadio = {false} autoClose={true} />
     </div>
   );
 };

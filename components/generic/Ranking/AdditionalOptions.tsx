@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 // import TripleDotsIcon from '@esmalley/react-material-icons/MoreVert';
 import SettingsIcon from '@esmalley/react-material-icons/Settings';
@@ -12,7 +12,6 @@ import ConferenceFilterOptions from './ConferenceFilterOptions';
 import { ClassYearPickerDialog } from './ClassYearPicker';
 import { IconButton, Menu, MenuDivider, MenuOption, Tooltip, useWindowDimensions } from '@esmalley/react-material-ui';
 import Organization from '@/components/helpers/Organization';
-import { useNavigation } from '@/components/hooks/useNavigation';
 
 const AdditionalOptions = ({ view }: {view: string}) => {
   const { width } = useWindowDimensions();
@@ -21,13 +20,10 @@ const AdditionalOptions = ({ view }: {view: string}) => {
   const [confOptionsOpen, setConfOptionsOpen] = useState(false);
   const open = Boolean(anchor);
 
-  const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const hideCommitted = useAppSelector((state) => state.rankingReducer.hideCommitted);
   const hideUnderTwoMPG = useAppSelector((state) => state.rankingReducer.hideUnderTwoMPG);
   const class_years = useAppSelector((state) => state.rankingReducer.class_years);
-  const career = useAppSelector((state) => state.rankingReducer.career);
-  const career_active = useAppSelector((state) => state.rankingReducer.career_active);
   const organization_id = useAppSelector((state) => state.organizationReducer.organization_id);
 
 
@@ -52,22 +48,6 @@ const AdditionalOptions = ({ view }: {view: string}) => {
     handleClose();
     if (newValue !== hideUnderTwoMPG) {
       dispatch(setDataKey({ key: 'hideUnderTwoMPG', value: newValue }));
-    }
-  };
-
-  const handleCareer = () => {
-    const newValue = +!career;
-    handleClose();
-    if (newValue !== career) {
-      navigation.rankingView({ career: newValue, career_active: 0 });
-    }
-  };
-
-  const handleCareerActive = () => {
-    const newValue = +!career_active;
-    handleClose();
-    if (newValue !== career_active) {
-      navigation.rankingView({ career_active: newValue, career: 0 });
     }
   };
 
@@ -119,22 +99,6 @@ const AdditionalOptions = ({ view }: {view: string}) => {
         selectable: true,
         onSelect: handleUnderTwo,
         icon: hideUnderTwoMPG ? <CheckIcon style = {{ fontSize: 20 }} /> : <VisibilityIcon style = {{ fontSize: 20 }} />,
-      });
-
-      menuOptions.push({
-        value: 'career',
-        label: 'Career',
-        selectable: true,
-        onSelect: handleCareer,
-        icon: career === 1 ? <CheckIcon style = {{ fontSize: 20 }} /> : <VisibilityIcon style = {{ fontSize: 20 }} />,
-      });
-
-      menuOptions.push({
-        value: 'career_active',
-        label: 'Career (active players)',
-        selectable: true,
-        onSelect: handleCareerActive,
-        icon: career_active === 1 ? <CheckIcon style = {{ fontSize: 20 }} /> : <VisibilityIcon style = {{ fontSize: 20 }} />,
       });
     }
 

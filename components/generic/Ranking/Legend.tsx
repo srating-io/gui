@@ -4,9 +4,12 @@
 import CloseIcon from '@esmalley/react-material-icons/Close';
 import TableColumns from '@/components/helpers/TableColumns';
 import { IconButton, Modal, Typography, useTheme } from '@esmalley/react-material-ui';
+import { useAppSelector } from '@/redux/hooks';
 
 const Legend = ({ open, onClose, columns, view, organization_id }) => {
-  const headers = TableColumns.getColumns({ organization_id, view });
+  const career = useAppSelector((state) => state.rankingReducer.career);
+  const career_active = useAppSelector((state) => state.rankingReducer.career_active);
+  const headers = TableColumns.getColumns({ organization_id, view, career: (career === 1 || career_active === 1) });
   const theme = useTheme();
 
   return (

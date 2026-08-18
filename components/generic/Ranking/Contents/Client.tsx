@@ -697,6 +697,7 @@ const Client = ({ generated, organization_id, division_id, season, view }) => {
               defaultSortOrder = {order as defaultSortOrderType} // todo
               defaultSortOrderBy = {orderBy}
               initialScrollTop={tableScrollTop}
+              secondaryKey = 'secondary'
             />
             : <div><Typography type='h6' style = {{ textAlign: 'center' }}>No results :(</Typography></div>
         }

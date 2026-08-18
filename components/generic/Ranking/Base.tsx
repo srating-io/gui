@@ -22,6 +22,7 @@ import ClassYearPicker from './ClassYearPicker';
 import { Textor } from '@esmalley/ts-utils';
 import { useNavigation } from '@/components/hooks/useNavigation';
 import { Chip, Typography, useTheme, useWindowDimensions } from '@esmalley/react-material-ui';
+import DataSince from './DataSince';
 
 
 const Base = (
@@ -29,7 +30,6 @@ const Base = (
   { organization_id: string, division_id: string, season: number, view: string, children: React.JSX.Element | React.JSX.Element[] },
 ) => {
   const navigation = useNavigation();
-  const theme = useTheme();
   const dispatch = useAppDispatch();
 
   const organization_id_x_division_id_x_ranking_seasons = useAppSelector((state) => state.dictionaryReducer.organization_id_x_division_id_x_ranking_seasons);
@@ -76,6 +76,34 @@ const Base = (
     { value: 'player', label: 'Player rankings' },
   ];
 
+  const ranking_type_options = [
+    {
+      value: 'season',
+      label: 'Season ranking',
+      sublabel: 'Statistics for entire season.',
+    },
+    {
+      value: 'career',
+      label: 'Career ranking',
+      sublabel: 'Statistics for all players career.',
+    },
+    {
+      value: 'career_active',
+      label: 'Career (active) ranking',
+      sublabel: 'Statistics for all active players career.',
+    },
+  ];
+
+  let selected_ranking_type = 'season';
+  let ranking_type_title = 'Season ranking';
+  if (career) {
+    selected_ranking_type = 'career';
+    ranking_type_title = width <= 475 ? 'Career' : 'Career ranking';
+  } else if (career_active) {
+    selected_ranking_type = 'career_active';
+    ranking_type_title = width <= 475 ? 'Career active' : 'Career (active) ranking';
+  }
+
   if (Organization.getCBBID() === organization_id) {
     rankViewOptions.push({ value: 'transfer', label: 'Transfer rankings' });
   }
@@ -106,6 +134,17 @@ const Base = (
       navigation.rankingView({ view: newRankView });
     }
   };
+
+  const handleRankType = (rank_type_value: string) => {
+    if (rank_type_value === 'season') {
+      navigation.rankingView({ career: 0, career_active: 0 });
+    } else if (rank_type_value === 'career') {
+      navigation.rankingView({ career: 1, career_active: 0 });
+    } else if (rank_type_value === 'career_active') {
+      navigation.rankingView({ career: 0, career_active: 1 });
+    }
+  };
+
 
   const handleSeason = (newSeason) => {
     if (newSeason !== season) {
@@ -153,12 +192,17 @@ const Base = (
       {
         !tableFullscreen ?
             <div style = {{ padding: '5px 10px 0px 10px' }}>
-              <div style = {{ display: 'flex', justifyContent: 'right', flexWrap: 'wrap' }}>
-                <OptionPicker buttonName = {Textor.toSentenceCase(`${view} rankings`)} options = {rankViewOptions} selected = {[view]} actionHandler = {handleRankView} isRadio = {true} />
-                <OptionPicker buttonName = {season.toString()} options = {seasonOptions} selected = {[season.toString()]} actionHandler = {handleSeason} isRadio = {true} />
+              <div style = {{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+                <div>
+                  {view === 'player' ? <OptionPicker buttonName={ranking_type_title} options = {ranking_type_options} selected = {[selected_ranking_type]} actionHandler = {handleRankType} isRadio = {true} /> : ''}
+                </div>
+                <div style = {{ display: 'flex', justifyContent: 'right', flexWrap: 'wrap' }}>
+                  <OptionPicker buttonName = {Textor.toSentenceCase(`${view} rankings`)} options = {rankViewOptions} selected = {[view]} actionHandler = {handleRankView} isRadio = {true} />
+                  <OptionPicker buttonName = {season.toString()} options = {seasonOptions} selected = {[season.toString()]} actionHandler = {handleSeason} isRadio = {true} />
+                </div>
               </div>
               <Typography type = {width < 500 ? 'h6' : 'h5'}>{title}</Typography>
-              {Organization.getCFBID() === organization_id && view === 'coach' ? <Typography type = 'body1' style = {{ fontStyle: 'italic', color: theme.text.secondary }}>Games since Aug '00</Typography> : ''}
+              <DataSince organization_id={organization_id} view = {view} />
               <LastUpdated view = {view} handleLegend={handleLegend} />
               <ColumnChipPicker view = {view} organization_id={organization_id} />
               <div style = {{ display: 'flex', justifyContent: 'space-between', marginTop: '10px' }}>

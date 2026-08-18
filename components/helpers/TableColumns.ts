@@ -210,7 +210,12 @@ class TableColumns {
         getTooltip: () => 'srating.io elo rating',
         sort: 'higher',
         organization_ids: [Organization.getCBBID(), Organization.getNBAID(), Organization.getCFBID()],
-        getViews: () => allViews,
+        getViews: () => {
+          if (career) {
+            return [];
+          }
+          return allViews;
+        },
         graphable: true,
         showDifference: true,
         precision: 0,
@@ -4068,7 +4073,7 @@ class TableColumns {
         }
         if (view === 'player') {
           if (career) {
-            return ['rank', 'name', 'max_elo', 'efficiency_rating', 'offensive_rating', 'defensive_rating', 'player_efficiency_rating', 'minutes_per_game', 'points_per_game', 'usage_percentage', 'true_shooting_percentage'];
+            return ['rank', 'name', 'max_elo', 'efficiency_rating', 'player_efficiency_rating', 'points_per_game', 'minutes_per_game', 'wins', 'losses'];
           }
           return ['rank', 'name', 'team_name', 'rank_delta_combo', 'elo', 'efficiency_rating', 'offensive_rating', 'defensive_rating', 'player_efficiency_rating', 'minutes_per_game', 'points_per_game', 'usage_percentage', 'true_shooting_percentage'];
         }

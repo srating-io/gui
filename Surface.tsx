@@ -5,7 +5,7 @@ import CBB from './components/helpers/CBB';
 import CFB from './components/helpers/CFB';
 import Division from './components/helpers/Division';
 import Organization from './components/helpers/Organization';
-import { DEFAULT_NBA_SEASON } from './components/helpers/Defaults';
+import NBA from './components/helpers/NBA';
 
 type SurfaceArguments = {
   sport?: string;
@@ -108,9 +108,7 @@ class Surface {
     }
 
     if (this.getSport() === 'nba') {
-      console.log('todo NBA helper?')
-
-      return DEFAULT_NBA_SEASON;
+      return NBA.getCurrentSeason();
     }
 
     // if there is no season then go to 404 page
