@@ -51,6 +51,7 @@ export default bundleAnalyzer({
   },
   devIndicators: false,
   // output: 'standalone',
+  // transpilePackages: ['@esmalley/react-material-ui'],
   reactStrictMode: true,
   // webpack: (config /* options */) => {
   //   config.module.rules.push({

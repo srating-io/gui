@@ -261,8 +261,16 @@ export const decorateRows = <T extends (Basketball.RankingTable | Football.Ranki
           classSpan = <ClassSpan class_year = {row.class_year as string}/>;
         }
 
+        let secondarySpan: string | React.JSX.Element = '';
+
+        if ('name_secondary' in row && row.name_secondary) {
+          secondarySpan = (
+            <span style = {{ color: theme.grey[500] }}> {row.name_secondary as string}</span>
+          );
+        }
+
         tableCells.push(
-          <Td key = {i} style = {cellStyle}>{classSpan}{row[displayColumns[i]]}</Td>,
+          <Td key = {i} style = {cellStyle}>{classSpan}{row[displayColumns[i]]}{secondarySpan}</Td>,
         );
       } else {
         // if (headCell.id === 'rank') {
@@ -490,6 +498,8 @@ const Client = ({ generated, organization_id, division_id, season, view }) => {
     rows = [...filteredRows];
   }
 
+  // console.log(rows.sort((a,b) => a.rank - b.rank))
+
   const handleSort = (id) => {
     const isAsc = orderBy === id && order === 'asc';
     if (tableRef && tableRef.current?.parentElement) {
@@ -697,7 +707,6 @@ const Client = ({ generated, organization_id, division_id, season, view }) => {
               defaultSortOrder = {order as defaultSortOrderType} // todo
               defaultSortOrderBy = {orderBy}
               initialScrollTop={tableScrollTop}
-              secondaryKey = 'secondary'
             />
             : <div><Typography type='h6' style = {{ textAlign: 'center' }}>No results :(</Typography></div>
         }
