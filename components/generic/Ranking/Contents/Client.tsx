@@ -498,8 +498,6 @@ const Client = ({ generated, organization_id, division_id, season, view }) => {
     rows = [...filteredRows];
   }
 
-  // console.log(rows.sort((a,b) => a.rank - b.rank))
-
   const handleSort = (id) => {
     const isAsc = orderBy === id && order === 'asc';
     if (tableRef && tableRef.current?.parentElement) {

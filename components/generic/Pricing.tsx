@@ -7,6 +7,7 @@ import SmartToyIcon from '@esmalley/react-material-icons/SmartToy';
 import AnalyticsIcon from '@esmalley/react-material-icons/Analytics';
 import CheckCircleOutlineIcon from '@esmalley/react-material-icons/CheckCircleOutline';
 import LaunchIcon from '@esmalley/react-material-icons/Launch';
+import SportsBasketballIcon from '@esmalley/react-material-icons/SportsBasketball';
 import DataObjectIcon from '@esmalley/react-material-icons/DataObject';
 import ShowChartIcon from '@esmalley/react-material-icons/ShowChart';
 import IntegrationInstructionsIcon from '@esmalley/react-material-icons/IntegrationInstructions';
@@ -309,10 +310,7 @@ const Pricing = ({ view }: { view: string | null; }) => {
                       <a style={{ cursor: 'pointer', color: theme.link.primary }} onClick={(e) => { e.preventDefault(); router.push('/cfb/picks?view=stats'); }} href='/cfb/picks?view=stats'>
                         live CFB
                       </a>
-                      {' '}. Live win rate is broken down by season, month, week, and day. Also read our {' '}
-                      <a style={{ cursor: 'pointer', color: theme.link.primary }} onClick={(e) => { e.preventDefault(); router.push('/blog/picks-2023-review'); }} href='/blog/picks-2023-review'>
-                        2023 blog season review
-                      </a>. Check out the code on <a style = {{ color: theme.link.primary }} href = "https://github.com/esmalleydev/srating.io-gui" target = "_blank">Github</a>.
+                      {' '}. Live win rate is broken down by season, month, week, and day. Check out the code on <a style = {{ color: theme.link.primary }} href = "https://github.com/esmalleydev/srating.io-gui" target = "_blank">Github</a>.
                   </Typography>
                 </div>
               </li>
@@ -352,6 +350,16 @@ const Pricing = ({ view }: { view: string | null; }) => {
                 <div style = {{ display: 'flex', flexDirection: 'column' }}>
                   <Typography type = 'subtitle1'>Live Scores & Betting Odds</Typography>
                   <Typography type = 'body2' style = {{ color: theme.text.secondary }}>Get up-to-the-minute game scores and betting odds to power real-time applications and analysis.</Typography>
+                </div>
+              </li>
+              <li className = {Style.getStyleClassName(liStyle)}>
+                <div style = {{ flexShrink: 0 }}>
+                  <SportsBasketballIcon style = {{ fontSize: 24, color: theme.primary.main }} />
+                </div>
+                <div style = {{ display: 'flex', flexDirection: 'column' }}>
+                  <Typography type = 'subtitle1'>Sports supported</Typography>
+                  <Typography type = 'body2' style = {{ color: theme.text.secondary }}>College football</Typography>
+                  <Typography type = 'body2' style = {{ color: theme.text.secondary }}>College basketball (mens)</Typography>
                 </div>
               </li>
               <li className = {Style.getStyleClassName(liStyle)}>
