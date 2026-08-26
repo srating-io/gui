@@ -85,8 +85,7 @@ const Search = (
         division_id,
         name: value,
       },
-      signal: controller.signal,
-    }).then((response) => {
+    }, { signal: controller.signal }).then((response) => {
       setTeams((response && response.teams) || []);
       setPlayers((response && response.players) || []);
       setCoaches((response && response.coaches) || []);

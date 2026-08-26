@@ -5,7 +5,6 @@ import { setDataKey, setSecret } from '@/redux/features/user-slice';
 import { setLoading } from '@/redux/features/loading-slice';
 import { refresh } from './generic/actions';
 import { getTagLabel } from './handlers/secret/shared';
-import { Objector } from '@esmalley/ts-utils';
 
 const protocol = process.env.NEXT_PUBLIC_CLIENT_PROTOCAL;
 const hostname = process.env.NEXT_PUBLIC_CLIENT_HOST;
@@ -18,6 +17,13 @@ const sleep = async (ms: number) => {
     setTimeout(resolve, ms);
   });
 };
+
+export interface ClientAPIRequest {
+  class: string;
+  function: string;
+  arguments: unknown;
+  cache?: number;
+}
 
 interface ApiResponse {
   error?: boolean;
@@ -83,7 +89,7 @@ async function executeFetch(url: string, fetchArgs: RequestInit, isRetry: boolea
 
 // todo this needs to be a hook / functional component, so when the store.getState() stuff changes it is refreshed with the correct values?
 
-export async function useClientAPI(args, optional_fetch_args = {}): Promise<any> {
+export async function useClientAPI(args: ClientAPIRequest, optional_fetch_args: RequestInit = {}): Promise<ApiResponse | any> {
   let url: string = `${protocol}://${hostname}:${port}`;
   if (useOrigin) {
     url = window.location.origin + path;
@@ -115,11 +121,13 @@ export async function useClientAPI(args, optional_fetch_args = {}): Promise<any>
     headers['X-KRYPTOS-ID'] = kryptos;
   }
 
-  const fetchArgs: RequestInit = Objector.extender({}, optional_fetch_args, {
+  // dont use Objector.extender here... things like AbortSignal need to keep their object reference
+  const fetchArgs: RequestInit = {
+    ...optional_fetch_args,
     method: 'POST',
     headers,
     body: JSON.stringify(args),
-  });
+  };
 
   let fetchRequest = await executeFetch(url, fetchArgs, false);
 
