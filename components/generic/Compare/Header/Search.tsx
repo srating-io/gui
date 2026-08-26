@@ -62,8 +62,7 @@ const Search = () => {
         team: 1,
         player: 0,
       },
-      signal: controller.signal,
-    }).then((response) => {
+    }, { signal: controller.signal }).then((response) => {
       setTeams((response && response.teams) || []);
       setLoading(false);
     }).catch((e) => {
