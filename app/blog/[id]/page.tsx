@@ -42,7 +42,7 @@ const Blog = async ({ params }: Props) => {
 
   return (
     <div>
-      <div style = {{ display: 'flex', padding: 20 }}>
+      <div style = {{ padding: 20 }}>
         <Post post = {post} sidebarPosts = {sidebarPosts} />
       </div>
     </div>

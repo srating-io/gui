@@ -3,7 +3,7 @@
 
 import { compiler } from 'markdown-to-jsx';
 
-import Sidebar from './Sidebar';
+import Layout from './Layout';
 import { Typography } from '@esmalley/react-material-ui';
 
 const options = {
@@ -69,12 +69,9 @@ const Post = async ({ post, sidebarPosts }) => {
   const markdown = compiler(post.content, options);
 
   return (
-    <div style = {{ width: '100%' }}>
-      <Sidebar sidebarPosts = {sidebarPosts} />
-      <div style = {{ maxWidth: 800, margin: 'auto' }}>
-        {markdown}
-      </div>
-    </div>
+    <Layout sidebarPosts = {sidebarPosts} activeId = {post.id}>
+      {markdown}
+    </Layout>
   );
 };
 

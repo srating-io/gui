@@ -1,26 +1,65 @@
 'use client';
 
-import { Typography, useTheme } from '@esmalley/react-material-ui';
+import Link from 'next/link';
+
 import { Dates } from '@esmalley/ts-utils';
+import { MenuItem, MenuList, Typography, useTheme } from '@esmalley/react-material-ui';
 
 
-const Sidebar = ({ sidebarPosts }) => {
+/**
+ * The post list. Rendered as-is by both the desktop rail and the mobile drawer
+ * so the two never drift apart.
+ */
+const Sidebar = (
+  {
+    sidebarPosts,
+    activeId,
+    onNavigate,
+  }:
+  {
+    sidebarPosts;
+    activeId?: string;
+    onNavigate?: () => void;
+  },
+) => {
   const theme = useTheme();
 
   return (
-    <div style = {{ minWidth: 125, float: 'right', marginTop: 10, marginLeft: 10, textAlign: 'right' }}>
-      <Typography type = 'h6'>Posts</Typography>
-      <hr />
-      {sidebarPosts.map((post, index) => {
+    <MenuList style = {{ padding: 0 }}>
+      {sidebarPosts.map((post) => {
+        const active = (post.id === activeId);
+
         return (
-          <div key = {index}>
-            <Typography style = {{ display: 'block' }} type = 'caption'>{Dates.format(Dates.parse(post.metadata.date), "M j 'y")}</Typography>
-            <a style = {{ cursor: 'pointer', fontSize: '14px', color: theme.link.primary }} href = {`/blog/${post.id}`}>{post.metadata.title}</a>
-            <hr />
-          </div>
+          <MenuItem
+            key = {post.id}
+            // MenuItem's own `active` paints a background block. The selected post
+            // is shown with blue text instead, so only the hover state is left.
+            style = {{ padding: 0, minHeight: 0, borderRadius: 6 }}
+          >
+            <Link
+              href = {`/blog/${post.id}`}
+              onClick = {onNavigate}
+              style = {{ display: 'block', width: '100%', minWidth: 0, padding: '6px 10px', textDecoration: 'none' }}
+            >
+              <Typography
+                type = 'body2'
+                style = {{
+                  color: (active ? theme.link.primary : 'inherit'),
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {post.metadata.title}
+              </Typography>
+              <Typography type = 'caption' style = {{ display: 'block', fontSize: 11, lineHeight: 1.3, color: theme.text.secondary }}>
+                {Dates.format(Dates.parse(post.metadata.date), "M j 'y")}
+              </Typography>
+            </Link>
+          </MenuItem>
         );
       })}
-    </div>
+    </MenuList>
   );
 };
 
