@@ -11,7 +11,7 @@ import HomeClientWrapper from '@/components/generic/FantasyEntry/Contents/Home/C
 import { Client as HomeClient } from '@/components/generic/FantasyEntry/Contents/Home/Client';
 import NavBar from '@/components/generic/FantasyEntry/NavBar';
 import Surface from '../Surface';
-import { General } from '@srating-io/types';
+import { Fantasy } from '@srating-io/types';
 
 export type getDecorateFantasyEntry = {
   fantasy_entry_id: string;
@@ -28,7 +28,7 @@ class FantasyEntry extends Surface {
   // }
 
   async getData({ fantasy_entry_id }) {
-    const fantasy_entry: General.FantasyEntry = await useServerAPI({
+    const fantasy_entry: Fantasy.FantasyEntry = await useServerAPI({
       class: 'fantasy_entry',
       function: 'get',
       arguments: {
@@ -36,7 +36,7 @@ class FantasyEntry extends Surface {
       },
     });
 
-    const fantasy_group: General.FantasyGroup = await useServerAPI({
+    const fantasy_group: Fantasy.FantasyGroup = await useServerAPI({
       class: 'fantasy_group',
       function: 'get',
       arguments: {

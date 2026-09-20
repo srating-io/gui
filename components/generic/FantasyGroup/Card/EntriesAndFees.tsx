@@ -3,7 +3,7 @@
 import AttachMoneyIcon from '@esmalley/react-material-icons/AttachMoney';
 import { getTitle, innerBreakPoint, paperStyle } from '../Card';
 import { Columns, Paper, Slab, useTheme } from '@esmalley/react-material-ui';
-import { General } from '@srating-io/types';
+import { Fantasy } from '@srating-io/types';
 
 
 const EntriesAndFees = (
@@ -11,7 +11,7 @@ const EntriesAndFees = (
     fantasy_group,
   } :
   {
-    fantasy_group: General.FantasyGroup
+    fantasy_group: Fantasy.FantasyGroup
   },
 ) => {
   const theme = useTheme();

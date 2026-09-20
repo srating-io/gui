@@ -17,7 +17,7 @@ import { useNavigation } from '@/components/hooks/useNavigation';
 import Game from '@/components/helpers/Game';
 import QueryStatsIcon from '@esmalley/react-material-icons/QueryStats';
 import { Chip, IconButton, Paper, Typography, useTheme, useWindowDimensions } from '@esmalley/react-material-ui';
-import { General } from '@srating-io/types';
+import { Fantasy, General } from '@srating-io/types';
 
 const slot_height = 100;
 const slot_width = 170;
@@ -113,7 +113,7 @@ const BracketSlot = (
   }:
   {
     fantasy_bracket_slot_id: string | null,
-    fantasy_bracket_slots: General.FantasyBracketSlots,
+    fantasy_bracket_slots: Fantasy.FantasyBracketSlots,
     isRightSide?: boolean,
     region_x_round_x_seed_x_bracket_teams?: object,
     team_id_x_seed: object,

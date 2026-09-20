@@ -3,7 +3,7 @@
 import RuleIcon from '@esmalley/react-material-icons/Rule';
 import { getTitle, innerBreakPoint, paperStyle } from '../Card';
 import { Columns, Paper, Slab, useTheme } from '@esmalley/react-material-ui';
-import { General } from '@srating-io/types';
+import { Fantasy } from '@srating-io/types';
 
 
 const BracketInfo = (
@@ -11,7 +11,7 @@ const BracketInfo = (
     fantasy_group,
   } :
   {
-    fantasy_group: General.FantasyGroup
+    fantasy_group: Fantasy.FantasyGroup
   },
 ) => {
   const theme = useTheme();

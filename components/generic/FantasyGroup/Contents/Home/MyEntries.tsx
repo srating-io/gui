@@ -11,7 +11,7 @@ import StadiumIcon from '@esmalley/react-material-icons/Stadium';
 import FantasyGroup from '@/components/helpers/FantasyGroup';
 import { useNavigation } from '@/components/hooks/useNavigation';
 import { Button, IconButton, Paper, Tile, Typography, useTheme } from '@esmalley/react-material-ui';
-import { General } from '@srating-io/types';
+import { Fantasy } from '@srating-io/types';
 
 const MyEntries = () => {
   const theme = useTheme();
@@ -24,7 +24,7 @@ const MyEntries = () => {
 
   const [joining, setJoining] = useState(false);
 
-  const my_fantasy_entrys: General.FantasyEntry[] = [];
+  const my_fantasy_entrys: Fantasy.FantasyEntry[] = [];
 
   for (const fantasy_entry_id in fantasy_entrys) {
     const row = fantasy_entrys[fantasy_entry_id];

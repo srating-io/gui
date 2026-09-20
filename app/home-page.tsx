@@ -28,19 +28,19 @@ const Home = () => {
     {
       id: 'trends',
       name: 'Trends',
-      icon: <TrendingUpIcon fontSize = 'medium' style = {{ display: 'inline-block', color: theme.success.dark }} />,
+      icon: <TrendingUpIcon style = {{ fontSize: 24, display: 'inline-block', color: theme.success.dark }} />,
       description: 'View trends of any statistic. See data at any point in time and how it compares to league and conference averages.',
     },
     {
       id: 'rankings',
       name: 'Rankings',
-      icon: <EmojiEventsIcon fontSize = 'medium' style = {{ display: 'inline-block', color: theme.warning.dark }} />,
+      icon: <EmojiEventsIcon style = {{ fontSize: 24, display: 'inline-block', color: theme.warning.dark }} />,
       description: 'Rank every team, coach, player, conference. Also view ranks of each individual metric.',
     },
     {
       id: 'tools',
       name: 'Tools',
-      icon: <BuildIcon fontSize = 'medium' style = {{ display: 'inline-block', color: theme.secondary.dark }} />,
+      icon: <BuildIcon style = {{ fontSize: 24, display: 'inline-block', color: theme.secondary.dark }} />,
       description: 'Powerful comparison and prediction tools to scout any match up. Compare stats, roster, trends.',
     },
   ];
@@ -98,8 +98,11 @@ const Home = () => {
           >
             {<><span style = {{ color: General.getLogoColorPrimary() }}>s</span><span style = {{ color: General.getLogoColorSecondary() }}>Rating</span></>}
           </Typography>
-          <Typography type="h5" style = {{ textAlign: 'center', color: theme.text.secondary, marginBottom: 16 }}>
-            Analysis tools, picks for 🏀 & 🏈, <br /> no ads, <a style = {{ color: theme.link.primary }} href = "https://github.com/esmalleydev/srating.io-gui" target = "_blank">open-source</a>
+          <Typography type="h5" style = {{ textAlign: 'center', color: theme.text.primary, marginBottom: 8 }}>
+            Know the matchup before tip-off 🏀 & 🏈
+          </Typography>
+          <Typography type="body1" style = {{ textAlign: 'center', color: theme.text.secondary, maxWidth: 620, margin: '0px auto 16px auto' }}>
+            Rankings, trends and prediction tools for college basketball and football. API access from $25 a month, Picks from $20/year. No ads, <a style = {{ color: theme.link.primary }} href = "https://github.com/srating-io/gui" target = "_blank">open-source</a>.
           </Typography>
         </div>
         <div style = {{ padding: '0px 5px 5px 5px', display: 'flex', justifyContent: 'center', flexWrap: 'wrap' }}>

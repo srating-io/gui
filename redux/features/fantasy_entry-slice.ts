@@ -1,20 +1,20 @@
 
 import State from '@/components/helpers/State';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { Basketball, General } from '@srating-io/types';
+import { Basketball, Fantasy, General } from '@srating-io/types';
 
 export type InitialState = {
-  fantasy_entry: General.FantasyEntry;
-  fantasy_group: General.FantasyGroup;
-  fantasy_entry_players: General.FantasyEntryPlayers;
+  fantasy_entry: Fantasy.FantasyEntry;
+  fantasy_group: Fantasy.FantasyGroup;
+  fantasy_entry_players: Fantasy.FantasyEntryPlayers;
   player_team_seasons: General.PlayerTeamSeasons;
   players: General.Players;
-  fantasy_bracket_slots: General.FantasyBracketSlots;
+  fantasy_bracket_slots: Fantasy.FantasyBracketSlots;
   bracket_teams: General.BracketTeams;
   teams: General.Teams;
   games: General.Games;
   fantasy_entry_player_statistic_rankings: {
-    [fantasy_entry_player_statistic_ranking_id: string]: General.FantasyEntryPlayerStatisticRanking & Basketball.PlayerStatisticRanking
+    [fantasy_entry_player_statistic_ranking_id: string]: Fantasy.FantasyEntryPlayerStatisticRanking & Basketball.PlayerStatisticRanking
   };
   // player_boxscores: PlayerBoxscores;
   loadingView: boolean;
@@ -47,18 +47,18 @@ stateController.set_url_param_type_x_keys({
 // });
 
 stateController.setInitialState({
-  fantasy_entry: {} as General.FantasyEntry,
-  fantasy_group: {} as General.FantasyGroup,
-  fantasy_entry_players: {} as General.FantasyEntryPlayers,
+  fantasy_entry: {} as Fantasy.FantasyEntry,
+  fantasy_group: {} as Fantasy.FantasyGroup,
+  fantasy_entry_players: {} as Fantasy.FantasyEntryPlayers,
   player_team_seasons: {} as General.PlayerTeamSeasons,
   players: {} as General.Players,
-  fantasy_bracket_slots: {} as General.FantasyBracketSlots,
+  fantasy_bracket_slots: {} as Fantasy.FantasyBracketSlots,
   bracket_teams: {} as General.BracketTeams,
   teams: {} as General.Teams,
   games: {} as General.Games,
   // player_boxscores: {} as PlayerBoxscores,
   fantasy_entry_player_statistic_rankings: {} as {
-    [fantasy_entry_player_statistic_ranking_id: string]: General.FantasyEntryPlayerStatisticRanking & Basketball.PlayerStatisticRanking
+    [fantasy_entry_player_statistic_ranking_id: string]: Fantasy.FantasyEntryPlayerStatisticRanking & Basketball.PlayerStatisticRanking
   },
   loadingView: true,
 });

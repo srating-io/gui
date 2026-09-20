@@ -6,7 +6,7 @@ import { useAppSelector } from '@/redux/hooks';
 // import EmojiEventsIcon from '@esmalley/react-material-icons/EmojiEvents';
 import WorkspacePremiumIcon from '@esmalley/react-material-icons/WorkspacePremium';
 import { Typography, useTheme } from '@esmalley/react-material-ui';
-import { General } from '@srating-io/types';
+import { Fantasy } from '@srating-io/types';
 // import SportsScoreIcon from '@esmalley/react-material-icons/SportsScore';
 
 const Winner = () => {
@@ -24,7 +24,7 @@ const Winner = () => {
     user_id_x_fantasy_group_user[row.user_id] = row;
   }
 
-  let winner_fantasy_ranking: General.FantasyRanking | null = null;
+  let winner_fantasy_ranking: Fantasy.FantasyRanking | null = null;
 
   for (const fantasy_ranking_id in fantasy_rankings) {
     const row = fantasy_rankings[fantasy_ranking_id];

@@ -5,7 +5,7 @@ import { getTitle, innerBreakPoint, paperStyle } from '../Card';
 import Payment from '@/components/helpers/Payment';
 import { useAppSelector } from '@/redux/hooks';
 import { Columns, Paper, Slab, useTheme } from '@esmalley/react-material-ui';
-import { General } from '@srating-io/types';
+import { Fantasy } from '@srating-io/types';
 
 
 const PayoutInfo = (
@@ -14,8 +14,8 @@ const PayoutInfo = (
     fantasy_entrys,
   } :
   {
-    fantasy_group: General.FantasyGroup,
-    fantasy_entrys: General.FantasyEntrys,
+    fantasy_group: Fantasy.FantasyGroup,
+    fantasy_entrys: Fantasy.FantasyEntrys,
   },
 ) => {
   const theme = useTheme();

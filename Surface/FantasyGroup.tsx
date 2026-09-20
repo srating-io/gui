@@ -13,7 +13,7 @@ import { Client as HomeClient } from '@/components/generic/FantasyGroup/Contents
 import DraftClientWrapper from '@/components/generic/FantasyGroup/Contents/Draft/ClientWrapper';
 import { Client as DraftClient } from '@/components/generic/FantasyGroup/Contents/Draft/Client';
 import Surface from '../Surface';
-import { General } from '@srating-io/types';
+import { Fantasy } from '@srating-io/types';
 
 export type getDecorateFantasyGroup = {
   fantasy_group_id: string;
@@ -32,7 +32,7 @@ class FantasyGroup extends Surface {
   async getData({ fantasy_group_id }) {
     const revalidateSeconds = 5 * 60;
 
-    const fantasy_group: General.FantasyGroup = await useServerAPI({
+    const fantasy_group: Fantasy.FantasyGroup = await useServerAPI({
       class: 'fantasy_group',
       function: 'get',
       arguments: {

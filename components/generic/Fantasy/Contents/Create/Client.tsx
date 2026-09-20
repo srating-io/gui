@@ -26,7 +26,7 @@ import {
   Wizard,
 } from '@esmalley/react-material-ui';
 import HelperGeneral from '@/components/helpers/General';
-import { General } from '@srating-io/types';
+import { Fantasy } from '@srating-io/types';
 // import InfoOutlineIcon from '@esmalley/react-material-icons/InfoOutline'; need to upgrade MUI for this icon... >.>
 
 
@@ -109,7 +109,7 @@ const Client = () => {
 
   // the inputs return strings, but internally they are formatted as a number, so just overwrite to allow string in a few of these columns
   type FantasyGroupForm = Omit<
-    General.FantasyGroup,
+    Fantasy.FantasyGroup,
     'fantasy_group_id' | 'guid' | 'deleted' | 'locked' | 'entry_fee' | 'entries_per_user' | 'date_of_entry' | 'started' | 'notified_24_hours' | 'notified_15_mins' | 'drafted' | 'finished' | 'notified_finished'
   > & {
     entry_fee: string | number | null;

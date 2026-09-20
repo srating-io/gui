@@ -8,7 +8,7 @@ import { useNavigation } from '@/components/hooks/useNavigation';
 import { useAppSelector } from '@/redux/hooks';
 import { Paper, Typography } from '@esmalley/react-material-ui';
 import { Objector, Textor } from '@esmalley/ts-utils';
-import { Basketball, Football, General } from '@srating-io/types';
+import { Basketball, Fantasy, Football, General } from '@srating-io/types';
 
 import React from 'react';
 
@@ -23,13 +23,13 @@ const Roster = (
     fantasy_entry_player_statistic_rankings,
   }:
   {
-    fantasy_entry: General.FantasyEntry;
-    fantasy_group: General.FantasyGroup;
-    fantasy_entry_players: General.FantasyEntryPlayers;
+    fantasy_entry: Fantasy.FantasyEntry;
+    fantasy_group: Fantasy.FantasyGroup;
+    fantasy_entry_players: Fantasy.FantasyEntryPlayers;
     player_team_seasons: General.PlayerTeamSeasons;
     players: General.Players;
     fantasy_entry_player_statistic_rankings: {
-      [fantasy_entry_player_statistic_ranking_id: string]: General.FantasyEntryPlayerStatisticRanking & Basketball.PlayerStatisticRanking;
+      [fantasy_entry_player_statistic_ranking_id: string]: Fantasy.FantasyEntryPlayerStatisticRanking & Basketball.PlayerStatisticRanking;
     };
   },
 ) => {

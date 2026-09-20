@@ -15,7 +15,7 @@ import PayoutInfo from '../FantasyGroup/Card/PayoutInfo';
 import FantasyGroup from '@/components/helpers/FantasyGroup';
 import { useNavigation } from '@/components/hooks/useNavigation';
 import { Button, Columns, ErrorModal, LinearProgress, Typography, useTheme } from '@esmalley/react-material-ui';
-import { General } from '@srating-io/types';
+import { Fantasy } from '@srating-io/types';
 
 
 
@@ -59,8 +59,8 @@ const Client = (
     code,
   }:
   {
-    fantasy_group: General.FantasyGroup;
-    fantasy_entrys?: General.FantasyEntrys;
+    fantasy_group: Fantasy.FantasyGroup;
+    fantasy_entrys?: Fantasy.FantasyEntrys;
     fantasy_group_invite_id: string;
     code: string;
   },

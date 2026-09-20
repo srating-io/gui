@@ -6,7 +6,7 @@ import { useState } from 'react';
 import SearchIcon from '@esmalley/react-material-icons/Search';
 import { Textor } from '@esmalley/ts-utils';
 import { Inputs, Menu, MenuOption, TextInput } from '@esmalley/react-material-ui';
-import { General } from '@srating-io/types';
+import { Fantasy, General } from '@srating-io/types';
 
 
 const TeamSearch = (
@@ -17,7 +17,7 @@ const TeamSearch = (
   }:
   {
     inputHandler: Inputs;
-    fantasy_group: General.FantasyGroup;
+    fantasy_group: Fantasy.FantasyGroup;
     handleSelect: (team_id: string) => void;
   },
 ) => {

@@ -1,11 +1,11 @@
 
 import State from '@/components/helpers/State';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { General } from '@srating-io/types';
+import { Payments } from '@srating-io/types';
 
 export type InitialState = {
   loadingView: boolean,
-  payment_router: General.PaymentRouter;
+  payment_router: Payments.PaymentRouter;
 };
 
 export type InitialStateKeys = keyof InitialState;
@@ -31,7 +31,7 @@ stateController.set_url_param_type_x_keys({
 
 stateController.setInitialState({
   loadingView: true,
-  payment_router: {} as General.PaymentRouter,
+  payment_router: {} as Payments.PaymentRouter,
 });
 
 

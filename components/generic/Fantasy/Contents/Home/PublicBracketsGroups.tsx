@@ -8,7 +8,7 @@ import AccountHandler from '@/components/generic/AccountHandler';
 import { useAppSelector } from '@/redux/hooks';
 import { useNavigation } from '@/components/hooks/useNavigation';
 import { Button, Paper, Tile, Typography, useTheme } from '@esmalley/react-material-ui';
-import { General } from '@srating-io/types';
+import { Fantasy } from '@srating-io/types';
 
 const PublicBracketsGroups = (
   {
@@ -16,8 +16,8 @@ const PublicBracketsGroups = (
     fantasy_group_id_x_fantasy_entrys,
   }:
   {
-    fantasy_groups: General.FantasyGroups;
-    fantasy_group_id_x_fantasy_entrys: {[fantasy_group_id: string]: General.FantasyEntrys};
+    fantasy_groups: Fantasy.FantasyGroups;
+    fantasy_group_id_x_fantasy_entrys: {[fantasy_group_id: string]: Fantasy.FantasyEntrys};
   },
 ) => {
   const theme = useTheme();
@@ -29,8 +29,8 @@ const PublicBracketsGroups = (
   const [showModal, setShowModal] = useState(false);
   const [selectedFantasyGroupID, setSelectedFantasyGroupID] = useState(null);
 
-  const free_fantasy_groups: General.FantasyGroup[] = [];
-  const paid_fantasy_groups: General.FantasyGroup[] = [];
+  const free_fantasy_groups: Fantasy.FantasyGroup[] = [];
+  const paid_fantasy_groups: Fantasy.FantasyGroup[] = [];
 
   for (const fantasy_group_id in fantasy_groups) {
     const row = fantasy_groups[fantasy_group_id];

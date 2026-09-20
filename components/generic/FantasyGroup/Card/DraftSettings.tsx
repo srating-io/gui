@@ -7,7 +7,7 @@ import FantasyGroup from '@/components/helpers/FantasyGroup';
 import React, { useState } from 'react';
 import { Dates } from '@esmalley/ts-utils';
 import { Button, Columns, Modal, Paper, Slab, Typography, useTheme } from '@esmalley/react-material-ui';
-import { General } from '@srating-io/types';
+import { Fantasy } from '@srating-io/types';
 
 
 const DraftSettings = (
@@ -15,7 +15,7 @@ const DraftSettings = (
     fantasy_group,
   } :
   {
-    fantasy_group: General.FantasyGroup
+    fantasy_group: Fantasy.FantasyGroup
   },
 ) => {
   const theme = useTheme();

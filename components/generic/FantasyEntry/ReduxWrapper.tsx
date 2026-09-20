@@ -5,18 +5,18 @@ import { useAppDispatch } from '@/redux/hooks';
 import { setDataKey } from '@/redux/features/fantasy_entry-slice';
 import { updateDivisionID, updateOrganizationID } from '@/redux/features/organization-slice';
 import { AppDispatch } from '@/redux/store';
-import { Basketball, General } from '@srating-io/types';
+import { Basketball, Fantasy, General } from '@srating-io/types';
 
 export interface FantasyEntryLoadData {
-  fantasy_entry_players: General.FantasyEntryPlayers;
+  fantasy_entry_players: Fantasy.FantasyEntryPlayers;
   player_team_seasons: General.PlayerTeamSeasons;
   players: General.Players;
-  fantasy_bracket_slots: General.FantasyBracketSlots;
+  fantasy_bracket_slots: Fantasy.FantasyBracketSlots;
   bracket_teams: General.BracketTeams;
   teams: General.Teams;
   games: General.Games;
   fantasy_entry_player_statistic_rankings: {
-    [fantasy_entry_player_statistic_ranking_id: string]: General.FantasyEntryPlayerStatisticRanking & Basketball.PlayerStatisticRanking
+    [fantasy_entry_player_statistic_ranking_id: string]: Fantasy.FantasyEntryPlayerStatisticRanking & Basketball.PlayerStatisticRanking
   },
   // player_boxscores: PlayerBoxscores;
   error?: string;
@@ -52,8 +52,8 @@ const ReduxWrapper = (
   }:
   {
     children: React.ReactNode;
-    fantasy_entry?: General.FantasyEntry;
-    fantasy_group?: General.FantasyGroup;
+    fantasy_entry?: Fantasy.FantasyEntry;
+    fantasy_group?: Fantasy.FantasyGroup;
   },
 ) => {
   const dispatch = useAppDispatch();

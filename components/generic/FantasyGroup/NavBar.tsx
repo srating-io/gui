@@ -16,7 +16,7 @@ import Organization from '@/components/helpers/Organization';
 import { Objector, Style } from '@esmalley/ts-utils';
 import { useNavigation } from '@/components/hooks/useNavigation';
 import { Button, IconButton, Menu, MenuOption, Modal, Typography, useTheme } from '@esmalley/react-material-ui';
-import { General } from '@srating-io/types';
+import { Fantasy } from '@srating-io/types';
 
 
 const getNavHeaderHeight = () => {
@@ -33,8 +33,8 @@ type ModalData = {
 }
 
 type LockResponse = {
-  fantasy_group: General.FantasyGroup;
-  fantasy_draft_orders: General.FantasyDraftOrders;
+  fantasy_group: Fantasy.FantasyGroup;
+  fantasy_draft_orders: Fantasy.FantasyDraftOrders;
   error?: string;
 }
 

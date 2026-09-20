@@ -7,22 +7,22 @@ import { updateDivisionID, updateOrganizationID } from '@/redux/features/organiz
 import { AppDispatch } from '@/redux/store';
 import { getStore } from '@/app/StoreProvider';
 import { Objector } from '@esmalley/ts-utils';
-import { Basketball, General } from '@srating-io/types';
+import { Basketball, Fantasy, General } from '@srating-io/types';
 
 export interface FantasyGroupLoadData {
   isOwner: boolean;
-  fantasy_group: General.FantasyGroup;
-  fantasy_group_users: General.FantasyGroupUsers;
-  fantasy_group_invites: General.FantasyGroupInvites;
-  fantasy_group_comments: General.FantasyGroupComments;
-  fantasy_entrys: General.FantasyEntrys;
-  fantasy_draft_orders: General.FantasyDraftOrders;
-  fantasy_entry_players: General.FantasyEntryPlayers;
+  fantasy_group: Fantasy.FantasyGroup;
+  fantasy_group_users: Fantasy.FantasyGroupUsers;
+  fantasy_group_invites: Fantasy.FantasyGroupInvites;
+  fantasy_group_comments: Fantasy.FantasyGroupComments;
+  fantasy_entrys: Fantasy.FantasyEntrys;
+  fantasy_draft_orders: Fantasy.FantasyDraftOrders;
+  fantasy_entry_players: Fantasy.FantasyEntryPlayers;
   player_team_seasons: General.PlayerTeamSeasons;
   players: General.Players;
-  fantasy_rankings: General.FantasyRankings;
+  fantasy_rankings: Fantasy.FantasyRankings;
   fantasy_entry_player_statistic_rankings: {
-    [fantasy_entry_player_statistic_ranking_id: string]: General.FantasyEntryPlayerStatisticRanking & Basketball.PlayerStatisticRanking
+    [fantasy_entry_player_statistic_ranking_id: string]: Fantasy.FantasyEntryPlayerStatisticRanking & Basketball.PlayerStatisticRanking
   },
   error?: string;
 }
@@ -78,7 +78,7 @@ const ReduxWrapper = (
   }:
   {
     children: React.ReactNode;
-    fantasy_group: General.FantasyGroup;
+    fantasy_group: Fantasy.FantasyGroup;
   },
 ) => {
   const dispatch = useAppDispatch();

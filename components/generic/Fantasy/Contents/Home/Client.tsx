@@ -11,13 +11,13 @@ import PublicBracketsGroups from './PublicBracketsGroups';
 import PublicDraftGroups from './PublicDraftGroups';
 import CreateGroup from './CreateGroup';
 import { Columns, LinearProgress, useTheme } from '@esmalley/react-material-ui';
-import { General } from '@srating-io/types';
+import { Fantasy } from '@srating-io/types';
 
 
 interface Data {
-  fantasy_groups: General.FantasyGroups;
-  fantasy_group_users?: General.FantasyGroupUsers;
-  fantasy_entrys?: General.FantasyEntrys;
+  fantasy_groups: Fantasy.FantasyGroups;
+  fantasy_group_users?: Fantasy.FantasyGroupUsers;
+  fantasy_entrys?: Fantasy.FantasyEntrys;
 }
 
 /**
@@ -95,7 +95,7 @@ const Client = () => {
     return <ClientSkeleton />;
   }
 
-  const my_fantasy_groups: General.FantasyGroups = {};
+  const my_fantasy_groups: Fantasy.FantasyGroups = {};
   if (
     data?.fantasy_group_users &&
     data.fantasy_groups
@@ -108,7 +108,7 @@ const Client = () => {
     }
   }
 
-  const fantasy_group_id_x_fantasy_entrys: {[fantasy_group_id: string]: General.FantasyEntrys} = {};
+  const fantasy_group_id_x_fantasy_entrys: {[fantasy_group_id: string]: Fantasy.FantasyEntrys} = {};
   if (data?.fantasy_entrys) {
     for (const fantasy_entry_id in data.fantasy_entrys) {
       const row = data.fantasy_entrys[fantasy_entry_id];
@@ -122,8 +122,8 @@ const Client = () => {
   }
 
   // const fantasy_group_type_terminology_id_x_public_fantasy_groups = {};
-  const public_bracket_groups: General.FantasyGroups = {};
-  const public_draft_groups: General.FantasyGroups = {};
+  const public_bracket_groups: Fantasy.FantasyGroups = {};
+  const public_draft_groups: Fantasy.FantasyGroups = {};
   for (const fantasy_group_id in data?.fantasy_groups) {
     const row = data.fantasy_groups[fantasy_group_id];
 

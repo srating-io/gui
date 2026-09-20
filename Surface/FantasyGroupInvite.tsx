@@ -10,7 +10,7 @@ import { Client } from '@/components/generic/FantasyGroupInvite/Client';
 import { Dates } from '@esmalley/ts-utils';
 import { Typography } from '@esmalley/react-material-ui';
 import Surface from '../Surface';
-import { General } from '@srating-io/types';
+import { Fantasy } from '@srating-io/types';
 
 export type getDecorateFantasyGroupInvite = {
   fantasy_group_invite_id: string;
@@ -31,9 +31,9 @@ class FantasyGroupInvite extends Surface {
     },
   ) {
     type Data = {
-      fantasy_group_invite?: General.FantasyGroupInvite;
-      fantasy_group?: General.FantasyGroup;
-      fantasy_entrys?: General.FantasyEntrys;
+      fantasy_group_invite?: Fantasy.FantasyGroupInvite;
+      fantasy_group?: Fantasy.FantasyGroup;
+      fantasy_entrys?: Fantasy.FantasyEntrys;
     };
 
     const data: Data = {};

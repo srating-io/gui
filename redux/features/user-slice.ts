@@ -1,6 +1,6 @@
 import State from '@/components/helpers/State';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { General } from '@srating-io/types';
+import { Auth, Fantasy, Payments } from '@srating-io/types';
 
 
 // todo this should really be renamed to the account-slice to make the url of /account
@@ -16,14 +16,14 @@ export type InitialState = {
   newUpdate: boolean,
   loadingView: boolean,
   loadedAccount: boolean,
-  user: General.User;
-  subscription: General.Subscriptions;
-  pricing: General.Pricings;
-  api_key: General.ApiKeys;
-  fantasy_group_user: General.FantasyGroupUsers;
-  fantasy_group: General.FantasyGroups;
-  user_payment_token: General.UserPaymentTokens;
-  notifications: General.Notifications;
+  user: Auth.User;
+  subscription: Payments.Subscriptions;
+  pricing: Payments.Pricings;
+  api_key: Auth.ApiKeys;
+  fantasy_group_user: Fantasy.FantasyGroupUsers;
+  fantasy_group: Fantasy.FantasyGroups;
+  user_payment_token: Payments.UserPaymentTokens;
+  notifications: Auth.Notifications;
 };
 
 
@@ -63,14 +63,14 @@ stateController.setInitialState({
   newUpdate: false,
   loadingView: true,
   loadedAccount: false,
-  user: {} as General.User,
-  subscription: {} as General.Subscriptions,
-  pricing: {} as General.Pricings,
-  api_key: {} as General.ApiKeys,
-  fantasy_group_user: {} as General.FantasyGroupUsers,
-  fantasy_group: {} as General.FantasyGroups,
-  user_payment_token: {} as General.UserPaymentTokens,
-  notifications: {} as General.Notifications,
+  user: {} as Auth.User,
+  subscription: {} as Payments.Subscriptions,
+  pricing: {} as Payments.Pricings,
+  api_key: {} as Auth.ApiKeys,
+  fantasy_group_user: {} as Fantasy.FantasyGroupUsers,
+  fantasy_group: {} as Fantasy.FantasyGroups,
+  user_payment_token: {} as Payments.UserPaymentTokens,
+  notifications: {} as Auth.Notifications,
 });
 
 export const user = createSlice({

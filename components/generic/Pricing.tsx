@@ -24,7 +24,7 @@ type priceOption = {
   type: string;
   price_description: string;
   features: string[];
-  requests?: string;
+  usage_limit?: string;
   missing_features: string[];
   priceId?: string;
   disabled?: boolean;
@@ -97,7 +97,7 @@ const Pricing = ({ view }: { view: string | null; }) => {
       price: 0,
       type: 'api',
       price_description: '',
-      requests: '500',
+      usage_limit: '500',
       features: ['Limited access', 'Scrambled data'],
       missing_features: ['Access to picks'],
     },
@@ -108,7 +108,7 @@ const Pricing = ({ view }: { view: string | null; }) => {
       price: 25,
       type: 'api',
       price_description: 'USD per month',
-      requests: '20,000',
+      usage_limit: '20,000',
       features: [
         'Access to picks',
         'CSV downloads',
@@ -127,7 +127,7 @@ const Pricing = ({ view }: { view: string | null; }) => {
       price: 49,
       type: 'api',
       price_description: 'USD per month',
-      requests: '100,000',
+      usage_limit: '100,000',
       features: [
         'Access to picks',
         'CSV downloads',
@@ -146,7 +146,7 @@ const Pricing = ({ view }: { view: string | null; }) => {
       price: 99,
       type: 'api',
       price_description: 'USD per month',
-      requests: '4 Million',
+      usage_limit: '4 Million',
       features: [
         'Access to picks',
         'CSV downloads',
@@ -191,7 +191,7 @@ const Pricing = ({ view }: { view: string | null; }) => {
           <Typography style = {{ color: theme.text.secondary }} type = 'body1'>{option.name}</Typography>
           <Typography style = {{ color: theme.primary.main }} type = 'h3'><Typography style = {{ fontSize: 16, display: 'inline-block', color: theme.primary.main }} type='caption'>$</Typography>{option.price}</Typography>
           <Typography style = {{ color: theme.text.secondary }} type = 'caption'>{option.price_description}</Typography>
-          {option.requests ? <div><Typography style = {{ color: theme.primary.main, display: 'inline-block', marginRight: 2.5 }} type = 'caption'>{option.requests}</Typography><Typography style = {{ color: theme.text.secondary, display: 'inline-block' }} type = 'caption'> requests per month</Typography></div> : ''}
+          {option.usage_limit ? <div><Typography style = {{ color: theme.primary.main, display: 'inline-block', marginRight: 2.5 }} type = 'caption'>{option.usage_limit}</Typography><Typography style = {{ color: theme.text.secondary, display: 'inline-block' }} type = 'caption'> usage per month</Typography></div> : ''}
           {option.features.map((feature) => {
             return (
               <div key = {feature}>

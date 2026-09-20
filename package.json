@@ -1,6 +1,6 @@
 {
   "name": "srating.io-gui",
-  "version": "7.0.0",
+  "version": "7.0.1",
   "private": true,
   "type": "module",
   "dependencies": {
@@ -55,7 +55,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
-    "@srating-io/types": "^1.1.5",
+    "@srating-io/types": "^2.0.0",
     "@testing-library/react": "^16.2.0",
     "@testing-library/user-event": "^14.5.1",
     "@types/lodash": "^4.17.10",

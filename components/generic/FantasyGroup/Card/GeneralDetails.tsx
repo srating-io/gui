@@ -6,7 +6,7 @@ import { getTitle, innerBreakPoint, paperStyle } from '../Card';
 import { useAppSelector } from '@/redux/hooks';
 import { Dates } from '@esmalley/ts-utils';
 import { Columns, Paper, Slab, useTheme } from '@esmalley/react-material-ui';
-import { General } from '@srating-io/types';
+import { Fantasy } from '@srating-io/types';
 
 
 const GeneralDetails = (
@@ -14,7 +14,7 @@ const GeneralDetails = (
     fantasy_group,
   } :
   {
-    fantasy_group: General.FantasyGroup
+    fantasy_group: Fantasy.FantasyGroup
   },
 ) => {
   const theme = useTheme();

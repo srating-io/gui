@@ -1,7 +1,7 @@
 /* eslint-disable no-restricted-syntax */
 
 import { getStore } from '@/app/StoreProvider';
-import { General } from '@srating-io/types';
+import { Fantasy } from '@srating-io/types';
 
 
 /**
@@ -12,7 +12,7 @@ class FantasyGroup {
     this.fantasy_group = fantasy_group;
   }
 
-  private fantasy_group: General.FantasyGroup;
+  private fantasy_group: Fantasy.FantasyGroup;
 
   getFantasyGroup() {
     return this.fantasy_group;
@@ -51,7 +51,7 @@ class FantasyGroup {
       fantasy_draft_orders,
     }:
     {
-      fantasy_draft_orders: General.FantasyDraftOrders;
+      fantasy_draft_orders: Fantasy.FantasyDraftOrders;
     },
   ) {
     const draft_order = this.getDraftOrder({ fantasy_draft_orders });
@@ -78,7 +78,7 @@ class FantasyGroup {
       fantasy_group_users,
     }:
     {
-      fantasy_group_users: General.FantasyGroupUsers
+      fantasy_group_users: Fantasy.FantasyGroupUsers
     },
   ): boolean {
     // todo the problem with this is it might be stale if the comppnent uses this does not re-render updating the store
@@ -102,8 +102,8 @@ class FantasyGroup {
       fantasy_draft_orders,
     }:
     {
-      fantasy_entrys?: General.FantasyEntrys;
-      fantasy_draft_orders?: General.FantasyDraftOrders;
+      fantasy_entrys?: Fantasy.FantasyEntrys;
+      fantasy_draft_orders?: Fantasy.FantasyDraftOrders;
     },
   ) {
     type Data = {

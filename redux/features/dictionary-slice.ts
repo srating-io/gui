@@ -2,7 +2,7 @@
 
 import { Objector } from '@esmalley/ts-utils';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { General } from '@srating-io/types';
+import { Fantasy, General } from '@srating-io/types';
 
 
 type InitialState = {
@@ -10,7 +10,7 @@ type InitialState = {
   organization: General.Organizations,
   division: General.Divisions,
   terminology: General.Terminologies,
-  fantasy_payout_rule: General.FantasyPayoutRules,
+  fantasy_payout_rule: Fantasy.FantasyPayoutRules,
   organization_id_x_division_id_x_season_x_count: object,
   organization_id_x_division_id_x_season_x_conference_id_x_true: object,
   organization_id_x_division_id_x_ranking_seasons: object,
