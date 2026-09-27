@@ -53,6 +53,20 @@ export default bundleAnalyzer({
   // output: 'standalone',
   // transpilePackages: ['@esmalley/react-material-ui'],
   reactStrictMode: true,
+  async redirects() {
+    return [
+      {
+        source: '/:sport/picks',
+        destination: '/:sport/projections',
+        permanent: true,
+      },
+      {
+        source: '/blog/picks-2023-review',
+        destination: '/blog/2023-projection-accuracy-review',
+        permanent: true,
+      },
+    ];
+  },
   // webpack: (config /* options */) => {
   //   config.module.rules.push({
   //     test: /\.md$/,

@@ -37,7 +37,7 @@ const Pricing = ({ view }: { view: string | null; }) => {
   const [billingOpen, setBillingOpen] = useState(false);
   const [selectedPricing, setSelectedPricing] = useState({});
 
-  const leftSwitch = 'Picks';
+  const leftSwitch = 'Projections';
   const rightSwitch = 'API';
 
   let s = leftSwitch;
@@ -60,14 +60,13 @@ const Pricing = ({ view }: { view: string | null; }) => {
     {
       code: 'picks_monthly',
       name: 'Monthly',
-      description: '$5 USD per month for picks access',
+      description: '$5 USD per month for projections access',
       price: 5,
       type: 'picks',
       price_description: 'USD per month',
       features: [
-        'Predicted win %',
-        'Predicted score / spread / over',
-        'Betting calculator tool',
+        'Win probability for every game',
+        'Projected score and margin',
       ],
       missing_features: ['API access'],
       priceId: process.env.NEXT_PUBLIC_ENV === 'dev' ? 'price_1NcziSDIZlrOiqc2TY4NEiXc' : 'price_1NczWWDIZlrOiqc2QdE6mTdf',
@@ -75,14 +74,13 @@ const Pricing = ({ view }: { view: string | null; }) => {
     {
       code: 'picks_yearly',
       name: 'Yearly',
-      description: '$20 USD per year for picks access',
+      description: '$20 USD per year for projections access',
       price: 20,
       type: 'picks',
       price_description: 'USD per year',
       features: [
-        'Predicted win %',
-        'Predicted score / spread / over',
-        'Betting calculator tool',
+        'Win probability for every game',
+        'Projected score and margin',
       ],
       missing_features: ['API access'],
       priceId: process.env.NEXT_PUBLIC_ENV === 'dev' ? 'price_1NcziSDIZlrOiqc2A9maKQwi' : 'price_1NczWWDIZlrOiqc2pKPXv8aj',
@@ -99,7 +97,7 @@ const Pricing = ({ view }: { view: string | null; }) => {
       price_description: '',
       usage_limit: '500',
       features: ['Limited access', 'Scrambled data'],
-      missing_features: ['Access to picks'],
+      missing_features: ['Access to projections'],
     },
     {
       code: 'api_basic',
@@ -110,11 +108,10 @@ const Pricing = ({ view }: { view: string | null; }) => {
       price_description: 'USD per month',
       usage_limit: '20,000',
       features: [
-        'Access to picks',
+        'Access to projections',
         'CSV downloads',
         'Games / Teams / Players / Stats',
         'Live scores',
-        'Live odds',
       ],
       disabled: false,
       missing_features: [],
@@ -129,11 +126,10 @@ const Pricing = ({ view }: { view: string | null; }) => {
       price_description: 'USD per month',
       usage_limit: '100,000',
       features: [
-        'Access to picks',
+        'Access to projections',
         'CSV downloads',
         'Games / Teams / Players / Stats',
         'Live scores',
-        'Live odds',
       ],
       disabled: false,
       missing_features: [],
@@ -148,11 +144,10 @@ const Pricing = ({ view }: { view: string | null; }) => {
       price_description: 'USD per month',
       usage_limit: '4 Million',
       features: [
-        'Access to picks',
+        'Access to projections',
         'CSV downloads',
         'Games / Teams / Players / Stats',
         'Live scores',
-        'Live odds',
       ],
       disabled: true,
       missing_features: [],
@@ -273,7 +268,7 @@ const Pricing = ({ view }: { view: string | null; }) => {
       <>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: 8 }}>
           <Typography type='body1' style={{ maxWidth: '600px', margin: 'auto', color: theme.text.secondary }}>
-            Start making data-driven decisions with our AI-powered sports predictions.
+            A win-probability model built on 20 seasons of college basketball and football — and published so you can check it.
           </Typography>
           <div style={{ maxWidth: '600px', margin: 0 }}>
             <ul className = {Style.getStyleClassName(ulStyle)}>
@@ -282,7 +277,7 @@ const Pricing = ({ view }: { view: string | null; }) => {
                   <SmartToyIcon style = {{ fontSize: 24, color: theme.primary.main }} />
                 </div>
                 <div style = {{ display: 'flex', flexDirection: 'column' }}>
-                  <Typography type = 'subtitle1'>AI-Powered Predictive Models</Typography>
+                  <Typography type = 'subtitle1'>AI-Powered Statistical Models</Typography>
                   <Typography type = 'body2' style = {{ color: theme.text.secondary }}>Our algorithms are trained on historical datasets: 10+ years of 🏀 (75,000+ games) and 20+ years of 🏈 (20,000+ games).</Typography>
                 </div>
               </li>
@@ -291,8 +286,8 @@ const Pricing = ({ view }: { view: string | null; }) => {
                   <AnalyticsIcon style = {{ fontSize: 24, color: theme.primary.main }} />
                 </div>
                 <div style = {{ display: 'flex', flexDirection: 'column' }}>
-                  <Typography type = 'subtitle1'>Daily Data-Driven Picks</Typography>
-                  <Typography type = 'body2' style = {{ color: theme.text.secondary }}>Receive daily, unbiased picks for College Basketball and Football, generated by our sophisticated analytics engine.</Typography>
+                  <Typography type = 'subtitle1'>Daily Game Projections</Typography>
+                  <Typography type = 'body2' style = {{ color: theme.text.secondary }}>Win probability and a projected score for every scheduled college basketball and football game, updated daily.</Typography>
                 </div>
               </li>
               <li className = {Style.getStyleClassName(liStyle)}>
@@ -302,15 +297,14 @@ const Pricing = ({ view }: { view: string | null; }) => {
                 <div style = {{ display: 'flex', flexDirection: 'column' }}>
                   <Typography type = 'subtitle1'>Proven & Transparent</Typography>
                   <Typography type = 'body2' style = {{ color: theme.text.secondary }}>
-                    We believe in transparency. View our {' '}
-                      <a style={{ cursor: 'pointer', color: theme.link.primary }} onClick={(e) => { e.preventDefault(); router.push('/cbb/picks?view=stats'); }} href='/cbb/picks?view=stats'>
-                        live CBB win-rate stats
+                    Our live accuracy page breaks every projection down by confidence band, and by season, month, week and day: {' '}
+                      <a style={{ cursor: 'pointer', color: theme.link.primary }} onClick={(e) => { e.preventDefault(); router.push('/cbb/projections?view=stats'); }} href='/cbb/projections?view=stats'>
+                        CBB accuracy
                       </a>
                       {' '} or {' '}
-                      <a style={{ cursor: 'pointer', color: theme.link.primary }} onClick={(e) => { e.preventDefault(); router.push('/cfb/picks?view=stats'); }} href='/cfb/picks?view=stats'>
-                        live CFB
-                      </a>
-                      {' '}. Live win rate is broken down by season, month, week, and day. Check out the code on <a style = {{ color: theme.link.primary }} href = "https://github.com/esmalleydev/srating.io-gui" target = "_blank">Github</a>.
+                      <a style={{ cursor: 'pointer', color: theme.link.primary }} onClick={(e) => { e.preventDefault(); router.push('/cfb/projections?view=stats'); }} href='/cfb/projections?view=stats'>
+                        CFB accuracy
+                      </a>.
                   </Typography>
                 </div>
               </li>
@@ -330,7 +324,7 @@ const Pricing = ({ view }: { view: string | null; }) => {
         <Typography style = {{ textAlign: 'center', margin: '10px 0px' }} type='h5'>API access <sup style = {{ fontSize: '14px' }}>beta</sup></Typography>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: 8 }}>
           <Typography type='body1' style={{ maxWidth: '600px', margin: 'auto', color: theme.text.secondary }}>
-            Integrate our powerful sports data and predictions directly into your applications with our flexible API.
+            One API for both sports: live scores, box scores, computed advanced stats, elo ratings and the same projections.
           </Typography>
           <div style={{ maxWidth: '600px', margin: 0 }}>
             <ul className = {Style.getStyleClassName(ulStyle)}>
@@ -340,7 +334,7 @@ const Pricing = ({ view }: { view: string | null; }) => {
                 </div>
                 <div style = {{ display: 'flex', flexDirection: 'column' }}>
                   <Typography type = 'subtitle1'>Flexible & Powerful Data</Typography>
-                  <Typography type = 'body2' style = {{ color: theme.text.secondary }}>Access comprehensive data for games, teams, players, stats, live scores, and our AI-powered picks.</Typography>
+                  <Typography type = 'body2' style = {{ color: theme.text.secondary }}>Access comprehensive data for games, teams, players, stats, live scores, and our model-based projections.</Typography>
                 </div>
               </li>
               <li className = {Style.getStyleClassName(liStyle)}>
@@ -348,8 +342,8 @@ const Pricing = ({ view }: { view: string | null; }) => {
                   <ShowChartIcon style = {{ fontSize: 24, color: theme.primary.main }} />
                 </div>
                 <div style = {{ display: 'flex', flexDirection: 'column' }}>
-                  <Typography type = 'subtitle1'>Live Scores & Betting Odds</Typography>
-                  <Typography type = 'body2' style = {{ color: theme.text.secondary }}>Get up-to-the-minute game scores and betting odds to power real-time applications and analysis.</Typography>
+                  <Typography type = 'subtitle1'>Live Scores & Box Scores</Typography>
+                  <Typography type = 'body2' style = {{ color: theme.text.secondary }}>Up-to-the-minute scores and full team and player box scores for every game, ready for real-time applications.</Typography>
                 </div>
               </li>
               <li className = {Style.getStyleClassName(liStyle)}>

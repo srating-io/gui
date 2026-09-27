@@ -34,14 +34,14 @@ class Games extends Surface {
 
     return {
       title: `sRating | ${sportText} live scores`,
-      description: `Live ${sportText} scores and odds`,
+      description: `Live ${sportText} scores and stats`,
       openGraph: {
         title: `sRating.io ${sportText} live scores`,
-        description: `Live ${sportText} scores and odds`,
+        description: `Live ${sportText} scores and stats`,
       },
       twitter: {
         card: 'summary',
-        title: `Live ${sportText} scores and odds`,
+        title: `Live ${sportText} scores and stats`,
       },
     };
   }

@@ -62,7 +62,7 @@ class Team extends Surface {
 
     return {
       title: `sRating | ${helperTeam.getName()}`,
-      description: 'View predicted result, matchup, trends, odds',
+      description: 'View predicted result, matchup, and trends',
       openGraph: {
         title: `${helperTeam.getName()} ${sportText}`,
         description: `${helperTeam.getName()} schedule, trends, statistics, roster`,

@@ -1,6 +1,6 @@
 ---
-title: '2023 picks stats'
-excerpt: '2023 Season Picks Statistical Review'
+title: '2023 projection accuracy'
+excerpt: '2023 Season Projection Accuracy Review'
 coverImage: null
 date: '2023-10-24T12:00:00.322Z'
 author:

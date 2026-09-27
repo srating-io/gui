@@ -51,7 +51,7 @@ const Billing = ({ pricing, open, closeHandler }) => {
       onClose={closeHandler}
       paperStyle={{ maxWidth: 550 }}
     >
-      <Typography type = 'h5' >{pricing.name || 'Loading...'} {pricing.type === 'picks' ? 'picks access' : 'API access'}</Typography>
+      <Typography type = 'h5' >{pricing.name || 'Loading...'} {pricing.type === 'picks' ? 'projections access' : 'API access'}</Typography>
       <div>
         <div>
           {!trial ? <Typography style = {{ color: theme.text.secondary }} type = 'caption'>See <a style = {{ color: theme.link.primary }} href = "https://srating.io/terms-and-conditions" target = "_blank">terms and conditions</a> before subscribing. Payments processed securely via <a style = {{ color: theme.link.primary }} href = "https://stripe.com" target = "_blank">Stripe</a></Typography> : ''}

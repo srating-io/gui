@@ -35,13 +35,13 @@ const Home = () => {
       id: 'rankings',
       name: 'Rankings',
       icon: <EmojiEventsIcon style = {{ fontSize: 24, display: 'inline-block', color: theme.warning.dark }} />,
-      description: 'Rank every team, coach, player, conference. Also view ranks of each individual metric.',
+      description: 'Every team, coach, player and conference ranked — overall and on each individual metric.',
     },
     {
       id: 'tools',
       name: 'Tools',
       icon: <BuildIcon style = {{ fontSize: 24, display: 'inline-block', color: theme.secondary.dark }} />,
-      description: 'Powerful comparison and prediction tools to scout any match up. Compare stats, roster, trends.',
+      description: 'Powerful comparison and prediction tools to scout any match up.',
     },
   ];
 
@@ -99,7 +99,7 @@ const Home = () => {
             {<><span style = {{ color: General.getLogoColorPrimary() }}>s</span><span style = {{ color: General.getLogoColorSecondary() }}>Rating</span></>}
           </Typography>
           <Typography type="h5" style = {{ textAlign: 'center', color: theme.text.primary, marginBottom: 8 }}>
-            Know the matchup before tip-off 🏀 & 🏈
+            Analysis tools & projections for 🏀 & 🏈
           </Typography>
           <Typography type="body1" style = {{ textAlign: 'center', color: theme.text.secondary, maxWidth: 620, margin: '0px auto 16px auto' }}>
             Rankings, trends and prediction tools for college basketball and football. API access from $25 a month, Picks from $20/year. No ads, <a style = {{ color: theme.link.primary }} href = "https://github.com/srating-io/gui" target = "_blank">open-source</a>.

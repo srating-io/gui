@@ -280,8 +280,8 @@ class Navigation {
    * Navigate to something on a picks view. Must already be on picks view
    */
   public picksView<K extends InitialStateKeysPicks>(args: Pick<InitialStatePicks, K>, onRouter: null | undefined | (() => void) = null) {
-    if (!this.pathName.includes('picks')) {
-      throw new Error('picksView only usable when already navigated to picks');
+    if (!this.pathName.includes('projections')) {
+      throw new Error('picksView only usable when already navigated to projections');
     }
 
     for (const key in args) {

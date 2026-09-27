@@ -15,14 +15,14 @@ type Props = {
 
 export const metadata: Metadata = {
   title: 'sRating | API Pricing',
-  description: 'College basketball API / Picks',
+  description: 'College basketball & football sports data API',
   openGraph: {
     title: 'sRating.io college basketball API',
-    description: 'College basketball API / Picks',
+    description: 'College basketball & football sports data API',
   },
   twitter: {
     card: 'summary',
-    title: 'College basketball API / Picks',
+    title: 'College basketball & football sports data API',
   },
 };
 

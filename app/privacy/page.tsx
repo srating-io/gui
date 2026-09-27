@@ -7,14 +7,14 @@ import { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'sRating | Privacy policy',
-  description: 'College basketball + football API / Picks',
+  description: 'College basketball & football sports data API',
   openGraph: {
     title: 'sRating.io college basketball + football API',
-    description: 'College basketball + football API / Picks',
+    description: 'College basketball & football sports data API',
   },
   twitter: {
     card: 'summary',
-    title: 'College basketball + football API / Picks',
+    title: 'College basketball & football sports data API',
   },
 };
 

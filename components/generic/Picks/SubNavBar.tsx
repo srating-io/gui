@@ -25,7 +25,7 @@ const SubNavBar = () => {
   const tabOptions = {
     stats: 'Stats',
     calculator: 'Calculator',
-    picks: 'Picks',
+    picks: 'Projections',
   };
 
   const tabOrder = ['picks', 'calculator', 'stats'];
@@ -110,8 +110,8 @@ const SubNavBar = () => {
         onClose={handleCloseLockedDialog}
       >
         <Typography type = 'h6'>Subscription required</Typography>
-        <Typography type = 'body1'>Subscribe for just $5 per month to get access to the betting calculator!</Typography>
-        <Typography type = 'a' onClick = {handleLiveWinRate}>View the live win rate</Typography>
+        <Typography type = 'body1'>Subscribe for just $5 per month to unlock subscriber tools!</Typography>
+        <Typography type = 'a' onClick = {handleLiveWinRate}>View the live accuracy</Typography>
         <div style = {{ textAlign: 'right' }}>
           <Button onClick={handleCloseLockedDialog} title = {'Maybe later'} ink value = 'later' />
           <Button onClick={handleSubscribe} autoFocus title = {'Subscribe'} value = 'subscribe' />

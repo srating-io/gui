@@ -105,7 +105,7 @@ const Picks = ({ games }: {games: PickResultsWithPrediction}) => {
       <div style = {{ maxWidth: 400, margin: 'auto' }}>
         <Typography type = 'h6' style = {{ marginBottom: 10 }}>Subscription required</Typography>
         <Typography type = 'body1' style = {{ marginBottom: 10 }}>Subscribe for just $5 per month to get access to the win percentage and predicted score for every game!</Typography>
-        <Typography type = 'a' onClick = {handleLiveWinRate}>View the live win rate</Typography>
+        <Typography type = 'a' onClick = {handleLiveWinRate}>View the live accuracy</Typography>
         <div style = {{ textAlign: 'right' }}>
           <Button onClick={handleSubscribe} autoFocus title = {'Subscribe'} value = 'subscribe' />
         </div>

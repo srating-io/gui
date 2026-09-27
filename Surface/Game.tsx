@@ -78,15 +78,15 @@ class Game extends Surface {
 
     return {
       title: `sRating | ${Game.getTeamName('away')} vs ${Game.getTeamName('home')}`,
-      description: 'View predicted result, matchup, trends, odds',
+      description: 'View predicted result, matchup, and trends',
       openGraph: {
         title: `${Game.getTeamName('away')} vs ${Game.getTeamName('home')}`,
-        description: 'View predicted result, matchup, trends, odds',
+        description: 'View predicted result, matchup, and trends',
       },
       twitter: {
         card: 'summary',
         title: `${Game.getTeamName('away')} vs ${Game.getTeamName('home')}`,
-        description: 'View predicted result, matchup, trends, odds',
+        description: 'View predicted result, matchup, and trends',
       },
     };
   }

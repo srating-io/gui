@@ -69,7 +69,7 @@ const Client = ({ game, game_pulses, odds }: {game: General.Game, game_pulses: G
       value: 'liveSpread',
     },
     {
-      label: 'Live O/U',
+      label: 'Live total',
       value: 'liveOverUnder',
     },
   ];
@@ -217,7 +217,7 @@ const Client = ({ game, game_pulses, odds }: {game: General.Game, game_pulses: G
     const lines: LineProps[] = [
       {
         type: 'monotone',
-        name: 'O/U',
+        name: 'Total',
         dataKey: 'over',
         stroke: Color.getTextColor(colors.homeColor, backgroundColor),
         strokeWidth: 2,

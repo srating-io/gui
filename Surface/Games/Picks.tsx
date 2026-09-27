@@ -37,15 +37,15 @@ class Picks extends Games {
     const sportText = Organization.getSportText({ organization_id });
 
     return {
-      title: `sRating | ${sportText} betting picks`,
-      description: `Best picks for each ${sportText} game`,
+      title: `sRating | ${sportText} score projections`,
+      description: `Model-based score and win-probability projections for each ${sportText} game`,
       openGraph: {
-        title: `sRating.io ${sportText} picks`,
-        description: `Best picks for each ${sportText} game`,
+        title: `sRating.io ${sportText} projections`,
+        description: `Model-based score and win-probability projections for each ${sportText} game`,
       },
       twitter: {
         card: 'summary',
-        title: `Best picks for each ${sportText} game`,
+        title: `${sportText} score projections`,
       },
     };
   }

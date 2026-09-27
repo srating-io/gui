@@ -181,13 +181,13 @@ const Tile = ({ game }) => {
     return (
       <div>
         <div style={containerStyle}>
-          <Typography style = {{ display: 'block', lineHeight: '20px', color: theme.text.secondary }} type = 'overline'>Money Line: {Game.getPreML('away')} / {Game.getPreML('home')}</Typography>
+          <Typography style = {{ display: 'block', lineHeight: '20px', color: theme.text.secondary }} type = 'overline'>Market line: {Game.getPreML('away')} / {Game.getPreML('home')}</Typography>
         </div>
         <div style={containerStyle}>
-          <Typography style = {{ display: 'block', lineHeight: '20px', color: theme.text.secondary }} type = 'overline'>Spread: {Game.getPreSpread('away')} / {Game.getPreSpread('home')}</Typography>
+          <Typography style = {{ display: 'block', lineHeight: '20px', color: theme.text.secondary }} type = 'overline'>Market spread: {Game.getPreSpread('away')} / {Game.getPreSpread('home')}</Typography>
         </div>
         <div style={containerStyle}>
-          <Typography style = {{ display: 'block', lineHeight: '20px', color: theme.text.secondary }} type = 'overline'>O/U: {Game.getPreOver()} / {Game.getPreUnder()}</Typography>
+          <Typography style = {{ display: 'block', lineHeight: '20px', color: theme.text.secondary }} type = 'overline'>Market total: {Game.getPreOver()} / {Game.getPreUnder()}</Typography>
         </div>
       </div>
     );

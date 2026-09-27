@@ -202,17 +202,18 @@ const Tile = ({ game, isLoadingWinPercentage }) => {
         <div style = {timeStyle}><Typography style = {{ display: 'inline-block', color: (Game.isInProgress() ? theme.info.dark : theme.text.secondary) }} type = 'overline'>{Game.getTime()}</Typography>{network}</div>
         {
           displayCardView === 'compact' && !Game.isFinal() && oddsTexts.length && hideOdds !== 1 ?
-            <div><Tooltip onClickRemove text='Vegas'><IconButton value = 'vegas' onClick={handleOpenVegas} icon = {<AccountBalanceIcon style = {{ fontSize: 16, color: theme.amber[500] }} />} /></Tooltip></div>
+            <div><Tooltip onClickRemove text='Market lines'><IconButton value = 'vegas' onClick={handleOpenVegas} icon = {<AccountBalanceIcon style = {{ fontSize: 16, color: theme.amber[500] }} />} /></Tooltip></div>
             : ''
         }
+        {hideOdds !== 1 &&
         <Modal open = {vegasModalOpen} onClose={() => setVegasModalOpen(false)}>
-          <Typography type = 'h6'>Vegas odds</Typography>
+          <Typography type = 'h6'>Market lines</Typography>
           {getOddsLine()}
           {
             (bookmakers && Object.keys(bookmakers).length) ?
               (
                 <>
-                  <Typography type = 'h6'>Bookmakers</Typography>
+                  <Typography type = 'h6'>Market sources</Typography>
                   {Object.entries(bookmakers).map(([key, value]) => {
                     if (!bookmakersKeysToShow.includes(key)) {
                       return null;
@@ -246,6 +247,7 @@ const Tile = ({ game, isLoadingWinPercentage }) => {
               ) : ''
           }
         </Modal>
+        }
         {/* {
           displayCardView === 'compact' && !Game.isFinal() && oddsTexts.length && hideOdds !== 1 ?
             <div><Typography style={{ display: 'inline-block', fontSize: '11px', color: theme.text.secondary }} type = 'overline'>{oddsTexts.join(' | ')}</Typography></div>
@@ -304,42 +306,42 @@ const Tile = ({ game, isLoadingWinPercentage }) => {
 
     let tdAwaySpreadTitle = 'Pre-game spread';
     let tdHomeSpreadTitle = 'Pre-game spread';
-    let tdAwayMLTitle = 'Pre-game money line';
-    let tdHomeMLTitle = 'Pre-game money line';
-    let tdOverTitle = 'Pre-game over';
-    let tdUnderTitle = 'Pre-game under';
+    let tdAwayMLTitle = 'Pre-game market line';
+    let tdHomeMLTitle = 'Pre-game market line';
+    let tdOverTitle = 'Pre-game total over';
+    let tdUnderTitle = 'Pre-game total under';
 
     if (Game.isFinal()) {
       if (Game.coveredSpread('away')) {
         awaySpreadCoverStyle.color = theme.success.main;
-        tdAwaySpreadTitle = 'Covered pre spread';
+        tdAwaySpreadTitle = 'Beat pre-game spread';
       }
       if (Game.coveredSpread('home')) {
         homeSpreadCoverStyle.color = theme.success.main;
-        tdHomeSpreadTitle = 'Covered pre spread';
+        tdHomeSpreadTitle = 'Beat pre-game spread';
       }
       if (Game.won('away')) {
         awayMLStyle.color = theme.success.main;
-        tdAwayMLTitle = 'Covered money line';
+        tdAwayMLTitle = 'Beat market line';
       }
       if (Game.won('home')) {
         homeMLStyle.color = theme.success.main;
-        tdHomeMLTitle = 'Covered money line';
+        tdHomeMLTitle = 'Beat market line';
       }
       if (Game.coveredOver()) {
         overStyle.color = theme.success.main;
-        tdOverTitle = 'Covered over';
+        tdOverTitle = 'Beat total over';
       }
       if (Game.coveredUnder()) {
         underStyle.color = theme.success.main;
-        tdUnderTitle = 'Covered under';
+        tdUnderTitle = 'Beat total under';
       }
     } else if (Game.isInProgress()) {
       tdAwaySpreadTitle = 'Pre / Live spread';
-      tdAwayMLTitle = 'Pre / Live money line';
+      tdAwayMLTitle = 'Pre / Live market line';
       tdOverTitle = 'Pre / Live over';
       tdHomeSpreadTitle = 'Pre / Live spread';
-      tdHomeMLTitle = 'Pre / Live money line';
+      tdHomeMLTitle = 'Pre / Live market line';
       tdUnderTitle = 'Pre / Live under';
     }
 
@@ -348,9 +350,9 @@ const Tile = ({ game, isLoadingWinPercentage }) => {
         <thead>
           <tr>
             <th style = {{ textAlign: 'left' }}><Typography type = 'caption'>-</Typography></th>
-            <th><Typography type = 'caption'>ML</Typography></th>
+            <th><Typography type = 'caption'>LINE</Typography></th>
             <th><Typography type = 'caption'>SPREAD</Typography></th>
-            <th><Typography type = 'caption'>O/U</Typography></th>
+            <th><Typography type = 'caption'>TOTAL</Typography></th>
             <th style = {{ textAlign: 'right' }}><Typography type = 'caption'>%</Typography></th>
           </tr>
         </thead>

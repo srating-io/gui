@@ -16,7 +16,7 @@ import SettingsIcon from '@esmalley/react-material-icons/Settings';
 import RSSFeedIcon from '@esmalley/react-material-icons/RssFeed';
 import RankingIcon from '@esmalley/react-material-icons/EmojiEvents';
 import ScoresIcon from '@esmalley/react-material-icons/Scoreboard';
-import PicksIcon from '@esmalley/react-material-icons/Casino';
+import PicksIcon from '@esmalley/react-material-icons/Insights';
 import ArticleIcon from '@esmalley/react-material-icons/Article';
 import QueryStatsIcon from '@esmalley/react-material-icons/QueryStats';
 import { reset } from '@/redux/features/compare-slice';
@@ -78,7 +78,7 @@ const Sidebar = (
 
   const handlePicks = () => {
     onClick();
-    const newPathName = `/${path}/picks`;
+    const newPathName = `/${path}/projections`;
 
     if (newPathName !== pathName) {
       dispatch(setLoading(true));
@@ -166,7 +166,7 @@ const Sidebar = (
       {getButtonContainer({
         onClick: handlePicks,
         icon: <PicksIcon style={iconStyle} />,
-        text: 'Picks',
+        text: 'Projections',
       })}
 
       {getButtonContainer({

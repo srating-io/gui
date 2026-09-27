@@ -55,7 +55,7 @@ const NavBar = () => {
     subTabOptions = {
       stat_compare: 'Stat compare',
       previous_matchups: 'Prev. Matchups',
-      odds: 'Odds',
+      odds: 'Lines',
       momentum: 'Momentum',
     };
   }

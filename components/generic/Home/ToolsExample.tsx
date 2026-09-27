@@ -4,7 +4,7 @@ import { useTransition } from 'react';
 
 
 
-import PicksIcon from '@esmalley/react-material-icons/Casino';
+import PicksIcon from '@esmalley/react-material-icons/Insights';
 import QueryStatsIcon from '@esmalley/react-material-icons/QueryStats';
 import DataObjectIcon from '@esmalley/react-material-icons/DataObject';
 import EventIcon from '@esmalley/react-material-icons/Event';
@@ -43,15 +43,15 @@ const ToolsExample = () => {
         <Tile
           style = {{ padding: 10 }}
           icon = {<PicksIcon style = {{ color: theme.success.main, fontSize: 28 }} />}
-          primary='Picks tool'
-          secondary='This tool can help you calculate which bets you should place.'
-          onClick={() => { handlePath(`/${path}/picks`); }}
+          primary='Projections tool'
+          secondary="See the model's win probability and projected score for any matchup."
+          onClick={() => { handlePath(`/${path}/projections`); }}
         />
         <Tile
           style = {{ padding: 10 }}
           icon = {<DataObjectIcon style = {{ color: theme.warning.main, fontSize: 28 }} />}
           primary='API access'
-          secondary='Use our API to do your own analysis and unlock every data point.'
+          secondary='Pull every data point yourself and build on it.'
           onClick={() => { handlePath('/pricing'); }}
         />
         <Tile

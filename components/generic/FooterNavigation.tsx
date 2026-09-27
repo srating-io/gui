@@ -5,7 +5,7 @@ import React, { useTransition } from 'react';
 
 import RankingIcon from '@esmalley/react-material-icons/EmojiEvents';
 import ScoresIcon from '@esmalley/react-material-icons/Scoreboard';
-import PicksIcon from '@esmalley/react-material-icons/Casino';
+import PicksIcon from '@esmalley/react-material-icons/Insights';
 import SportsEsportsIcon from '@esmalley/react-material-icons/SportsEsports';
 import { useAppSelector } from '@/redux/hooks';
 import Organization from '@/components/helpers/Organization';
@@ -37,7 +37,7 @@ const FooterNavigation = () => {
     'home',
     'ranking',
     'games',
-    'picks',
+    'projections',
   ];
 
   if (organization_id === Organization.getCBBID()) {
@@ -86,7 +86,7 @@ const FooterNavigation = () => {
   };
 
   const handlePicks = () => {
-    const newPathName = `/${viewingSport.toLowerCase()}/picks`;
+    const newPathName = `/${viewingSport.toLowerCase()}/projections`;
 
     if (newPathName !== pathName) {
       navigation.picks(newPathName);
@@ -127,8 +127,8 @@ const FooterNavigation = () => {
       handler: handleScores,
     },
     {
-      value: 'picks',
-      label: 'Picks',
+      value: 'projections',
+      label: 'Projections',
       icon: <PicksIcon style = {{ fontSize: 24 }} />,
       handler: handlePicks,
     },

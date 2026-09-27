@@ -62,7 +62,7 @@ const AdditionalOptions = () => {
     },
     {
       value: 'odds_display',
-      label: 'Hide odds',
+      label: 'Hide market lines',
       selectable: true,
       onSelect: () => {
         dispatch(setDataKey({ key: 'hideOdds', value: (hideOdds === 1 ? 0 : 1) }));

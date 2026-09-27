@@ -53,7 +53,7 @@ const Locked = (
   };
 
   const getLiveWinRateHref = () => {
-    return `/${path}/picks?view=stats`;
+    return `/${path}/projections?view=stats`;
   };
 
   const handleLiveWinRate = (e) => {
