@@ -54,11 +54,11 @@ const Tile = (
 
 
   const won = (
-    game.home_score && game.away_score &&
+    game.home_score !== null && game.away_score !== null &&
     game.home_score > game.away_score &&
     game.home_team_id === team.team_id
   ) || (
-    game.home_score && game.away_score &&
+    game.home_score !== null && game.away_score !== null &&
     game.home_score < game.away_score &&
     game.away_team_id === team.team_id
   );
