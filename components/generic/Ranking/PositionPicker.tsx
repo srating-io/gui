@@ -41,7 +41,7 @@ const PositionPicker = ({ selected, isRadio = false }: { selected: string[]; isR
     options = [
       { value: 'QB', label: (breakPoint ? 'QB' : 'Quarterback') },
       { value: 'rushing', label: (breakPoint ? 'Rush' : 'Rushing') },
-      { value: 'receiving', label: (breakPoint ? 'REC.' : 'Receiving') },
+      { value: 'receiving', label: (breakPoint ? 'Rec.' : 'Receiving') },
     ];
   }
 

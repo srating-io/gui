@@ -59,7 +59,6 @@ const Client = ({ organization_id, gamelogs }) => {
   const season = useAppSelector((state) => state.playerReducer.season);
   const subview = useAppSelector((state) => state.playerReducer.subview);
 
-  console.log(gamelogs)
 
   const player_boxscores = {};
 
@@ -112,6 +111,10 @@ const Client = ({ organization_id, gamelogs }) => {
   let playerColumns: string[] = [];
 
   const playerBoxscoreHeaderColumns = Objector.deepClone(TableColumns.getColumns({ organization_id, view: 'player_boxscore' }));
+
+  const averageColumns: string[] = [
+    'passing_rating_college',
+  ];
 
   if (Organization.getCBBID() === organization_id || Organization.getNBAID() === organization_id) {
     playerColumns = ['game_details', 'minutes_played', 'points', 'fg', 'two_fg', 'three_fg', 'ft', 'offensive_rebounds', 'defensive_rebounds', 'assists', 'steals', 'blocks', 'turnovers', 'fouls'];
@@ -277,6 +280,12 @@ const Client = ({ organization_id, gamelogs }) => {
     }
 
     playerRows.push(formattedRow);
+  }
+
+  for (const key of averageColumns) {
+    if (key in footerRow && playerRows.length) {
+      footerRow[key] = +(+(footerRow[key] || 0) / playerRows.length).toFixed(2);
+    }
   }
 
   if (Organization.getCBBID() === organization_id || Organization.getNBAID() === organization_id) {
