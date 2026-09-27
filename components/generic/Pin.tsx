@@ -90,11 +90,12 @@ const Pin = ({ game_id }: { game_id: string; }) => {
     });
   };
 
-  const pinStyle: React.CSSProperties = {};
+  const pinStyle: React.CSSProperties = {
+    fontSize: 20,
+  };
 
   if (selected) {
     pinStyle.color = theme.warning.light;
-    pinStyle.fontSize = 24;
   }
 
   return (
