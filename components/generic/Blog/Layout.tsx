@@ -125,7 +125,7 @@ const Layout = (
         }
         {open ? <Sidebar sidebarPosts = {sidebarPosts} activeId = {activeId} onNavigate = {handleNavigate} /> : ''}
       </nav>
-      <div style = {{ flex: 1, minWidth: 0, maxWidth: 800, width: '100%' }}>
+      <div style = {{ flex: 1, minWidth: 0, width: '100%' }}>
         {children}
       </div>
     </div>
