@@ -71,8 +71,8 @@ export const getSections = () => {
       {
         name: 'Passing',
         keys: [
-          'passing_attempts',
           'passing_completions',
+          'passing_attempts',
           'passing_yards',
           'passing_completion_percentage',
           'passing_yards_per_attempt',
