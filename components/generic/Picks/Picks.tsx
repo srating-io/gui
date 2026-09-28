@@ -11,6 +11,7 @@ import { useTransition } from 'react';
 import { useNavigation } from '@/components/hooks/useNavigation';
 import { Button, Typography } from '@esmalley/react-material-ui';
 import { Game, General } from '@srating-io/types';
+import HelperGame from '@/components/helpers/Game';
 
 export type PicksGameWithPrediction = Game.getGamesResults[string] & {
   prediction?: General.Prediction;
@@ -31,8 +32,24 @@ const Picks = ({ games }: {games: PickResultsWithPrediction}) => {
   const selectedConferences = useAppSelector((state) => state.displayReducer.conferences);
 
   const hasAccess = useAppSelector((state) => state.userReducer.isValidSession);
+  const picksData = useAppSelector((state) => state.picksReducer.picks);
 
   const sorted_games = Object.values(games);
+
+  // Precomputed rather than derived inside the comparator, which runs O(n log n) times per
+  // render. The projection and the market rows arrive from the picks store after the server
+  // props, so merge a copy here rather than relying on the tile children to have run yet.
+  const game_id_x_edge: { [game_id: string]: number | null } = {};
+
+  if (picksSort === 'best_value') {
+    for (let i = 0; i < sorted_games.length; i++) {
+      const row = sorted_games[i];
+      const liveRow = (picksData && row.game_id in picksData) ? picksData[row.game_id] : null;
+      const merged = liveRow ? { ...row, ...liveRow } : row;
+
+      game_id_x_edge[row.game_id] = new HelperGame({ game: merged }).getBestEdge().edge;
+    }
+  }
 
   sorted_games.sort((a, b) => {
     const aIsPinned = (
@@ -53,6 +70,25 @@ const Picks = ({ games }: {games: PickResultsWithPrediction}) => {
 
     if (!aIsPinned && bIsPinned) {
       return 1;
+    }
+
+    if (picksSort === 'best_value') {
+      const aEdge = game_id_x_edge[a.game_id];
+      const bEdge = game_id_x_edge[b.game_id];
+
+      if (aEdge !== bEdge) {
+        // Games with no market line or no projection fall to the bottom rather than being
+        // treated as a zero edge, which would scatter them through the middle of the list.
+        if (aEdge === null || aEdge === undefined) {
+          return 1;
+        }
+
+        if (bEdge === null || bEdge === undefined) {
+          return -1;
+        }
+
+        return aEdge > bEdge ? -1 : 1;
+      }
     }
 
     if (

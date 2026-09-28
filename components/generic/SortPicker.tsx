@@ -29,10 +29,10 @@ const SortPicker = ({ open, openHandler, closeHandler }) => {
       value: 'win_percentage',
       label: 'Highest win percentage',
     },
-    // {
-    //   'value': 'best_value',
-    //   'label': 'Best value',
-    // },
+    {
+      value: 'best_value',
+      label: 'Largest edge',
+    },
   ];
 
   const handleOpen = () => {

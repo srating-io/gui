@@ -9,6 +9,7 @@ import { useScrollContext } from '@/contexts/scrollContext';
 import Rank from './Tile/Rank';
 import PredictionLine from './Tile/PredictionLine';
 import StatLine from './Tile/StatLine';
+import Analysis from './Tile/Analysis';
 import Organization from '@/components/helpers/Organization';
 import { setDataKey } from '@/redux/features/picks-slice';
 import { useNavigation } from '@/components/hooks/useNavigation';
@@ -42,6 +43,7 @@ const Tile = ({ game }) => {
 
   const organizations = useAppSelector((state) => state.dictionaryReducer.organization);
   const conferences = useAppSelector((state) => state.dictionaryReducer.conference);
+  const hideOdds = useAppSelector((state) => state.displayReducer.hideOdds);
 
   const path = Organization.getPath({ organizations, organization_id: game.organization_id });
 
@@ -203,7 +205,8 @@ const Tile = ({ game }) => {
         {getSecondaryHeader()}
         <PredictionLine game = {game} />
         <StatLine game = {game} />
-        {getOdds()}
+        <Analysis game = {game} />
+        {hideOdds !== 1 ? getOdds() : ''}
         <div style = {{ textAlign: 'right' }}>
           <Button onClick = {handleMatchup} title = {'Full matchup'} value={'full-matchup'} ink />
         </div>

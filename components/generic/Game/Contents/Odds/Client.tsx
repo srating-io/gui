@@ -15,6 +15,8 @@ import { headerBarHeight } from '@/components/generic/Header';
 // import LockIcon from '@esmalley/react-material-icons/Lock';
 import { Color } from '@esmalley/ts-utils';
 import { LinearProgress, Paper, Typography, useTheme } from '@esmalley/react-material-ui';
+import Analysis from '@/components/generic/Analysis/Analysis';
+import { useAppSelector } from '@/redux/hooks';
 
 /**
  * The main wrapper div for all the contents
@@ -51,6 +53,12 @@ const ClientSkeleton = () => {
 
 const Client = ({ game, oddsStats }) => {
   const theme = useTheme();
+
+  // The game page keeps its fresher scores and prediction in its own slice; the accuracy
+  // payload is shared with the projections page.
+  const gamePrediction = useAppSelector((state) => state.gameReducer.gamePrediction);
+  const gamePredictionLoading = useAppSelector((state) => state.gameReducer.gamePredictionLoading);
+  const accuracy = useAppSelector((state) => state.picksReducer.accuracy);
   const Game = new HelperGame({
     game,
   });
@@ -63,7 +71,7 @@ const Client = ({ game, oddsStats }) => {
     const percentage = +(((number_of_wins / number_of_games) || 0) * 100).toFixed(0);
 
     return (
-      <tr style = {{ textAlign: 'left' }}>
+      <tr key = {caption} style = {{ textAlign: 'left' }}>
         <td style = {{ textAlign: 'left' }}><Typography type='caption' style = {{ color: theme.info.main }}>{caption}</Typography></td>
         <td style = {{ paddingLeft: '10px' }}><Typography type='caption' style = {{ color: theme.text.secondary }}>{`${number_of_wins}/${number_of_games}`}</Typography></td>
         <td><Typography type='caption' style = {{ color: Color.lerpColor(theme.error.main, theme.success.light, percentage / 100) }}>{`(${percentage}%)`}</Typography></td>
@@ -111,6 +119,13 @@ const Client = ({ game, oddsStats }) => {
           </div>
         </div>
       </Paper>
+      <Analysis
+        game = {game}
+        liveRows = {gamePrediction}
+        accuracy = {accuracy}
+        loading = {gamePredictionLoading}
+        maxWidth = {600}
+      />
     </Contents>
   );
 };

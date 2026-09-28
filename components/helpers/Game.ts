@@ -3,6 +3,7 @@
 import Team from './Team';
 import Organization from './Organization';
 import { Bookmakers } from '@/types/general';
+import Odds from './Odds';
 import { Color, Dates } from '@esmalley/ts-utils';
 import { useTheme } from '@esmalley/react-material-ui';
 
@@ -484,6 +485,105 @@ class Game {
     }
 
     return false;
+  }
+
+
+  /**
+   * The market row the analysis should read.
+   *
+   * Live numbers only while the game is actually running - a final game reads its pre-game row.
+   * The -9000 floor mirrors the guard in getLiveML. This is the only place pre-vs-live is decided.
+   */
+  getActiveOddsRow() {
+    const { odds } = this.getGame();
+
+    if (!odds) {
+      return null;
+    }
+
+    if (
+      this.isInProgress() &&
+      odds.live &&
+      odds.live.money_line_away > -9000 &&
+      odds.live.money_line_home > -9000
+    ) {
+      return odds.live;
+    }
+
+    return odds.pre || null;
+  }
+
+  /**
+   * The market sources attached to the active row.
+   * Unlike getBookMakers this never hands back live sources for a finished game.
+   */
+  getActiveBookMakers(): Bookmakers | null {
+    const row = this.getActiveOddsRow();
+
+    return (row && row.json_bookmakers) || null;
+  }
+
+  /**
+   * The two sided market probabilities with the overround removed.
+   */
+  getFairProbabilities() {
+    const row = this.getActiveOddsRow();
+
+    if (!row) {
+      return null;
+    }
+
+    return Odds.getFairProbabilities({ away: row.money_line_away, home: row.money_line_home });
+  }
+
+  /**
+   * The model's projected win probability for a side, or null when there is no projection.
+   */
+  getModelProbability(side: string): number | null {
+    const { prediction } = this.getGame();
+
+    if (!prediction) {
+      return null;
+    }
+
+    const value = prediction[`${side}_percentage`];
+
+    if (value === null || value === undefined) {
+      return null;
+    }
+
+    return value;
+  }
+
+  /**
+   * How far the projection sits from the market on a side, in percentage points.
+   */
+  getEdge(side: string): number | null {
+    const fair = this.getFairProbabilities();
+
+    if (!fair) {
+      return null;
+    }
+
+    return Odds.getEdge({
+      modelProbability: this.getModelProbability(side),
+      fairProbability: fair[side],
+    });
+  }
+
+  /**
+   * The side the model likes most relative to the market, and by how much.
+   * Returns nulls rather than zeros when the comparison cannot be made at all.
+   */
+  getBestEdge(): { side: string | null; edge: number | null } {
+    const away = this.getEdge('away');
+    const home = this.getEdge('home');
+
+    if (away === null || home === null) {
+      return { side: null, edge: null };
+    }
+
+    return away >= home ? { side: 'away', edge: away } : { side: 'home', edge: home };
   }
 
   /**

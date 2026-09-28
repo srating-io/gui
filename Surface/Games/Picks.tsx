@@ -8,6 +8,8 @@ import SubNavBar from '@/components/generic/Picks/SubNavBar';
 import PicksComponent from '@/components/generic/Picks/Picks';
 import { ClientSkeleton as StatsLoaderClientSkeleton } from '@/components/generic/Picks/StatsLoader/Client';
 import StatsLoaderServer from '@/components/generic/Picks/StatsLoader/Server';
+import { ClientSkeleton as AccuracyLoaderClientSkeleton } from '@/components/generic/Picks/AccuracyLoader/Client';
+import AccuracyLoaderServer from '@/components/generic/Picks/AccuracyLoader/Server';
 import Calculator from '@/components/generic/Picks/Calculator';
 import PicksLoader from '@/components/generic/Picks/PicksLoader';
 import ContentsWrapper from '@/components/generic/Picks/ContentsWrapper';
@@ -72,7 +74,12 @@ class Picks extends Games {
             <>
               {
                 view === 'picks' ?
-                  <PicksComponent games = {games} />
+                  <>
+                    <PicksComponent games = {games} />
+                    <Suspense key = {selectedDate} fallback = {<AccuracyLoaderClientSkeleton />}>
+                      <AccuracyLoaderServer organization_id={organization_id} division_id={division_id} date = {selectedDate} season = {season} />
+                    </Suspense>
+                  </>
                   : ''
               }
               <Suspense key = {selectedDate} fallback = {<StatsLoaderClientSkeleton />}>

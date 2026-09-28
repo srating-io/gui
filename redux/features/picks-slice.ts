@@ -2,6 +2,16 @@ import State from '@/components/helpers/State';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 
+// Model accuracy bucketed by period, then by projected-confidence band.
+// Keys look like '70_total' / '70_correct'; see components/generic/Picks/Stats/Client.tsx.
+export type AccuracyBuckets = {
+  [bucket_key: string]: number;
+};
+
+export type Accuracy = {
+  [period: string]: AccuracyBuckets;
+};
+
 export type InitialState = {
   view: string;
   subview: string | null;
@@ -13,6 +23,8 @@ export type InitialState = {
   dates_checked: object,
   gameStats: object,
   gameStatsLoading: boolean,
+  accuracy: Accuracy,
+  accuracyLoading: boolean,
 };
 
 export type InitialStateKeys = keyof InitialState;
@@ -48,6 +60,8 @@ stateController.setInitialState({
   dates_checked: {},
   gameStats: {},
   gameStatsLoading: true,
+  accuracy: {},
+  accuracyLoading: true,
 });
 
 

@@ -1,26 +1,47 @@
 'use client';
 
-import React, { useState, useTransition } from 'react';
+import React, { useMemo, useState, useTransition } from 'react';
 
 import CheckCircleIcon from '@esmalley/react-material-icons/CheckCircle';
 import CancelCircleIcon from '@esmalley/react-material-icons/Cancel';
 
-// import CompareStatistic from '../../CompareStatistic';
 import HelperGame from '@/components/helpers/Game';
-
+import Organization from '@/components/helpers/Organization';
+import Odds from '@/components/helpers/Odds';
+import Scenario, { ScenarioPick, ScenarioSummary } from '@/components/helpers/Scenario';
+import useDebounce from '@/components/hooks/useDebounce';
 
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
-import Organization from '@/components/helpers/Organization';
 import { setLoading } from '@/redux/features/loading-slice';
-import { Arrayifier, Dates, Sorter } from '@esmalley/ts-utils';
+import { Dates, Sorter } from '@esmalley/ts-utils';
 import { useNavigation } from '@/components/hooks/useNavigation';
 import {
-  Button, CircularProgress, Columns, Inputs, Paper, Skeleton, Table, Tbody, Td, TextInput, Th, Thead, Tr, Typography, useTheme, useWindowDimensions,
+  Button, CircularProgress, Columns, Inputs, Paper, Table, Tbody, Td, TextInput, Th, Thead, Tr, Typography, useTheme, useWindowDimensions,
 } from '@esmalley/react-material-ui';
-import { General } from '@srating-io/types';
-import { PicksGameWithPrediction } from './Picks';
 
-// todo this somestimes triggers a double load in PicksLoader.... something with having const picksLoading = useAppSelector(state => state.picksReducer.picksLoading);, makes it double render
+
+type CommittedFilters = {
+  bet: number;
+  priceMin: number;
+  priceMax: number;
+  confidence: number;
+  roundRobin: number;
+};
+
+const defaultFilters: CommittedFilters = {
+  bet: 10,
+  priceMin: -2000,
+  priceMax: 500,
+  confidence: 75,
+  roundRobin: 0,
+};
+
+// The win rates the projections are run at. 1 is the everything-lands case.
+const projectedWinRates = [1, 0.75, 0.6];
+
+const money = (value: number): string => value.toFixed(2);
+const percent = (value: number): string => (value * 100).toFixed(2);
+
 
 const Calculator = ({ games, date }) => {
   const navigation = useNavigation();
@@ -28,7 +49,7 @@ const Calculator = ({ games, date }) => {
   const { width } = useWindowDimensions();
 
   const dispatch = useAppDispatch();
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
 
   const picksData = useAppSelector((state) => state.picksReducer.picks);
   const picksLoading = useAppSelector((state) => state.picksReducer.picksLoading);
@@ -38,476 +59,158 @@ const Calculator = ({ games, date }) => {
   const path = Organization.getPath({ organizations, organization_id });
   const hasAccess = useAppSelector((state) => state.userReducer.isValidSession);
 
-  const [now, setNow] = useState(Dates.format(Dates.parse(), 'Y-m-d'));
   const [order, setOrder] = useState('asc');
   const [orderBy, setOrderBy] = useState('start_timestamp');
-  const [inputBet, setBet] = useState<string | number>(10);
-  const [inputOddsMin, setOddsMin] = useState<string | number>(-2000);
-  const [inputOddsMax, setOddsMax] = useState<string | number>(500);
-  const [inputRoundRobin, setRoundRobin] = useState<string | number>(0);
-  const [inputPercentage, setPercentage] = useState<string | number>(75);
+
+  // What the fields show, updated on every keystroke so typing stays responsive.
+  const [inputBet, setBet] = useState<string | number>(defaultFilters.bet);
+  const [inputPriceMin, setPriceMin] = useState<string | number>(defaultFilters.priceMin);
+  const [inputPriceMax, setPriceMax] = useState<string | number>(defaultFilters.priceMax);
+  const [inputRoundRobin, setRoundRobin] = useState<string | number>(defaultFilters.roundRobin);
+  const [inputConfidence, setConfidence] = useState<string | number>(defaultFilters.confidence);
+
+  // What the maths runs on. Held apart from the fields and updated on a debounce, because a
+  // twenty leg round robin is 184,756 combinations and should not be rebuilt mid-keystroke.
+  const [filters, setFilters] = useState<CommittedFilters>(defaultFilters);
+
+  const commitFilters = useDebounce(() => {
+    setFilters({
+      bet: inputBet ? +inputBet : 0,
+      priceMin: inputPriceMin ? +inputPriceMin : 0,
+      priceMax: inputPriceMax ? +inputPriceMax : 0,
+      confidence: inputConfidence ? +inputConfidence : 0,
+      roundRobin: inputRoundRobin ? +inputRoundRobin : 0,
+    });
+  }, 400);
+
+  // Recomputed rather than held in state: a value frozen at mount sends the whole component
+  // down the wrong branch once the tab has been open past midnight.
+  const now = Dates.format(Dates.parse(), 'Y-m-d');
+
+  // The live scores arrive separately, so merge a copy. Mutating the prop in place would leave
+  // every memo below looking at an unchanged reference over changed data.
+  const merged = useMemo(() => {
+    const out = {};
+
+    for (const game_id in games) {
+      out[game_id] = (picksData && game_id in picksData) ?
+        { ...games[game_id], ...picksData[game_id] } :
+        games[game_id];
+    }
+
+    return out;
+  }, [games, picksData]);
+
+  const { eligible, rejected } = useMemo(
+    () => Scenario.getPicks({ games: merged, filters }),
+    [merged, filters],
+  );
+
+  const legs = useMemo(() => Scenario.getLegs(eligible), [eligible]);
+
+  const settled = useMemo(
+    () => Scenario.getSettled({ picks: eligible, bet: filters.bet }),
+    [eligible, filters.bet],
+  );
+
+  // One build of the combinations feeds the settled figure and every projected win rate.
+  const roundRobin = useMemo(
+    () => Scenario.getRoundRobin({ legs, size: filters.roundRobin, bet: filters.bet, winRates: projectedWinRates }),
+    [legs, filters.roundRobin, filters.bet],
+  );
+
+  const settledRoundRobin = roundRobin.settled;
+
+  const projected = useMemo(() => projectedWinRates.map((winRate, index) => ({
+    winRate,
+    straight: Scenario.getProjected({ picks: eligible, bet: filters.bet, winRate }),
+    roundRobin: roundRobin.projected[index].summary,
+  })), [eligible, roundRobin, filters.bet]);
+
+  // Projection accuracy over the whole slate. Not derived from the picks above, because a
+  // game the model called correctly still counts when nobody posted a line on it.
+  const accuracy = useMemo(() => Scenario.getAccuracy({ games: merged }), [merged]);
+
 
   if (picksLoading) {
     return (<div style={{ textAlign: 'center' }}><CircularProgress /></div>);
   }
 
-  for (const game_id in picksData) {
-    if (game_id in games) {
-      Object.assign(games[game_id], picksData[game_id]);
-    }
-  }
-
-
-  const bet = inputBet ? +inputBet : 0;
-  const oddsMin = inputOddsMin ? +inputOddsMin : 0;
-  const oddsMax = inputOddsMax ? +inputOddsMax : 0;
-  const roundRobinLength = inputRoundRobin ? +inputRoundRobin : 0;
-  const winChance = inputPercentage ? +inputPercentage : 0;
-
-
-
-  const convertAmericanToDecimal = (odds) => {
-    if (odds > 0) {
-      return 1 + (odds / 100);
-    }
-    return 1 - (100 / odds);
-  };
-
+  const isPast = date < now;
+  const isToday = date === now;
 
   const handleGame = (game_id: string) => {
     navigation.game(`/${path}/games/${game_id}`);
   };
 
-  const headCells = [
-    {
-      id: 'pick',
-      numeric: false,
-      label: 'Pick',
-    },
-    {
-      id: 'pick_ml',
-      numeric: false,
-      label: 'Pick ML',
-    },
-    {
-      id: 'start_timestamp',
-      numeric: false,
-      padding: '6px 0px 6px 6px',
-      label: 'Start',
-    },
-    {
-      id: 'vs',
-      numeric: false,
-      label: 'VS',
-    },
-    {
-      id: 'vs_ml',
-      numeric: false,
-      label: 'VS ML',
-    },
-    {
-      id: 'chance',
-      numeric: false,
-      label: '%',
-    },
-    {
-      id: 'result',
-      numeric: false,
-      label: 'Result',
-    },
-  ];
-
-  let correct = 0;
-  let total_final = 0;
-
-  let total_bet = 0;
-  let wins = 0;
-  let games_bet = 0;
-  let winnings = 0;
-
-  let future_total_bet = 0;
-  let future_games_bet = 0;
-  let future_winnings_100 = 0;
-  let future_games_won_75 = 0;
-  let future_winnings_75 = 0;
-  const future_winnings_75_array: number[] = [];
-  let future_games_won_60 = 0;
-  let future_winnings_60 = 0;
-  const future_winnings_60_array: number[] = [];
-
-  type parlayOdds = {
-    [game_id: string] : {
-      odds: number;
-      game_id: string;
-    };
-  }
-  const game_id_x_parlay_odds: parlayOdds = {};
-  const future_game_id_x_parlay_odds: parlayOdds = {};
-  const rows_picked: tableRow[] = [];
-  const rows_other: tableRow[] = [];
-  const rows_parlay: tableRow[] = [];
-
-
-  type tableRow = {
-    game_id: string;
-    game: General.Game;
-    start_timestamp: number;
-    pick: string;
-    pick_ml: string;
-    vs: string;
-    vs_ml: string;
-    chance: string;
-    result: boolean;
-    status: string;
-  };
-
-  /**
-   * Get a common, formatted row for our tables
-   */
-  const getFormattedGameRow = (game: PicksGameWithPrediction) => {
-    const Game = new HelperGame({
-      game,
-    });
-
-    const homePercentage = (game.prediction && game.prediction.home_percentage) || 0;
-    const awayPercentage = (game.prediction && game.prediction.away_percentage) || 0;
-
-    const row: tableRow = {
-      game_id: game.game_id,
-      game,
-      start_timestamp: game.start_timestamp,
-      pick: homePercentage >= awayPercentage ? 'home' : 'away',
-      pick_ml: homePercentage >= awayPercentage ? Game.getPreML('home') : Game.getPreML('away'),
-      vs: homePercentage >= awayPercentage ? 'away' : 'home', // the opposite of the pick :)
-      vs_ml: homePercentage >= awayPercentage ? Game.getPreML('away') : Game.getPreML('home'),
-      chance: parseFloat(((homePercentage >= awayPercentage ? homePercentage : awayPercentage) * 100).toString()).toFixed(0),
-      result: (homePercentage >= awayPercentage && ((game.home_score || 0) > (game.away_score || 0))) || (awayPercentage >= homePercentage && ((game.home_score || 0) < (game.away_score || 0))),
-      status: game.status,
-    };
-
-    return row;
-  };
-
-  for (const game_id in games) {
-    const game = games[game_id];
-
-    const homePercentage = (game.prediction && game.prediction.home_percentage) || 0;
-    const awayPercentage = (game.prediction && game.prediction.away_percentage) || 0;
-
-    const row = getFormattedGameRow(game);
-
-    if (game.status === 'final') {
-      total_final++;
-
-      let was_correct = false;
-
-      if (
-        (
-          game.home_score > game.away_score &&
-          homePercentage > awayPercentage
-        ) ||
-        (
-          game.home_score < game.away_score &&
-          homePercentage < awayPercentage
-        )
-      ) {
-        was_correct = true;
-        correct++;
-      }
-
-      if (
-        game.odds &&
-        game.odds.pre &&
-        game.odds.pre.money_line_away &&
-        game.odds.pre.money_line_home
-      ) {
-        const pick = homePercentage >= awayPercentage ? 'home' : 'away';
-        const odds = game.odds.pre[`money_line_${pick}`];
-
-        if (
-          odds >= oddsMin &&
-          odds <= oddsMax &&
-          game.prediction &&
-          (game.prediction[`${pick}_percentage`] * 100) >= winChance
-        ) {
-          games_bet++;
-          total_bet += bet;
-
-
-          game_id_x_parlay_odds[game_id] = {
-            odds: convertAmericanToDecimal(+odds),
-            game_id,
-          };
-
-          if (was_correct) {
-            wins++;
-            winnings += bet + ((100 / Math.abs(odds)) * bet);
-          }
-        }
-      }
-    }
-
-    if (
-      game.odds &&
-      game.odds.pre &&
-      game.odds.pre.money_line_away &&
-      game.odds.pre.money_line_home
-    ) {
-      const pick = homePercentage >= awayPercentage ? 'home' : 'away';
-      const odds = game.odds.pre[`money_line_${pick}`];
-
-      if (
-        odds >= oddsMin &&
-        odds <= oddsMax &&
-        game.prediction &&
-        (game.prediction[`${pick}_percentage`] * 100) >= winChance
-      ) {
-        rows_picked.push(row);
-        future_games_bet++;
-        future_total_bet += bet;
-
-
-        future_game_id_x_parlay_odds[game_id] = {
-          odds: convertAmericanToDecimal(+odds),
-          game_id,
-        };
-
-        future_winnings_100 += bet + ((100 / Math.abs(odds)) * bet);
-
-        future_winnings_75_array.push(((100 / Math.abs(odds)) * bet));
-        future_winnings_60_array.push(((100 / Math.abs(odds)) * bet));
-      } else {
-        rows_other.push(row);
-      }
-    }
-  }
-
-
-  // Fanduel only allows 20 parley picks for round robin, so pick the 20 with "best" odds.
-  // Fanduel seems to be the sportsbook with the highest round robin limit
-
-  // todo in the future attempt to pick the best mix of 20 games, or splits into multiples of 20?
-
-
-  // let parlay_game_ids = Object.keys(game_id_x_parlay_odds);
-  let parlay_game_ids: string[] = [];
-
-  if (Object.keys(game_id_x_parlay_odds).length <= 20) {
-    parlay_game_ids = Object.keys(game_id_x_parlay_odds);
-  } else {
-    const sorted_parlay = Object.values(game_id_x_parlay_odds).sort((a, b) => {
-      if (a.odds < b.odds) {
-        return -1;
-      }
-
-      if (a.odds > b.odds) {
-        return 1;
-      }
-
-      return 0;
-    });
-
-    for (let i = 0; i < sorted_parlay.length; i++) {
-      if (i > 19) {
-        break;
-      }
-      parlay_game_ids.push(sorted_parlay[i].game_id);
-    }
-  }
-
-
-  let roundRobinWonTotal = 0;
-  let roundRobinBetTotal = 0;
-  let roundRobinBetCombos = 0;
-  let roundRobinWins = 0;
-  if (parlay_game_ids.length > 2 && roundRobinLength) {
-    const combinations = Arrayifier.getCombinations(parlay_game_ids, parlay_game_ids.length, roundRobinLength);
-
-    roundRobinBetCombos = combinations.length;
-    roundRobinBetTotal = combinations.length * bet;
-
-    for (let i = 0; i < combinations.length; i++) {
-      let parlay_won = true;
-      let parlay_odds: number | null = null;
-      for (let j = 0; j < combinations[i].length; j++) {
-        const game = games[combinations[i][j]];
-        const homePercentage = (game.prediction && game.prediction.home_percentage) || 0;
-        const awayPercentage = (game.prediction && game.prediction.away_percentage) || 0;
-        if (
-          (
-            game.home_score < game.away_score &&
-            homePercentage > awayPercentage
-          ) ||
-          (
-            game.home_score > game.away_score &&
-            homePercentage < awayPercentage
-          )
-        ) {
-          // parlay lost, this team did not win
-          parlay_won = false;
-          break;
-        }
-
-        const { odds } = game_id_x_parlay_odds[combinations[i][j]];
-
-        if (parlay_odds === null) {
-          parlay_odds = odds;
-        } else {
-          parlay_odds *= odds;
-        }
-      }
-
-      if (parlay_won && parlay_odds !== null) {
-        roundRobinWins++;
-        roundRobinWonTotal += (parlay_odds * bet);
-      }
-    }
-  }
-
-  let future_parlay_game_ids: string[] = [];
-
-  if (Object.keys(future_game_id_x_parlay_odds).length <= 20) {
-    future_parlay_game_ids = Object.keys(future_game_id_x_parlay_odds);
-  } else {
-    const sorted_parlay = Object.values(future_game_id_x_parlay_odds).sort((a, b) => {
-      if (a.odds < b.odds) {
-        return -1;
-      }
-
-      if (a.odds > b.odds) {
-        return 1;
-      }
-
-      return 0;
-    });
-
-    for (let i = 0; i < sorted_parlay.length; i++) {
-      if (i > 19) {
-        break;
-      }
-      future_parlay_game_ids.push(sorted_parlay[i].game_id);
-    }
-  }
-
-  const randomized_60 = Arrayifier.shuffle(future_parlay_game_ids) as string[];
-
-  const future_game_id_x_loss_60 = {};
-
-  for (let i = 0; i < randomized_60.length; i++) {
-    if (
-      Object.keys(future_game_id_x_loss_60).length &&
-      Object.keys(future_game_id_x_loss_60).length / randomized_60.length > 0.4
-    ) {
-      break;
-    }
-
-    future_game_id_x_loss_60[randomized_60[i]] = true;
-  }
-
-  const randomized_75 = Arrayifier.shuffle(future_parlay_game_ids) as string[];
-  const future_game_id_x_loss_75 = {};
-
-  for (let i = 0; i < randomized_75.length; i++) {
-    if (
-      Object.keys(future_game_id_x_loss_75).length &&
-      Object.keys(future_game_id_x_loss_75).length / randomized_75.length > 0.25
-    ) {
-      break;
-    }
-
-    future_game_id_x_loss_75[randomized_75[i]] = true;
-  }
-
-  let future_roundRobinBetTotal = 0;
-  let future_roundRobinBetCombos = 0;
-  let future_roundRobinWonTotal_100 = 0;
-  let future_roundRobinWonTotal_75 = 0;
-  let future_roundRobinWonTotal_60 = 0;
-  let future_roundRobinWins_100 = 0;
-  let future_roundRobinWins_75 = 0;
-  let future_roundRobinWins_60 = 0;
-  if (future_parlay_game_ids.length > 2 && roundRobinLength) {
-    const combinations = Arrayifier.getCombinations(future_parlay_game_ids, future_parlay_game_ids.length, roundRobinLength);
-
-    future_roundRobinBetCombos = combinations.length;
-    future_roundRobinBetTotal = combinations.length * bet;
-
-    for (let i = 0; i < combinations.length; i++) {
-      let parlay_won_75 = true;
-      let parlay_won_60 = true;
-      let parlay_odds: number | null = null;
-      for (let j = 0; j < combinations[i].length; j++) {
-        const game = games[combinations[i][j]];
-        if (game.game_id in future_game_id_x_loss_75) {
-          // parlay lost, this team did not win
-          parlay_won_75 = false;
-        }
-
-        if (game.game_id in future_game_id_x_loss_60) {
-          // parlay lost, this team did not win
-          parlay_won_60 = false;
-        }
-
-        const { odds } = future_game_id_x_parlay_odds[combinations[i][j]];
-
-        if (parlay_odds === null) {
-          parlay_odds = odds;
-        } else {
-          parlay_odds *= odds;
-        }
-      }
-
-      if (parlay_won_75 && parlay_odds !== null) {
-        future_roundRobinWins_75++;
-        future_roundRobinWonTotal_75 += (parlay_odds * bet);
-      }
-
-      if (parlay_won_60 && parlay_odds !== null) {
-        future_roundRobinWins_60++;
-        future_roundRobinWonTotal_60 += (parlay_odds * bet);
-      }
-
-      if (parlay_odds !== null) {
-        future_roundRobinWins_100++;
-        future_roundRobinWonTotal_100 += (parlay_odds * bet);
-      }
-    }
-  }
-
-
-  if (future_winnings_75_array.length) {
-    const randomized = Arrayifier.shuffle(future_winnings_75_array);
-
-    for (let i = 0; i < randomized.length; i++) {
-      if ((future_games_won_75 / future_games_bet) < 0.7) {
-        future_games_won_75++;
-        future_winnings_75 += bet + randomized[i];
-      }
-    }
-  }
-
-  if (future_winnings_60_array.length) {
-    const randomized = Arrayifier.shuffle(future_winnings_60_array);
-
-    for (let i = 0; i < randomized.length; i++) {
-      if ((future_games_won_60 / future_games_bet) < 0.6) {
-        future_games_won_60++;
-        future_winnings_60 += bet + randomized[i];
-      }
-    }
-  }
-
-
-  const handleSort = (id) => {
+  const handleSort = (id: string) => {
     const isAsc = orderBy === id && order === 'asc';
     setOrder(isAsc ? 'desc' : 'asc');
     setOrderBy(id);
   };
 
-  let b = 0;
+  const headCells = [
+    { id: 'pick', label: 'Pick' },
+    { id: 'pick_ml', label: 'Pick ML' },
+    { id: 'start_timestamp', label: 'Start' },
+    { id: 'vs', label: 'VS' },
+    { id: 'vs_ml', label: 'VS ML' },
+    { id: 'chance', label: '%' },
+    { id: 'result', label: 'Result' },
+  ];
 
+  /**
+   * Sort key for a pick, matching the column ids above.
+   */
+  const getSortValue = (pick: ScenarioPick, key: string) => {
+    const Game = new HelperGame({ game: pick.game });
+    const other = pick.side === 'home' ? 'away' : 'home';
 
-  const getStyledTableRow = (row) => {
+    if (key === 'pick') {
+      return Game.getTeamName(pick.side);
+    }
+
+    if (key === 'pick_ml') {
+      return pick.price;
+    }
+
+    if (key === 'vs') {
+      return Game.getTeamName(other);
+    }
+
+    if (key === 'vs_ml') {
+      return pick.oppositePrice;
+    }
+
+    if (key === 'chance') {
+      return pick.probability;
+    }
+
+    if (key === 'result') {
+      return pick.won ? 1 : 0;
+    }
+
+    return pick.start_timestamp;
+  };
+
+  const getSortedPicks = (picks: ScenarioPick[]) => {
+    // Sort flat rows and map back, because the shared comparator is typed for plain values.
+    const comparator = Sorter.getComparator(order, 'value');
+    const byId: { [game_id: string]: ScenarioPick } = {};
+    const rows: Record<string, string | number>[] = [];
+
+    for (const pick of picks) {
+      byId[pick.game_id] = pick;
+      rows.push({ game_id: pick.game_id, value: getSortValue(pick, orderBy) });
+    }
+
+    return rows.sort(comparator).map((row) => byId[row.game_id]);
+  };
+
+  const getStyledTableRow = (pick: ScenarioPick, index: number) => {
+    const Game = new HelperGame({ game: pick.game });
+    const other = pick.side === 'home' ? 'away' : 'home';
+
     const teamCellStyle: React.CSSProperties = {
       cursor: 'pointer',
       whiteSpace: 'nowrap',
@@ -519,13 +222,11 @@ const Calculator = ({ games, date }) => {
       teamCellStyle.backgroundColor = (theme.mode === 'light' ? theme.grey[200] : theme.grey[900]);
     }
 
-    let trColor = (b % 2 === 0 ? theme.grey[800] : theme.grey[900]);
+    let trColor = (index % 2 === 0 ? theme.grey[800] : theme.grey[900]);
 
     if (theme.mode === 'light') {
-      trColor = b % 2 === 0 ? theme.grey[200] : theme.grey[300];
+      trColor = index % 2 === 0 ? theme.grey[200] : theme.grey[300];
     }
-
-    b++;
 
     const trStyle = {
       padding: '4px 5px',
@@ -536,178 +237,139 @@ const Calculator = ({ games, date }) => {
       },
     };
 
-    const Game = new HelperGame({
-      game: row.game,
-    });
-
-    const pickRank = Game.getTeamRank(row.pick, displayRank);
-    const pickName = Game.getTeamName(row.pick);
-    const vsRank = Game.getTeamRank(row.vs, displayRank);
-    const vsName = Game.getTeamName(row.vs);
+    const pickRank = Game.getTeamRank(pick.side, displayRank);
+    const vsRank = Game.getTeamRank(other, displayRank);
 
     let icon: string | React.JSX.Element = '-';
 
-    if (row.status === 'final') {
-      icon = (row.result ? <CheckCircleIcon style = {{ fontSize: 24, color: theme.success.main }} /> : <CancelCircleIcon style = {{ fontSize: 24, color: theme.error.main }} />);
+    if (pick.settled && pick.won !== null) {
+      icon = (pick.won ?
+        <CheckCircleIcon style = {{ fontSize: 24, color: theme.success.main }} /> :
+        <CancelCircleIcon style = {{ fontSize: 24, color: theme.error.main }} />);
     }
 
     return (
-      <Tr
-        key={row.game_id}
-        style={trStyle}
-        onClick={() => { handleGame(row.game_id); }}
-      >
-        <Td style = {teamCellStyle}><div>{pickRank ? <sup style = {{ marginRight: '5px' }}>{pickRank}</sup> : ''}{pickName}</div></Td>
-        <Td>{row.pick_ml}</Td>
+      <Tr key={pick.game_id} style={trStyle} onClick={() => { handleGame(pick.game_id); }}>
+        <Td style = {teamCellStyle}><div>{pickRank ? <sup style = {{ marginRight: '5px' }}>{pickRank}</sup> : ''}{Game.getTeamName(pick.side)}</div></Td>
+        <Td>{Odds.formatPrice(pick.price)}</Td>
         <Td>{Game.getStartTime()}</Td>
         <Td style = {{ cursor: 'pointer', whiteSpace: 'nowrap' }}>
-          <div>{vsRank ? <sup style = {{ marginRight: '5px' }}>{vsRank}</sup> : ''}{vsName}</div>
+          <div>{vsRank ? <sup style = {{ marginRight: '5px' }}>{vsRank}</sup> : ''}{Game.getTeamName(other)}</div>
         </Td>
-        <Td>{row.vs_ml}</Td>
-        <Td>{row.chance}</Td>
+        <Td>{Odds.formatPrice(pick.oppositePrice)}</Td>
+        <Td>{(pick.probability * 100).toFixed(0)}</Td>
         <Td>{icon}</Td>
       </Tr>
     );
   };
 
-  const pickedRowsContainer = rows_picked.sort((a: tableRow, b: tableRow) => Sorter.getComparator(order as string, orderBy as string)(a as any, b as any)).slice().map((row: tableRow) => getStyledTableRow(row));
-
-  const otherRowsConatiner = rows_other.sort((a: tableRow, b: tableRow) => Sorter.getComparator(order as string, orderBy as string)(a as any, b as any)).slice().map((row: tableRow) => getStyledTableRow(row));
-
-
-  if (date < now && games_bet > 2 && roundRobinLength) {
-    for (let i = 0; i < parlay_game_ids.length; i++) {
-      const game = games[parlay_game_ids[i]];
-
-      const row = getFormattedGameRow(game);
-
-      rows_parlay.push(row);
-    }
-  } else if (date === now && future_games_bet > 2 && roundRobinLength) {
-    for (let i = 0; i < future_parlay_game_ids.length; i++) {
-      const game = games[future_parlay_game_ids[i]];
-
-      const row = getFormattedGameRow(game);
-
-      rows_parlay.push(row);
-    }
-  }
-
-  const parleyRowsConatiner = rows_parlay.sort((a: tableRow, b: tableRow) => Sorter.getComparator(order as string, orderBy as string)(a as any, b as any)).slice().map((row: tableRow) => getStyledTableRow(row));
-
-
-  const getTable = (rowContainers) => {
+  const getTable = (picks: ScenarioPick[]) => {
     return (
       <Table>
         <Thead>
           <Tr>
-            {headCells.map((headCell) => {
-              const tdStyle: React.CSSProperties = {
-                padding: '4px 5px',
-                border: 0,
-                backgroundColor: theme.mode === 'light' ? theme.info.light : theme.info.dark,
-              };
-
-              return (
-                <Th
-                  style = {tdStyle}
-                  key={headCell.id}
-                  onClick={() => { handleSort(headCell.id); }}
-                  sortable = {true}
-                  sortDirection={orderBy === headCell.id ? order : false}
-                >
-                  {headCell.label}
-                </Th>
-              );
-            })}
+            {headCells.map((headCell) => (
+              <Th
+                style = {{ padding: '4px 5px', border: 0, backgroundColor: theme.mode === 'light' ? theme.info.light : theme.info.dark }}
+                key={headCell.id}
+                onClick={() => { handleSort(headCell.id); }}
+                sortable = {true}
+                sortDirection={orderBy === headCell.id ? order : false}
+              >
+                {headCell.label}
+              </Th>
+            ))}
           </Tr>
         </Thead>
         <Tbody>
-          {rowContainers}
+          {getSortedPicks(picks).map((pick, index) => getStyledTableRow(pick, index))}
         </Tbody>
       </Table>
     );
   };
 
+  /**
+   * The three lines every scenario prints, so the settled case and each projected win rate
+   * read identically.
+   */
+  const getSummaryBlock = (key: string, heading: string | null, summary: ScenarioSummary, unit: string, count: number) => {
+    if (!summary.staked) {
+      return null;
+    }
+
+    return (
+      <div key = {key}>
+        {heading ? <Typography type = 'subtitle2' style = {{ color: theme.text.secondary, marginTop: '10px' }}>{heading}</Typography> : ''}
+        <Typography type = 'body1'>{`Total bet: $${money(summary.staked)} (${count} ${unit})`}</Typography>
+        <Typography type = 'body1'>{`Won: $${money(summary.returned)} (${Math.round(summary.wins)} (${percent(count ? summary.wins / count : 0)}%))`}</Typography>
+        <Typography type = 'body1'>{`Net: $${money(summary.net)} (${percent(summary.roi)}%)`}</Typography>
+      </div>
+    );
+  };
+
+  const getWinRateHeading = (winRate: number) => `${(winRate * 100).toFixed(0)}% win rate`;
+
+  const getStraightBlock = (row) => getSummaryBlock(`straight-${row.winRate}`, getWinRateHeading(row.winRate), row.straight, 'games', row.straight.games);
+
+  const getRoundRobinBlock = (row) => getSummaryBlock(`rr-${row.winRate}`, getWinRateHeading(row.winRate), row.roundRobin, 'parlays', row.roundRobin.combos);
 
   const inputHandler = new Inputs();
 
-  const betting_contents: React.JSX.Element[] = [];
-
-
-  const bettingInput = <TextInput style = {{ display: 'inline-flex' }} inputHandler = {inputHandler} id="bet" formatter='number' placeholder="Bet" variant="standard" value={inputBet} onChange = {(val) => { setBet(val); }} />;
-  const oddsMinInput = <TextInput style = {{ display: 'inline-flex' }} inputHandler = {inputHandler} id="oddsMin" formatter='number' placeholder="Odd Min" variant="standard" value={inputOddsMin} onChange = {(val) => { setOddsMin(val); }} />;
-  const oddsMaxInput = <TextInput style = {{ display: 'inline-flex' }} inputHandler = {inputHandler} id="oddsmax" formatter='number' placeholder="Odds Max" variant="standard" value={inputOddsMax} onChange = {(val) => { setOddsMax(val); }} />;
-  const percentageInput = <TextInput style = {{ display: 'inline-flex' }} inputHandler = {inputHandler} id="precentage" formatter='number' placeholder="Win chance %" variant="standard" value={inputPercentage} onChange = {(val) => { setPercentage(val); }} />;
-  const roundRobinInput = <TextInput style = {{ display: 'inline-flex' }} inputHandler = {inputHandler} id="roundRobin" formatter='number' placeholder="Round robin parlay" variant="standard" value={inputRoundRobin} onChange = {(val) => { setRoundRobin(val); }} />;
+  const handleChange = (setter) => (val) => {
+    setter(val);
+    commitFilters();
+  };
 
   const inputs = (
-    <Columns numberOfColumns={4} breakPoint={600}>
-      {bettingInput}
-      {oddsMinInput}
-      {oddsMaxInput}
-      {percentageInput}
+    <Columns key = 'inputs' numberOfColumns={4} breakPoint={600}>
+      <TextInput style = {{ display: 'inline-flex' }} inputHandler = {inputHandler} id="bet" formatter='number' placeholder="Bet" variant="standard" value={inputBet} onChange = {handleChange(setBet)} />
+      <TextInput style = {{ display: 'inline-flex' }} inputHandler = {inputHandler} id="oddsMin" formatter='number' placeholder="Odd Min" variant="standard" value={inputPriceMin} onChange = {handleChange(setPriceMin)} />
+      <TextInput style = {{ display: 'inline-flex' }} inputHandler = {inputHandler} id="oddsmax" formatter='number' placeholder="Odds Max" variant="standard" value={inputPriceMax} onChange = {handleChange(setPriceMax)} />
+      <TextInput style = {{ display: 'inline-flex' }} inputHandler = {inputHandler} id="precentage" formatter='number' placeholder="Win chance %" variant="standard" value={inputConfidence} onChange = {handleChange(setConfidence)} />
     </Columns>
   );
-  if (total_bet || date < now) {
-    betting_contents.push(inputs);
-    betting_contents.push(<Typography type = 'subtitle1' style = {{ color: theme.text.secondary }}>Hypothetical pre-game ML betting ${bet} on each pick with odds greater than {oddsMin} and less than {oddsMax}</Typography>);
 
-    if (total_bet) {
-      betting_contents.push(<Typography type = 'body1'>Total bet: ${total_bet} ({games_bet} games)</Typography>);
-      betting_contents.push(<Typography type = 'body1'>Won: ${parseFloat(winnings.toString()).toFixed(2)} ({wins}  ({((wins / games_bet) * 100).toFixed(2)}%))</Typography>);
-      betting_contents.push(<Typography type = 'body1'>Net: ${parseFloat((winnings - total_bet).toString()).toFixed(2)} ({total_bet > 0 ? parseFloat((((winnings - total_bet) / total_bet) * 100).toString()).toFixed(2) : 0}%)</Typography>);
+  const roundRobinInput = (
+    <TextInput key = 'round-robin-input' style = {{ display: 'inline-flex' }} inputHandler = {inputHandler} id="roundRobin" formatter='number' placeholder="Round robin parlay" variant="standard" value={inputRoundRobin} onChange = {handleChange(setRoundRobin)} />
+  );
+
+  const roundRobinBlurb = (
+    <Typography key = 'round-robin-blurb' type = 'subtitle1' style = {{ color: theme.text.secondary }}>
+      A round robin bet creates a parlay for every possible combination of games based on the input
+      below. It will use the inputs above as a base for games to select. Must have at least 2 eligible
+      games. Ex: if there are 10 games total and you select 9 games, it would create 10 parlays of 9
+      games each.
+    </Typography>
+  );
+
+  const getContents = () => {
+    if (isPast) {
+      return [
+        inputs,
+        <Typography key = 'blurb' type = 'subtitle1' style = {{ color: theme.text.secondary }}>{`Hypothetical pre-game ML betting $${filters.bet} on each pick with odds greater than ${filters.priceMin} and less than ${filters.priceMax}`}</Typography>,
+        getSummaryBlock('settled', null, settled, 'games', settled.games),
+        roundRobinBlurb,
+        roundRobinInput,
+        getSummaryBlock('settled-rr', null, settledRoundRobin, 'parlays', settledRoundRobin.combos),
+      ];
     }
 
-    betting_contents.push(<Typography type = 'subtitle1' style = {{ color: theme.text.secondary }}>A round robin bet creates a parlay for every possible combination of games based on the input below. It will use the inputs above as a base for games to select. Must have at least 2 eligible games. Ex: if there are 10 games total and you select 9 games, it would create 10 parlays of 9 games each.</Typography>);
-    betting_contents.push(roundRobinInput);
-    if (games_bet > 2 && roundRobinLength) {
-      betting_contents.push(<Typography type = 'body1'>Total bet: ${roundRobinBetTotal} ({roundRobinBetCombos} parlays)</Typography>);
-      betting_contents.push(<Typography type = 'body1'>Won: ${parseFloat(roundRobinWonTotal.toString()).toFixed(2)} ({roundRobinWins}  ({((roundRobinWins / roundRobinBetCombos) * 100).toFixed(2)}%))</Typography>);
-      betting_contents.push(<Typography type = 'body1'>Net: ${parseFloat((roundRobinWonTotal - roundRobinBetTotal).toString()).toFixed(2)} ({roundRobinBetTotal > 0 ? parseFloat((((roundRobinWonTotal - roundRobinBetTotal) / roundRobinBetTotal) * 100).toString()).toFixed(2) : 0}%)</Typography>);
-    }
-  } else if (date === now) {
-    betting_contents.push(inputs);
-    betting_contents.push(<Typography type = 'subtitle1' style = {{ color: theme.text.secondary }}>Future pre-game ML betting ${bet} on each pick with odds greater than {oddsMin} and less than {oddsMax}</Typography>);
-
-    if (future_total_bet) {
-      betting_contents.push(<Typography type = 'body1'>Total bet: ${future_total_bet} ({future_games_bet} games)</Typography>);
-      betting_contents.push(<Typography type = 'subtitle2' style = {{ color: theme.text.secondary, marginTop: '10px' }}>100% win rate</Typography>);
-      betting_contents.push(<Typography type = 'body1'>Won: ${parseFloat(future_winnings_100.toString()).toFixed(2)} ({future_games_bet} games) (100%)</Typography>);
-      betting_contents.push(<Typography type = 'body1'>Net: ${parseFloat((future_winnings_100 - future_total_bet).toString()).toFixed(2)} ({future_total_bet > 0 ? parseFloat((((future_winnings_100 - future_total_bet) / future_total_bet) * 100).toString()).toFixed(2) : 0}%)</Typography>);
-      betting_contents.push(<Typography type = 'subtitle2' style = {{ color: theme.text.secondary, marginTop: '10px' }}>Random ~75% win rate</Typography>);
-      betting_contents.push(<Typography type = 'body1'>Won: ${parseFloat(future_winnings_75.toString()).toFixed(2)} ({future_games_won_75} games) ({((future_games_won_75 / future_games_bet) * 100).toFixed(2)}%)</Typography>);
-      betting_contents.push(<Typography type = 'body1'>Net: ${parseFloat((future_winnings_75 - future_total_bet).toString()).toFixed(2)} ({future_total_bet > 0 ? parseFloat((((future_winnings_75 - future_total_bet) / future_total_bet) * 100).toString()).toFixed(2) : 0}%)</Typography>);
-      betting_contents.push(<Typography type = 'subtitle2' style = {{ color: theme.text.secondary, marginTop: '10px' }}>Random ~60% win rate</Typography>);
-      betting_contents.push(<Typography type = 'body1'>Won: ${parseFloat(future_winnings_60.toString()).toFixed(2)} ({future_games_won_60} games) ({((future_games_won_60 / future_games_bet) * 100).toFixed(2)}%)</Typography>);
-      betting_contents.push(<Typography type = 'body1'>Net: ${parseFloat((future_winnings_60 - future_total_bet).toString()).toFixed(2)} ({future_total_bet > 0 ? parseFloat((((future_winnings_60 - future_total_bet) / future_total_bet) * 100).toString()).toFixed(2) : 0}%)</Typography>);
+    if (isToday) {
+      return [
+        inputs,
+        <Typography key = 'blurb' type = 'subtitle1' style = {{ color: theme.text.secondary }}>{`Future pre-game ML betting $${filters.bet} on each pick with odds greater than ${filters.priceMin} and less than ${filters.priceMax}`}</Typography>,
+        ...projected.map(getStraightBlock),
+        roundRobinBlurb,
+        roundRobinInput,
+        ...projected.map(getRoundRobinBlock),
+      ];
     }
 
-    betting_contents.push(<Typography type = 'subtitle1' style = {{ color: theme.text.secondary }}>A round robin bet creates a parlay for every possible combination of games based on the input below. It will use the inputs above as a base for games to select. Must have at least 2 eligible games. Ex: if there are 10 games total and you select 9 games, it would create 10 parlays of 9 games each.</Typography>);
-    betting_contents.push(roundRobinInput);
+    return [
+      <Typography key = 'none' type = 'subtitle1' style = {{ textAlign: 'center', color: theme.text.secondary }}>No betting info available yet... come back soon!</Typography>,
+    ];
+  };
 
-    if (future_games_bet > 2 && roundRobinLength) {
-      betting_contents.push(<Typography type = 'subtitle2' style = {{ color: theme.text.secondary, marginTop: '10px' }}>100% win rate</Typography>);
-      betting_contents.push(<Typography type = 'body1'>Total bet: ${future_roundRobinBetTotal} ({future_roundRobinBetCombos} parlays)</Typography>);
-      betting_contents.push(<Typography type = 'body1'>Won: ${parseFloat(future_roundRobinWonTotal_100.toString()).toFixed(2)} ({future_roundRobinWins_100}  ({((future_roundRobinWins_100 / future_roundRobinBetCombos) * 100).toFixed(2)}%))</Typography>);
-      betting_contents.push(<Typography type = 'body1'>Net: ${parseFloat((future_roundRobinWonTotal_100 - future_roundRobinBetTotal).toString()).toFixed(2)} ({future_roundRobinBetTotal > 0 ? parseFloat((((future_roundRobinWonTotal_100 - future_roundRobinBetTotal) / future_roundRobinBetTotal) * 100).toString()).toFixed(2) : 0}%)</Typography>);
-
-      betting_contents.push(<Typography type = 'subtitle2' style = {{ color: theme.text.secondary, marginTop: '10px' }}>75% win rate</Typography>);
-      betting_contents.push(<Typography type = 'body1'>Total bet: ${future_roundRobinBetTotal} ({future_roundRobinBetCombos} parlays)</Typography>);
-      betting_contents.push(<Typography type = 'body1'>Won: ${parseFloat(future_roundRobinWonTotal_75.toString()).toFixed(2)} ({future_roundRobinWins_75}  ({((future_roundRobinWins_75 / future_roundRobinBetCombos) * 100).toFixed(2)}%))</Typography>);
-      betting_contents.push(<Typography type = 'body1'>Net: ${parseFloat((future_roundRobinWonTotal_75 - future_roundRobinBetTotal).toString()).toFixed(2)} ({future_roundRobinBetTotal > 0 ? parseFloat((((future_roundRobinWonTotal_75 - future_roundRobinBetTotal) / future_roundRobinBetTotal) * 100).toString()).toFixed(2) : 0}%)</Typography>);
-
-      betting_contents.push(<Typography type = 'subtitle2' style = {{ color: theme.text.secondary, marginTop: '10px' }}>60% win rate</Typography>);
-      betting_contents.push(<Typography type = 'body1'>Total bet: ${future_roundRobinBetTotal} ({future_roundRobinBetCombos} parlays)</Typography>);
-      betting_contents.push(<Typography type = 'body1'>Won: ${parseFloat(future_roundRobinWonTotal_60.toString()).toFixed(2)} ({future_roundRobinWins_60}  ({((future_roundRobinWins_60 / future_roundRobinBetCombos) * 100).toFixed(2)}%))</Typography>);
-      betting_contents.push(<Typography type = 'body1'>Net: ${parseFloat((future_roundRobinWonTotal_60 - future_roundRobinBetTotal).toString()).toFixed(2)} ({future_roundRobinBetTotal > 0 ? parseFloat((((future_roundRobinWonTotal_60 - future_roundRobinBetTotal) / future_roundRobinBetTotal) * 100).toString()).toFixed(2) : 0}%)</Typography>);
-    }
-  } else {
-    betting_contents.push(<Typography type = 'subtitle1' style = {{ textAlign: 'center', color: theme.text.secondary }}>No betting info available yet... come back soon!</Typography>);
-    // if (date > now) {
-    //   betting_contents.push(<Typography type = 'caption' style = {{'textAlign': 'center'}} style = {{ color: theme.palette.text.secondary }}>Picks for games greater than today may change</Typography>);
-    // }
-  }
 
   if (!hasAccess) {
     const handleSubscribe = () => {
@@ -718,9 +380,7 @@ const Calculator = ({ games, date }) => {
     };
 
     const handleLiveWinRate = () => {
-      navigation.picksView({
-        view: 'stats',
-      });
+      navigation.picksView({ view: 'stats' });
     };
 
     return (
@@ -735,40 +395,25 @@ const Calculator = ({ games, date }) => {
     );
   }
 
+  const parlayPicks = (filters.roundRobin > 1 && legs.length > filters.roundRobin) ? legs : [];
 
 
   return (
     <div style = {{ padding: '0px 5px' }}>
-      {
-        picksLoading ?
-          <Paper elevation = {3} style = {{ padding: 10 }}>
-            <div>
-              <Typography type = 'h5'><Skeleton /></Typography>
-              <Typography type = 'h5'><Skeleton /></Typography>
-              <Typography type = 'h5'><Skeleton /></Typography>
-              <Typography type = 'h5'><Skeleton /></Typography>
-              <Typography type = 'h5'><Skeleton /></Typography>
-            </div>
-          </Paper>
-          :
-        <div>
-          <Typography type="h6">Betting calculator</Typography>
-          <Paper elevation={3} style = {{ padding: '10px', margin: '0px 0px 10px 0px' }}>
-            {betting_contents}
-          </Paper>
-          {total_final ? <div>Total win rate: {Math.round((correct / total_final) * 100)}% {correct} / {total_final}</div> : ''}
-          {rows_parlay.length ? <Typography style = {{ margin: '10px 0px' }} type="h6">Parley games</Typography> : ''}
-          {rows_parlay.length ? getTable(parleyRowsConatiner) : ''}
-          {rows_picked.length ? <Typography style = {{ margin: '10px 0px' }} type="h6">Games bet</Typography> : ''}
-          {rows_picked.length ? getTable(pickedRowsContainer) : ''}
-          {rows_other.length ? <Typography style = {{ margin: '10px 0px' }} type="h6">Other games</Typography> : ''}
-          {rows_other.length ? getTable(otherRowsConatiner) : ''}
-        </div>
-      }
+      <Typography type="h6">Betting calculator</Typography>
+      <Paper elevation={3} style = {{ padding: '10px', margin: '0px 0px 10px 0px' }}>
+        {getContents()}
+      </Paper>
+      {accuracy.total ? <div>{`Total win rate: ${Math.round((accuracy.correct / accuracy.total) * 100)}% ${accuracy.correct} / ${accuracy.total}`}</div> : ''}
+      {parlayPicks.length ? <Typography style = {{ margin: '10px 0px' }} type="h6">Parley games</Typography> : ''}
+      {parlayPicks.length ? getTable(parlayPicks) : ''}
+      {eligible.length ? <Typography style = {{ margin: '10px 0px' }} type="h6">Games bet</Typography> : ''}
+      {eligible.length ? getTable(eligible) : ''}
+      {rejected.length ? <Typography style = {{ margin: '10px 0px' }} type="h6">Other games</Typography> : ''}
+      {rejected.length ? getTable(rejected) : ''}
     </div>
   );
 };
-
 
 
 export default Calculator;
