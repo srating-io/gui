@@ -65,8 +65,9 @@ const Pricing = ({ view }: { view: string | null; }) => {
       type: 'picks',
       price_description: 'USD per month',
       features: [
-        'Win probability for every game',
-        'Projected score and margin',
+        'Access statistical models',
+        'Analysis tools',
+        'Projected scores and margin',
       ],
       missing_features: ['API access'],
       priceId: process.env.NEXT_PUBLIC_ENV === 'dev' ? 'price_1NcziSDIZlrOiqc2TY4NEiXc' : 'price_1NczWWDIZlrOiqc2QdE6mTdf',
@@ -79,8 +80,9 @@ const Pricing = ({ view }: { view: string | null; }) => {
       type: 'picks',
       price_description: 'USD per year',
       features: [
-        'Win probability for every game',
-        'Projected score and margin',
+        'Access statistical models',
+        'Analysis tools',
+        'Projected scores and margin',
       ],
       missing_features: ['API access'],
       priceId: process.env.NEXT_PUBLIC_ENV === 'dev' ? 'price_1NcziSDIZlrOiqc2A9maKQwi' : 'price_1NczWWDIZlrOiqc2pKPXv8aj',
