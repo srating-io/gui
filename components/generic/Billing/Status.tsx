@@ -84,7 +84,7 @@ const Status = () => {
 
   return (
     <div>
-      {triggerConversion ? <Conversions /> : ''}
+      {triggerConversion ? <Conversions amount = {amount} reference = {reference} /> : ''}
       {
         !status ? <div style = {{ textAlign: 'center' }}><CircularProgress /></div> :
         <div style = {{ padding: 20 }}>

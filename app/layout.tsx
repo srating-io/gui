@@ -40,6 +40,8 @@ export default async function RootLayout({ children }: {children: React.ReactNod
     arguments: {},
   });
 
+
+
   return (
     <html lang="en">
       {/* <head>
