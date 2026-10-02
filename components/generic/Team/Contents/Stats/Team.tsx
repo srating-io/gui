@@ -1,6 +1,8 @@
 'use client';
 
 import RankSpan from '@/components/generic/RankSpan';
+import { useAppSelector } from '@/redux/hooks';
+import { ChartDivergingBars, ChartDumbbell, ChartRankStrip, DivergingBar, DumbbellRow, RankStripRow } from '@/components/generic/Chart';
 import Organization from '@/components/helpers/Organization';
 import TableColumns from '@/components/helpers/TableColumns';
 import { Tooltip, Typography, useTheme } from '@esmalley/react-material-ui';
@@ -9,6 +11,8 @@ import { Basketball, Football } from '@srating-io/types';
 
 const Team = ({ organization_id, division_id, season, teamStats }: { organization_id: string, division_id: string, season: number, teamStats: Basketball.StatisticRanking | Football.StatisticRanking }) => {
   const theme = useTheme();
+  const statsCharts = useAppSelector((state) => state.teamReducer.statsCharts);
+
   const getMax = () => {
     if (teamStats.max) {
       return teamStats.max;
@@ -167,6 +171,142 @@ const Team = ({ organization_id, division_id, season, teamStats }: { organizatio
 
   const sections = getSections();
 
+  /**
+   * The handful of measures a reader wants before anything else: how good, how good on each side
+   * of the ball, and who they played to get there. Everything below is detail on top of these.
+   */
+  const getHeadlineColumns = () => {
+    if (Organization.getCFBID() === organization_id) {
+      return ['elo', 'points', 'opponent_points', 'yards_per_play', 'elo_sos'];
+    }
+
+    return ['elo', 'adjusted_efficiency_rating', 'offensive_rating', 'defensive_rating', 'elo_sos'];
+  };
+
+  const getStripRows = (): RankStripRow[] => {
+    const stripRows: RankStripRow[] = [];
+
+    for (const column of getHeadlineColumns()) {
+      const columnData = allColumns[column];
+      const rank = teamStats[`${column}_rank`];
+
+      if (!columnData || !rank || !(column in teamStats)) {
+        continue;
+      }
+
+      stripRows.push({
+        key: column,
+        label: columnData.getAltLabel ? columnData.getAltLabel() : columnData.getLabel(),
+        value: teamStats[column],
+        rank,
+        tooltip: columnData.getTooltip(),
+      });
+    }
+
+    return stripRows;
+  };
+
+  /**
+   * Every ranked stat on the row, as distance from the middle of the league.
+   *
+   * Drawn from the same sections rendered below, so the bars and the grid can never disagree about
+   * which stats this sport has.
+   */
+  const getStandoutBars = (): DivergingBar[] => {
+    const bars: DivergingBar[] = [];
+    const seen: { [column: string]: boolean } = {};
+
+    // without a denominator there is no middle of the league to measure distance from
+    if (maxTeams < 2) {
+      return bars;
+    }
+
+    for (const section of sections) {
+      for (const column of section.columns) {
+        const rank = teamStats[`${column}_rank`];
+
+        if (seen[column] || !rank || !(column in teamStats)) {
+          continue;
+        }
+
+        seen[column] = true;
+
+        const columnData = allColumns[column];
+
+        if (!columnData) {
+          continue;
+        }
+
+        // 1 at the top of the league and 0 at the bottom, then recentred so the league's middle
+        // sits at zero and the bar's length is how far from ordinary the team is
+        const standing = 1 - ((Math.min(rank, maxTeams) - 1) / (maxTeams - 1));
+
+        bars.push({
+          key: column,
+          label: columnData.getAltLabel ? columnData.getAltLabel() : columnData.getLabel(),
+          value: (standing - 0.5) * 2,
+          // the same figure-and-rank pairing the strips above and the grid below print, rather
+          // than a bare number the reader has to guess the denominator for
+          detail: <>{teamStats[column]}<RankSpan rank = {rank} max = {maxTeams} useOrdinal = {true} /></>,
+          tooltip: columnData.getTooltip(),
+        });
+      }
+    }
+
+    return bars;
+  };
+
+  /**
+   * The same record under different conditions.
+   *
+   * 36-3 is one number covering two teams - the one at home and the one on the road - and a
+   * conference record covering a third. The length of each connector is how much the context
+   * actually mattered.
+   */
+  const getSplitRows = (): DumbbellRow[] => {
+    const rate = (wins: number, losses: number) => {
+      const played = wins + losses;
+
+      return played ? +((wins / played) * 100).toFixed(1) : null;
+    };
+
+    const homeWins = teamStats.homewins || 0;
+    const homeLosses = teamStats.homelosses || 0;
+    const roadWins = teamStats.roadwins || 0;
+    const roadLosses = teamStats.roadlosses || 0;
+    const confWins = teamStats.confwins || 0;
+    const confLosses = teamStats.conflosses || 0;
+
+    // non conference is what is left once the conference games are taken out of the overall record
+    const nonConfWins = (teamStats.wins || 0) - confWins;
+    const nonConfLosses = (teamStats.losses || 0) - confLosses;
+
+    const splits = [
+      {
+        key: 'venue',
+        label: 'Home / road',
+        from: rate(homeWins, homeLosses),
+        to: rate(roadWins, roadLosses),
+        fromDetail: `${homeWins}-${homeLosses}`,
+        toDetail: `${roadWins}-${roadLosses}`,
+        tooltip: 'Win rate at home against win rate away from home.',
+      },
+      {
+        key: 'competition',
+        label: 'Conf. / non-conf.',
+        from: rate(confWins, confLosses),
+        to: rate(nonConfWins, nonConfLosses),
+        fromDetail: `${confWins}-${confLosses}`,
+        toDetail: `${nonConfWins}-${nonConfLosses}`,
+        tooltip: 'Win rate inside the conference against everyone else.',
+      },
+    ];
+
+    return splits
+      .filter((split) => split.from !== null && split.to !== null)
+      .map((split) => ({ ...split, from: split.from as number, to: split.to as number }));
+  };
+
   const getStatBlock = (column: string) => {
     const columnData = allColumns[column];
     const value = column in teamStats ? teamStats[column] : 0;
@@ -183,8 +323,51 @@ const Team = ({ organization_id, division_id, season, teamStats }: { organizatio
     );
   };
 
+  // each chart draws nothing at all until the season has ranks behind it, so the rule that
+  // separates it from the next block is held back with it - otherwise a team page opened in the
+  // preseason leads with three bare lines and no charts
+  //
+  // With the charts switched off none of this is built either, rather than built and thrown away
+  const stripRows = statsCharts ? getStripRows() : [];
+  const standoutBars = statsCharts ? getStandoutBars() : [];
+  const splitRows = statsCharts ? getSplitRows() : [];
+
   return (
     <div style = {{ padding: '0px 5px' }}>
+      {
+        stripRows.length && maxTeams > 1 ?
+          <>
+            <ChartRankStrip rows = {stripRows} max = {maxTeams} />
+            <hr />
+          </> :
+          ''
+      }
+      {
+        standoutBars.length ?
+          <>
+            {/* twelve is about what fits without scrolling and comfortably more than anyone can
+                hold in mind at once; past that the list stops being a summary and becomes the
+                grid again */}
+            <ChartDivergingBars bars = {standoutBars} limit = {12} />
+            <hr />
+          </> :
+          ''
+      }
+      {
+        splitRows.length ?
+          <>
+            <ChartDumbbell
+              rows = {splitRows}
+              domain = {[0, 100]}
+              fromLabel = 'home / conference'
+              toLabel = 'road / non-conference'
+              title = 'Same team, different week'
+              unit = ''
+            />
+            <hr />
+          </> :
+          ''
+      }
       {sections.map(({ name, columns }, sectionIndex) => {
         return (
           <div key = {sectionIndex}>

@@ -140,11 +140,15 @@ class Team extends Surface {
 
       if (view === 'trends') {
         return (
-          <TrendsClientWrapper>
-            <Suspense fallback = {<TrendsClientSkeleton />}>
-              <TrendsServer organization_id={organization_id} division_id={division_id} team_id = {team_id} season = {season} />
-            </Suspense>
-          </TrendsClientWrapper>
+          <>
+            <TrendsClientWrapper>
+              <Suspense fallback = {<TrendsClientSkeleton />}>
+                <TrendsServer organization_id={organization_id} division_id={division_id} team_id = {team_id} season = {season} />
+              </Suspense>
+            </TrendsClientWrapper>
+            {/* the accuracy chart reads the same client-side predictions the schedule tab does */}
+            <SchedulePredictionLoader organization_id={organization_id} division_id={division_id} team_id = {team_id} season = {season} />
+          </>
         );
       }
 

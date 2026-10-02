@@ -313,6 +313,20 @@ class Odds {
   }
 
   /**
+   * Win percentage from one side's perspective, rounded to a whole number.
+   *
+   * Null is the un-subscribed case rather than a coin flip: the API nulls both percentages out
+   * when the caller has no access to them, so a caller that read this as 0 would be printing a
+   * confident loss for every game. Show a lock on null instead.
+   */
+  public static getWinPercentage(prediction: General.Prediction | null | undefined, isHome: boolean): number | null {
+    if (!prediction || (prediction.home_percentage === null && prediction.away_percentage === null)) {
+      return null;
+    }
+
+    return +(((isHome ? prediction.home_percentage : prediction.away_percentage) || 0) * 100).toFixed(0);
+  }
+  /**
    * Projected combined score.
    */
   public static getProjectedTotal(prediction: General.Prediction | null | undefined): number | null {

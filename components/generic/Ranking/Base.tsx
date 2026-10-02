@@ -1,6 +1,6 @@
 'use client';
 
-import { Profiler, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Legend from './Legend';
 import FloatingButtons from './FloatingButtons';
 // import CheckIcon from '@esmalley/react-material-icons/Check';
@@ -21,7 +21,7 @@ import TableColumns from '@/components/helpers/TableColumns';
 import ClassYearPicker from './ClassYearPicker';
 import { Textor } from '@esmalley/ts-utils';
 import { useNavigation } from '@/components/hooks/useNavigation';
-import { Chip, Typography, useTheme, useWindowDimensions } from '@esmalley/react-material-ui';
+import { Chip, Typography, useWindowDimensions } from '@esmalley/react-material-ui';
 import DataSince from './DataSince';
 
 
@@ -40,6 +40,7 @@ const Base = (
   const customColumns = useAppSelector((state) => state.rankingReducer.customColumns);
   const career = useAppSelector((state) => state.rankingReducer.career);
   const career_active = useAppSelector((state) => state.rankingReducer.career_active);
+  const chartView = useAppSelector((state) => state.rankingReducer.chartView);
 
   const [legendOpen, setLegendOpen] = useState(false);
 
@@ -183,9 +184,6 @@ const Base = (
 
 
   return (
-    <Profiler id="Ranking.Base" onRender={(id, phase, actualDuration) => {
-      console.log(id, phase, actualDuration);
-    }}>
     <div>
       <Legend open = {legendOpen} onClose={handleLegend} columns={columns} view={view} organization_id = {organization_id} />
       <FloatingButtons />
@@ -204,10 +202,10 @@ const Base = (
               <Typography type = {width < 500 ? 'h6' : 'h5'}>{title}</Typography>
               <DataSince organization_id={organization_id} view = {view} />
               <LastUpdated view = {view} handleLegend={handleLegend} />
-              <ColumnChipPicker view = {view} organization_id={organization_id} />
+              {chartView ? '' : <ColumnChipPicker view = {view} organization_id={organization_id} />}
               <div style = {{ display: 'flex', justifyContent: 'space-between', marginTop: '10px' }}>
                 <div style={{ display: 'flex', alignItems: 'center' }}>
-                  {view === 'player' || view === 'transfer' ? <AdditionalOptions view = {view} /> : ''}
+                  <AdditionalOptions view = {view} />
                   {view !== 'conference' ? <ConferencePicker /> : ''}
                   {view === 'player' || view === 'transfer' ? <PositionPicker selected = {positions} isRadio = {Organization.getCFBID() === organization_id} /> : ''}
                   {classYearPicker}
@@ -225,7 +223,6 @@ const Base = (
       }
       {children}
     </div>
-    </Profiler>
   );
 };
 

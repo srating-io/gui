@@ -1,23 +1,21 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo } from 'react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Label, Brush,
   YAxisProps,
 } from 'recharts';
 
-import LinearScaleIcon from '@esmalley/react-material-icons/LinearScale';
-
-
-import { Payload } from 'recharts/types/component/DefaultLegendContent';
 import StatsGraph from './StatsGraph';
+import Accuracy from './Accuracy';
+import { ChartLegend, ChartTooltip, useInactiveSeries, getChartPalette } from '@/components/generic/Chart';
 import { useSearchParams } from 'next/navigation';
 import { footerNavigationHeight } from '@/components/generic/FooterNavigation';
 import { headerBarHeight } from '@/components/generic/Header';
 import Organization from '@/components/helpers/Organization';
 import { Dates } from '@esmalley/ts-utils';
-import { LinearProgress, Paper, Typography, useTheme, useWindowDimensions } from '@esmalley/react-material-ui';
-import { Basketball, Football, General } from '@srating-io/types';
+import { LinearProgress, Typography, useTheme, useWindowDimensions } from '@esmalley/react-material-ui';
+import { Basketball, Football, General, Team } from '@srating-io/types';
 
 export interface TrendsType {
   games: General.Games;
@@ -59,8 +57,8 @@ const ClientSkeleton = () => {
 };
 
 const Client = (
-  { organization_id, division_id, season, data }:
-  { organization_id: string, division_id: string, season: number, data: TrendsType },
+  { organization_id, division_id, team_id, season, data, schedule }:
+  { organization_id: string, division_id: string, team_id: string, season: number, data: TrendsType, schedule: Team.getScheduleResults },
 ) => {
   const theme = useTheme();
 
@@ -71,13 +69,25 @@ const Client = (
   const searchParams = useSearchParams();
   const subView = searchParams?.get('subview') || 'stats';
 
-  const games = (data && data.games) || {};
-  const statistic_rankings = (data && data.statistic_rankings) || {};
-  const conference_statistic_rankings = (data && data.conference_statistic_rankings) || {};
-  const league_statistic_rankings = (data && data.league_statistic_rankings) || {};
-  const boxscores = (data && data.boxscores) || {};
+  /**
+   * Held steady across renders.
+   *
+   * Each `|| {}` mints a fresh object whenever its branch is missing, and StatsGraph builds its
+   * chart data from these. A fresh object every render means fresh chart data every render, which
+   * recharts reads as "the data changed" - so a second render straight after a chip change told it
+   * the data had changed twice and it dropped the animation between the two. Only a genuinely new
+   * `data` prop should count as a change.
+   */
+  const { games, statistic_rankings, conference_statistic_rankings, league_statistic_rankings, boxscores } = useMemo(() => ({
+    games: (data && data.games) || {},
+    statistic_rankings: (data && data.statistic_rankings) || {},
+    conference_statistic_rankings: (data && data.conference_statistic_rankings) || {},
+    league_statistic_rankings: (data && data.league_statistic_rankings) || {},
+    boxscores: (data && data.boxscores) || {},
+  }), [data]);
 
-  const [inactiveSeries, setInactiveSeries] = useState<Array<string>>([]);
+  const series = useInactiveSeries();
+  const palette = getChartPalette(theme);
 
 
   const sorted_statistic_rankings = Object.values(statistic_rankings).sort((a, b) => {
@@ -125,7 +135,7 @@ const Client = (
         if (
           key.includes('rank') &&
           d[key] !== null &&
-          !inactiveSeries.includes(key)
+          !series.inactive.includes(key)
         ) {
           if (!minYaxis || minYaxis > d[key]) {
             minYaxis = d[key];
@@ -140,86 +150,66 @@ const Client = (
       formattedData.push(d);
     }
 
-    const CustomLegend = ({ payload }: { payload: Payload[]}) => {
-      const onClick = (dataKey) => {
-        if (inactiveSeries.includes(dataKey)) {
-          setInactiveSeries(inactiveSeries.filter((el) => el !== dataKey));
-        } else {
-          setInactiveSeries((prev) => [...prev, dataKey]);
-        }
-      };
+    const renderLegend = ({ payload }) => (
+      <ChartLegend
+        payload = {payload}
+        inactive = {series.inactive}
+        onToggle = {series.toggle}
+        layout = {width > breakPoint ? 'vertical' : 'horizontal'}
+        size = 'caption'
+      />
+    );
 
-      const divStyle: React.CSSProperties = {
-        display: (width > breakPoint ? 'flex' : 'inline-flex'),
-        alignItems: 'center',
-        margin: (width > breakPoint ? '5px 0px' : '5px 5px'),
-        cursor: 'pointer',
-      };
+    const formatTooltipLabel = (row, label) => (
+      row && row.date ? Dates.format(row.date, 'M jS \'y') : label
+    );
 
-      return (
-        <div style = {{ marginLeft: 10, textAlign: (width > breakPoint ? 'initial' : 'center') }}>
-          {
-            payload.map((entry, index) => {
-              const color = entry.dataKey && inactiveSeries.includes(entry.dataKey as string) ? theme.grey[500] : entry.color;
-              return (
-                <div key={`item-${index}`} style = {divStyle} onClick={() => { onClick(entry.dataKey); }}>
-                  <div style = {{ display: 'flex' }}>
-                    <LinearScaleIcon style = {{ fontSize: '14px', color }} />
-                  </div>
-                  <div style = {{ display: 'flex', marginLeft: 5 }}>
-                    <Typography type='caption' style = {{ color }}>{entry.value}</Typography>
-                  </div>
-                </div>
-              );
-            })
-          }
-        </div>
-      );
-    };
-
-    type TooltipProps = {
-      active?: boolean;
-      payload?: { value: number, name: string, stroke: string, payload: {date: string} }[];
-      label?: number;
-    };
-
-    const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
-      if (active && payload && payload.length) {
-        return (
-          <Paper elevation={3} style = {{ padding: '5px 10px' }}>
-            <div><Typography type='subtitle2' style={{ color: theme.text.secondary }}>{payload[0].payload?.date ? Dates.format(payload[0].payload?.date, 'M jS \'y') : label}</Typography></div>
-            {
-              payload.map((entry, index) => {
-                return (
-                  <div key = {index} style = {{ display: 'flex' }}><Typography type='body1' style = {{ color: entry.stroke }} >{entry.name}:</Typography><Typography style = {{ marginLeft: 5, color: entry.stroke }} type='body1'>{entry.value}</Typography></div>
-                );
-              })
-            }
-          </Paper>
-        );
-      }
-
-      return null;
-    };
+    /**
+     * The seven rating systems, each pinned to its own palette slot.
+     *
+     * The slot is keyed to the system, not to its position in the array, so hiding the AP poll on a
+     * CBB team does not hand AP's colour to the Coach Poll, and a CFB team - which only ever has
+     * the first two - keeps the same two colours it would have on a CBB page.
+     */
+    const rankSeries = [
+      { dataKey: 'rank', name: 'SRating.io (rank)', slot: 0, cbbOnly: false },
+      { dataKey: 'elo_rank', name: 'SRating.io (elo)', slot: 1, cbbOnly: false },
+      { dataKey: 'kenpom_rank', name: 'Kenpom', slot: 2, cbbOnly: true },
+      { dataKey: 'net_rank', name: 'NET', slot: 3, cbbOnly: true },
+      { dataKey: 'srs_rank', name: 'SRS', slot: 4, cbbOnly: true },
+      { dataKey: 'ap_rank', name: 'AP', slot: 5, cbbOnly: true },
+      { dataKey: 'coaches_rank', name: 'Coach Poll', slot: 6, cbbOnly: true },
+    ];
 
     const getLines = () => {
-      const lines = [
-        <Line type = 'monotone' hide={inactiveSeries.includes('rank')} name = 'SRating.io (rank)' dataKey = 'rank' stroke = {theme.purple[500]} strokeWidth={2} dot = {false} connectNulls = {true} />,
-        <Line type = 'monotone' hide={inactiveSeries.includes('elo_rank')} name = 'SRating.io (elo)' dataKey = 'elo_rank' stroke = {theme.green[500]} strokeWidth={2} dot = {false} connectNulls = {true} />,
-      ];
+      const isCBB = Organization.getCBBID() === organization_id;
 
-      if (Organization.getCBBID() === organization_id) {
-        lines.push(<Line type = 'monotone' hide={inactiveSeries.includes('kenpom_rank')} name = 'Kenpom' dataKey = 'kenpom_rank' stroke = {theme.blue[500]} strokeWidth={2} dot = {false} connectNulls = {true} />);
-        lines.push(<Line type = 'monotone' hide={inactiveSeries.includes('net_rank')} name = 'NET' dataKey = 'net_rank' stroke = {theme.teal[500]} strokeWidth={2} dot = {false} connectNulls = {true} />);
-        lines.push(<Line type = 'monotone' hide={inactiveSeries.includes('srs_rank')} name = 'SRS' dataKey = 'srs_rank' stroke = {theme.lime[300]} strokeWidth={2} dot = {false} connectNulls = {true} />);
-        lines.push(<Line type = 'monotone' hide={inactiveSeries.includes('ap_rank')} name = 'AP' dataKey = 'ap_rank' stroke = {theme.indigo[500]} strokeWidth={2} dot = {false} connectNulls = {true} />);
-        lines.push(<Line type = 'monotone' hide={inactiveSeries.includes('coaches_rank')} name = 'Coach Poll' dataKey = 'coaches_rank' stroke = {theme.yellow[700]} strokeWidth={2} dot = {false} connectNulls = {true} />);
-      }
-
-      return lines;
+      return rankSeries
+        .filter((s) => !s.cbbOnly || isCBB)
+        .map((s) => (
+          <Line
+            key = {s.dataKey}
+            type = 'monotone'
+            hide = {series.isHidden(s.dataKey)}
+            name = {s.name}
+            dataKey = {s.dataKey}
+            stroke = {palette.series(s.slot)}
+            strokeWidth = {2}
+            dot = {false}
+            connectNulls = {true}
+          />
+        ));
     };
 
-    const YAxisProps: YAxisProps = { scale: 'auto' };
+    // rank 1 is the best, so the axis runs the other way round: a team climbing the rankings has
+    // to draw a line going up, the way every other ratings site shows it.
+    //
+    // The breathing room is pixel padding rather than a widened domain. A team that sits at 1 or 2
+    // all season has a range of about one rank, so padding the domain by a share of it gives back
+    // almost nothing, and padding it by a flat number of ranks would run past rank 1 into a region
+    // that cannot exist and label it. Pixels keep the scale honest and still lift the line off the
+    // top of the plot.
+    const YAxisProps: YAxisProps = { scale: 'auto', reversed: true, padding: { top: 14, bottom: 14 } };
     if (minYaxis !== null && maxYaxis !== null) {
       YAxisProps.domain = [minYaxis, maxYaxis];
     }
@@ -234,7 +224,7 @@ const Client = (
                 right: 10,
               }}
             >
-              <CartesianGrid strokeDasharray = '3 3' />
+              <CartesianGrid stroke = {palette.grid} />
               <XAxis dataKey = 'name' minTickGap={20} tickLine = {false} axisLine = {false}>
                 <Label value = 'Date of rank' position={'bottom'} />
               </XAxis>
@@ -243,15 +233,15 @@ const Client = (
               </YAxis>
               {
                 width > breakPoint ?
-                <Legend layout='vertical' align='right' verticalAlign='middle' content={CustomLegend} /> :
-                <Legend layout='horizontal' align='center' verticalAlign='top' content={CustomLegend} />
+                <Legend layout='vertical' align='right' verticalAlign='middle' content={renderLegend} /> :
+                <Legend layout='horizontal' align='center' verticalAlign='top' content={renderLegend} />
               }
               {
                 width > breakPoint ?
                   <Brush dataKey = 'name' startIndex={0} height={20} stroke = {theme.success.dark} /> :
                   ''
               }
-              <Tooltip cursor = {{ stroke: theme.warning.main, strokeWidth: 2 }} content={<CustomTooltip />} />
+              <Tooltip cursor = {{ stroke: theme.warning.main, strokeWidth: 2 }} content={<ChartTooltip formatLabel = {formatTooltipLabel} />} />
               {getLines()}
             </LineChart>
           </ResponsiveContainer>
@@ -266,6 +256,7 @@ const Client = (
   return (
     <Contents>
       {subView === 'ranking' ? getRankingGraph() : ''}
+      {subView === 'accuracy' ? <Accuracy games = {schedule} team_id = {team_id} /> : ''}
       {subView === 'stats' ? <StatsGraph organization_id = {organization_id} division_id = {division_id} season = {season} statistic_rankings = {statistic_rankings} games = {games} conference_statistic_rankings = {conference_statistic_rankings} league_statistic_rankings = {league_statistic_rankings} boxscores={boxscores} /> : ''}
     </Contents>
   );

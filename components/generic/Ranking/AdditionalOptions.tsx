@@ -5,6 +5,9 @@ import SettingsIcon from '@esmalley/react-material-icons/Settings';
 import CheckIcon from '@esmalley/react-material-icons/Check';
 import VisibilityIcon from '@esmalley/react-material-icons/Visibility';
 import FilterAltIcon from '@esmalley/react-material-icons/FilterAlt';
+import ScatterPlotIcon from '@esmalley/react-material-icons/ScatterPlot';
+import TableIcon from '@esmalley/react-material-icons/TableChart';
+import GradientIcon from '@esmalley/react-material-icons/Gradient';
 
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { setDataKey } from '@/redux/features/ranking-slice';
@@ -23,6 +26,8 @@ const AdditionalOptions = ({ view }: {view: string}) => {
   const dispatch = useAppDispatch();
   const hideCommitted = useAppSelector((state) => state.rankingReducer.hideCommitted);
   const hideUnderTwoMPG = useAppSelector((state) => state.rankingReducer.hideUnderTwoMPG);
+  const chartView = useAppSelector((state) => state.rankingReducer.chartView);
+  const heatMap = useAppSelector((state) => state.rankingReducer.heatMap);
   const class_years = useAppSelector((state) => state.rankingReducer.class_years);
   const organization_id = useAppSelector((state) => state.organizationReducer.organization_id);
 
@@ -51,6 +56,22 @@ const AdditionalOptions = ({ view }: {view: string}) => {
     }
   };
 
+  const handleChartView = () => {
+    handleClose();
+    dispatch(setDataKey({ key: 'chartView', value: !chartView }));
+
+    // the chart tabs only exist inside chart view, so the url stops naming one on the way back to
+    // the table rather than carrying a dead param around the rest of the site
+    if (chartView) {
+      dispatch(setDataKey({ key: 'chart', value: null }));
+    }
+  };
+
+  const handleHeatMap = () => {
+    handleClose();
+    dispatch(setDataKey({ key: 'heatMap', value: !heatMap }));
+  };
+
   const handleConferenceFilter = () => {
     handleClose();
     setConfOptionsOpen(true);
@@ -63,6 +84,27 @@ const AdditionalOptions = ({ view }: {view: string}) => {
 
   const getMenuOptions = () => {
     const menuOptions: MenuOption[] = [];
+
+    // team is the only view whose rows carry two measures worth crossing
+    if (view === 'team') {
+      menuOptions.push({
+        value: 'chart-view-display',
+        label: chartView ? 'Show table' : 'Show chart',
+        selectable: true,
+        onSelect: handleChartView,
+        icon: chartView ? <TableIcon style = {{ fontSize: 20 }} /> : <ScatterPlotIcon style = {{ fontSize: 20 }} />,
+      });
+    }
+
+    if (!chartView) {
+      menuOptions.push({
+        value: 'heat-map-display',
+        label: 'Color cells by rank',
+        selectable: true,
+        onSelect: handleHeatMap,
+        icon: heatMap ? <CheckIcon style = {{ fontSize: 20 }} /> : <GradientIcon style = {{ fontSize: 20 }} />,
+      });
+    }
 
     if (view === 'transfer') {
       menuOptions.push({

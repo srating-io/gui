@@ -25,6 +25,30 @@ class General {
     return mode === 'light' ? theme.error.main : theme.error.dark;
   }
 
+  public static getWeakerColor(): string {
+    const store = getStore();
+
+    const { mode } = store.getState().themeReducer;
+
+    const theme = new Theme(mode).getTheme();
+
+    // todo might need to adjust for mode
+
+    return mode === 'light' ? theme.blue[500] : theme.blue[500];
+  }
+
+  public static getStrongerColor(): string {
+    const store = getStore();
+
+    const { mode } = store.getState().themeReducer;
+
+    const theme = new Theme(mode).getTheme();
+
+    // todo might need to adjust for mode
+
+    return mode === 'light' ? theme.orange[500] : theme.orange[500];
+  }
+
   public static getLogoColorPrimary(): string {
     const store = getStore();
 

@@ -27,6 +27,7 @@ const SubNavBar = ({ view }) => {
   const scheduleView = useAppSelector((state) => state.teamReducer.scheduleView);
   const showScheduleDifferentials = useAppSelector((state) => state.teamReducer.showScheduleDifferentials);
   const showScheduleHistoricalRankRecord = useAppSelector((state) => state.teamReducer.showScheduleHistoricalRankRecord);
+  const statsCharts = useAppSelector((state) => state.teamReducer.statsCharts);
   const subview = useAppSelector((state) => state.teamReducer.subview) || (view === 'stats' ? 'team' : 'stats');
 
 
@@ -40,10 +41,11 @@ const SubNavBar = ({ view }) => {
       player: 'Players',
     };
   } else if (view === 'trends') {
-    tabOrder = ['stats', 'ranking'];
+    tabOrder = ['stats', 'accuracy', 'ranking'];
     tabOptions = {
       ranking: 'Ranking',
       stats: 'Stats',
+      accuracy: 'Accuracy',
     };
   }
 
@@ -142,6 +144,20 @@ const SubNavBar = ({ view }) => {
       <div key = {subview} style = {{ width: '100%', display: 'flex', justifyContent: 'center', overflowX: 'scroll', overflowY: 'hidden', scrollbarWidth: 'none' }}>
         {tabs}
       </div>,
+    );
+  }
+
+  // the team stats page leads with three charts, which summarise the grid below rather than saying
+  // anything it does not. They are a thing to reach for, so they stay off until asked for.
+  if (view === 'stats' && subview === 'team') {
+    leftButtons.push(
+      <Tooltip key = {'toggle-stats-charts-tooltip'} text = {statsCharts ? 'Hide charts' : 'Show charts'}>
+        <IconButton
+          value = 'stats-charts-button'
+          onClick = {() => dispatch(setDataKey({ key: 'statsCharts', value: !statsCharts }))}
+          icon = {<LegendToggleIcon style = {{ fontSize: 24, color: theme[(statsCharts ? 'success' : 'primary')].main }} />}
+        />
+      </Tooltip>,
     );
   }
 

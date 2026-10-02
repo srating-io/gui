@@ -15,6 +15,7 @@ import Rank from './Tile/Rank';
 import Record from './Tile/Record';
 import Organization from '@/components/helpers/Organization';
 import HelperGeneral from '@/components/helpers/General';
+import Odds from '@/components/helpers/Odds';
 import { Color, Dates } from '@esmalley/ts-utils';
 import { useNavigation } from '@/components/hooks/useNavigation';
 import { IconButton, Paper, Skeleton, Tooltip, Typography, useTheme, useWindowDimensions } from '@esmalley/react-material-ui';
@@ -146,14 +147,13 @@ const Tile = (
 
   const predictionContainer: React.JSX.Element[] = [];
 
-  const hasAccessToPercentages = !(!game.prediction || (game.prediction.home_percentage === null && game.prediction.away_percentage === null));
+  const winPercentage = Odds.getWinPercentage(game.prediction, game.home_team_id === team.team_id);
 
   if (isLoadingPredictions) {
     predictionContainer.push(<Skeleton style = {{ width: '100%', height: '100%' }} key = {1} />);
-  } else if (!hasAccessToPercentages) {
+  } else if (winPercentage === null) {
     predictionContainer.push(<Locked key = {1} iconFontSize = {(width < 475 ? '18px' : '20px')} />);
   } else {
-    const winPercentage = (game.home_team_id === team.team_id ? +((game.prediction?.home_percentage || 0) * 100).toFixed(0) : +((game.prediction?.away_percentage || 0) * 100).toFixed(0));
     predictionContainer.push(<Typography key = {'win_percent'} type = 'caption' style = {{ color: Color.lerpColor(worstColor, bestColor, winPercentage / 100) }}>{winPercentage}%</Typography>);
   }
 

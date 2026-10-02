@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { CSSProperties, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 
 import LockIcon from '@esmalley/react-material-icons/Lock';
@@ -16,7 +16,11 @@ const Locked = (
     ...props
   }:
   {
+    // everything else is handed straight to the IconButton, which is how a caller shrinks the
+    // lock to fit somewhere tighter than a schedule row
     iconFontSize: string | null;
+    style?: CSSProperties;
+    containerStyle?: CSSProperties;
   },
 ) => {
   const theme = useTheme();

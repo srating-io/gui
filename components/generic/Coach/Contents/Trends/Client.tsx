@@ -7,10 +7,11 @@ import {
 
 
 import { getNavHeaderHeight } from '@/components/generic/Coach/NavBar';
+import { ChartTooltip, getChartPalette } from '@/components/generic/Chart';
 import { footerNavigationHeight } from '@/components/generic/FooterNavigation';
 import { headerBarHeight } from '@/components/generic/Header';
 import { Dates } from '@esmalley/ts-utils';
-import { LinearProgress, Paper, Typography, useTheme } from '@esmalley/react-material-ui';
+import { LinearProgress, Typography, useTheme } from '@esmalley/react-material-ui';
 import { General } from '@srating-io/types';
 
 
@@ -52,6 +53,7 @@ const ClientSkeleton = () => {
 
 const Client = ({ coach_elos, games }: {coach_elos: General.CoachElos, games: General.Games}) => {
   const theme = useTheme();
+  const palette = getChartPalette(theme);
 
   const sorted_elo = Object.values(coach_elos).sort((a, b) => {
     if (!(a.game_id)) {
@@ -116,27 +118,9 @@ const Client = ({ coach_elos, games }: {coach_elos: General.CoachElos, games: Ge
   minYaxis -= 100;
   maxYaxis += 100;
 
-  type TooltipProps = {
-    active?: boolean;
-    payload?: { value: number, name: string, payload: {date: string} }[];
-    label?: number;
-  };
-
-  const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
-    if (active && payload && payload.length) {
-      return (
-        <Paper elevation={3} style = {{ padding: '5px 10px' }}>
-          <div><Typography type='subtitle2' style = {{ color: theme.text.secondary }}>{payload[0].payload?.date ? Dates.format(payload[0].payload?.date, 'M jS \'y') : label}</Typography></div>
-          <div style = {{ display: 'inline-flex' }}>
-            <Typography type='body1' style = {{ color: theme.text.secondary }}>Rating:</Typography>
-            <Typography style = {{ marginLeft: 5, color: theme.info.main }} type='body1'>{payload[0].value}</Typography>
-          </div>
-        </Paper>
-      );
-    }
-
-    return null;
-  };
+  const formatTooltipLabel = (row, label) => (
+    row && row.date ? Dates.format(row.date, 'M jS \'y') : label
+  );
 
   const formatXAxis = (value) => {
     return Dates.format(value, 'Y');
@@ -157,10 +141,10 @@ const Client = ({ coach_elos, games }: {coach_elos: General.CoachElos, games: Ge
               right: 10,
             }}
           >
-            <CartesianGrid strokeDasharray = '3 3' />
+            <CartesianGrid stroke = {palette.grid} />
             <XAxis dataKey = 'date' minTickGap={20} tickLine = {false} axisLine = {false} tickFormatter={formatXAxis} />
             <YAxis dataKey = 'value' scale = 'linear' domain = {[minYaxis, maxYaxis]} />
-            <Tooltip cursor = {{ stroke: theme.warning.main, strokeWidth: 2 }} content={<CustomTooltip />} />
+            <Tooltip cursor = {{ stroke: theme.warning.main, strokeWidth: 2 }} content={<ChartTooltip formatLabel = {formatTooltipLabel} />} />
             <ReferenceLine y = {highestElo} stroke = {referenceLineStroke}>
               <Label value={highestElo} style={{ textAnchor: 'middle', fill: referenceLineStroke, fontSize: 18 }} dy={-10} />
             </ReferenceLine>
@@ -168,7 +152,7 @@ const Client = ({ coach_elos, games }: {coach_elos: General.CoachElos, games: Ge
               <Label value = {Dates.format(highestEloDate, 'M jS \'y')} angle={-90} dx={-15} style={{ textAnchor: 'middle', fill: referenceLineStroke, fontSize: 18 }} />
             </ReferenceLine>
             {/* {formattedData.length > 1 ? <ReferenceLine label="Segment" stroke="green" strokeDasharray="3 3" segment={[{x: formattedData[0].name, y: formattedData[0].value}, {x: formattedData[formattedData.length - 1].name, y: formattedData[formattedData.length - 1].value}]} /> : ''} */}
-            <Line type = 'monotone' dataKey = 'value' stroke = {theme.info.main} strokeWidth={2} dot = {false} />
+            <Line type = 'monotone' name = 'Rating' dataKey = 'value' stroke = {palette.series(0)} strokeWidth={2} dot = {false} />
           </LineChart>
         </ResponsiveContainer>
       </div>

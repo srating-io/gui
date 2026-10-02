@@ -3,7 +3,9 @@
 import { useState } from 'react';
 
 import HelperGame from '@/components/helpers/Game';
+import Odds from '@/components/helpers/Odds';
 import Chart from '@/components/generic/Chart';
+import GameFlow from './GameFlow';
 import { LineProps } from 'recharts';
 import { getNavHeaderHeight, getSubNavHeaderHeight } from '@/components/generic/Game/NavBar';
 import { footerNavigationHeight } from '@/components/generic/FooterNavigation';
@@ -45,6 +47,8 @@ const ClientSkeleton = () => {
 };
 
 const Client = ({ game, game_pulses, odds }: {game: General.Game, game_pulses: General.GamePulses, odds: General.Oddsz}) => {
+  // the flow leads, because "was this ever in doubt" is the question a reader arrives with; the
+  // raw score and the three odds series stay one chip away
   const [selectedIntervalChip, setSelectedIntervalChip] = useState('scoring');
 
   const theme = useTheme();
@@ -54,8 +58,12 @@ const Client = ({ game, game_pulses, odds }: {game: General.Game, game_pulses: G
     game,
   });
 
-
+  // todo this needs to use my live predicted win %
   const intervalCompare = [
+    {
+      label: 'Game flow',
+      value: 'gameFlow',
+    },
     {
       label: 'Scoring',
       value: 'scoring',
@@ -97,6 +105,10 @@ const Client = ({ game, game_pulses, odds }: {game: General.Game, game_pulses: G
     time: string;
     home_score: number;
     away_score: number;
+    /** Home score minus away score, so positive is the home side ahead. */
+    margin: number;
+    /** Vig free home win probability, 0 to 100, or null where the book gave no price. */
+    home_win_probability: number | null;
     money_line_home?: number;
     money_line_away?: number;
     spread_home?: number;
@@ -128,9 +140,23 @@ const Client = ({ game, game_pulses, odds }: {game: General.Game, game_pulses: G
         time: clock + (showPeriod ? ` ${current_period}` : ''),
         home_score: sorted_game_pulses[i].home_score,
         away_score: sorted_game_pulses[i].away_score,
+        margin: sorted_game_pulses[i].home_score - sorted_game_pulses[i].away_score,
+        home_win_probability: null,
       };
 
       if (game_pulse_odds) {
+        // the two sides of a money line add up to more than one, and the excess is the book's
+        // margin rather than anything anyone believed. Taking it out first is what makes this a
+        // probability instead of a price
+        const fair = Odds.getFairProbabilities({
+          away: game_pulse_odds.money_line_away,
+          home: game_pulse_odds.money_line_home,
+        });
+
+        if (fair) {
+          data.home_win_probability = +(fair.home * 100).toFixed(1);
+        }
+
         data.money_line_home = game_pulse_odds.money_line_home < -10000 ? -10000 : game_pulse_odds.money_line_home;
         data.money_line_away = game_pulse_odds.money_line_away < -10000 ? -10000 : game_pulse_odds.money_line_away;
         data.spread_home = game_pulse_odds.spread_home < -10000 ? -10000 : game_pulse_odds.spread_home;
@@ -147,7 +173,17 @@ const Client = ({ game, game_pulses, odds }: {game: General.Game, game_pulses: G
 
   const colors = Game.getColors();
 
-  if (selectedIntervalChip === 'scoring') {
+  if (selectedIntervalChip === 'gameFlow') {
+    intervalChart = (
+      <GameFlow
+        rows = {formattedData}
+        homeColor = {Color.getTextColor(colors.homeColor, backgroundColor)}
+        awayColor = {Color.getTextColor(colors.awayColor, backgroundColor)}
+        homeName = {Game.getTeamName('home')}
+        awayName = {Game.getTeamName('away')}
+      />
+    );
+  } else if (selectedIntervalChip === 'scoring') {
     const lines: LineProps[] = [
       {
         type: 'monotone',

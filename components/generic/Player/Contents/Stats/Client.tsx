@@ -7,6 +7,7 @@ import { getNavHeaderHeight } from '../../NavBar';
 import { getSubNavHeaderHeight } from '../../SubNavbar';
 import RankSpan from '@/components/generic/RankSpan';
 import TableColumns from '@/components/helpers/TableColumns';
+import { ChartPercentileRadar, RadarSpoke } from '@/components/generic/Chart';
 import AdditionalOptions from '../../AdditionalOptions';
 import { useAppSelector } from '@/redux/hooks';
 import { LinearProgress, Tooltip, Typography, useTheme } from '@esmalley/react-material-ui';
@@ -172,6 +173,64 @@ const Client = ({ organization_id, division_id, season, player_statistic_ranking
 
   const sections = getSections();
 
+  /**
+   * The handful of measures that describe what kind of player this is rather than how much of the
+   * box score they filled: scoring, creating, finishing, and the two ends of defence.
+   *
+   * Every key here has to be one where the ranking runs best-first, because that is the only thing
+   * the percentile below knows how to read. That is not true of every column the app carries:
+   * `turnover_percentage` is ranked `sort: 'higher'`, so rank 1 is the most turnover-prone player
+   * in the league, and plotting it put the loosest handler on the outer ring. It is left out for
+   * that reason - check a column's `sort` against which end is actually good before adding it.
+   */
+  const getRadarKeys = () => {
+    if (Organization.isCFB()) {
+      return [
+        'adjusted_passing_rating',
+        'passing_completion_percentage',
+        'passing_yards_per_attempt',
+        'rushing_yards_per_attempt',
+        'receiving_yards_per_reception',
+        'passing_touchdowns_per_game',
+      ];
+    }
+
+    return [
+      'points_per_game',
+      'true_shooting_percentage',
+      'assist_percentage',
+      'total_rebound_percentage',
+      'steal_percentage',
+      'block_percentage',
+    ];
+  };
+
+  const getRadarSpokes = (): RadarSpoke[] => {
+    const spokes: RadarSpoke[] = [];
+
+    for (const key of getRadarKeys()) {
+      const column = columns[key];
+      const rank = player_statistic_ranking[`${key}_rank`];
+
+      if (!column || !rank || !(key in player_statistic_ranking) || !maxPlayers || maxPlayers < 2) {
+        continue;
+      }
+
+      // rank 1 is the best on every measure listed above, including the ones where the good
+      // direction is down, so the percentile needs no per-stat knowledge of which way is better
+      const percentile = (1 - ((Math.min(rank, maxPlayers) - 1) / (maxPlayers - 1))) * 100;
+
+      spokes.push({
+        key,
+        label: column.getAltLabel ? column.getAltLabel() : column.getLabel(),
+        percentile,
+        detail: `${player_statistic_ranking[key]}`,
+      });
+    }
+
+    return spokes;
+  };
+
   const getStatBlock = (key: string) => {
     if (!key || !(key in columns)) {
       return <></>;
@@ -191,9 +250,24 @@ const Client = ({ organization_id, division_id, season, player_statistic_ranking
     );
   };
 
+  // three spokes is the least that encloses an area, so below that the radar draws nothing - and
+  // the rule under it is held back too, rather than left behind as a bare line
+  const radarSpokes = getRadarSpokes();
+
   return (
     <Contents>
       <AdditionalOptions />
+      {
+        radarSpokes.length >= 3 ?
+          <>
+            <ChartPercentileRadar
+              spokes = {radarSpokes}
+              caption = {`percentile among ${maxPlayers} ranked players · the numbers beside the shape are the ones to use`}
+            />
+            <hr />
+          </> :
+          ''
+      }
       <div style = {{ padding: '0px 5px' }}>
         {sections.map(({ name, keys }, sectionIndex) => {
           return (

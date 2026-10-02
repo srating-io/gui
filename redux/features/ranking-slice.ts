@@ -16,6 +16,14 @@ export type InitialState = {
   filterOriginalConf: boolean,
   tableScrollTop: number,
   tableFullscreen: boolean,
+  chartView: boolean,
+  /**
+   * Which chart `chartView` is showing. Null until a tab is picked, which keeps the param out of
+   * the url for the chart a reader lands on, and is what leaving chart view resets it to.
+   */
+  chart: string | null,
+  /** Tints each ranked cell by where it falls in the league, so a column can be read at a glance. */
+  heatMap: boolean,
   lastUpdated: string | null,
   columnView: string,
   customColumns: Array<string>,
@@ -45,6 +53,7 @@ stateController.set_url_param_type_x_keys({
     'order',
     'orderBy',
     'columnView',
+    'chart',
   ],
   number: [
     'career',
@@ -59,6 +68,8 @@ stateController.set_url_param_type_x_keys({
     'hideUnderTwoMPG',
     'filterCommittedConf',
     'filterOriginalConf',
+    'chartView',
+    'heatMap',
   ],
 });
 
@@ -74,6 +85,9 @@ stateController.setInitialState({
   filterOriginalConf: true,
   tableScrollTop: 0,
   tableFullscreen: false,
+  chartView: false,
+  chart: null,
+  heatMap: false,
   lastUpdated: null,
   columnView: 'composite',
   customColumns: ['rank', 'name'],
