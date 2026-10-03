@@ -9,7 +9,7 @@
  *   - One y-axis. Two measures on different scales belong in two panels, in small multiples, or
  *     indexed to a common base - never on a second axis, where the alignment between the two
  *     scales is arbitrary and invents a correlation the data does not contain.
- *   - Colour follows the entity, not its rank. See palette.ts.
+ *   - color follows the entity, not its rank. See palette.ts.
  */
 import Line from './Line';
 
@@ -31,6 +31,7 @@ export { default as ChartResidual } from './Residual';
 export { default as ChartCorrelationMatrix } from './CorrelationMatrix';
 export { default as ChartLegend } from './ChartLegend';
 export { default as ChartTooltip } from './ChartTooltip';
+export { default as LazyPanel } from './LazyPanel';
 export { default as useInactiveSeries } from './useInactiveSeries';
 export { getChartPalette, getCategorical } from './palette';
 

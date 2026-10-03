@@ -297,7 +297,7 @@ const StatsGraph = (
    * The three lines every panel carries, named once in the grid's own legend.
    *
    * Same slots as the one-stat chart below, so a reader who learned that the league is the third
-   * colour there does not have to learn it again here.
+   * color there does not have to learn it again here.
    */
   const smallMultipleSeries: SmallMultipleSeries[] = [
     { key: 'team', name: 'Team', prefix: '', slot: 0, showRank: true },

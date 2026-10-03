@@ -29,13 +29,13 @@ export type ResidualPoint = {
  *   - POSITION against the dashed diagonal is the error. Scatter around it is noise, which is
  *     mostly the sport; a cloud consistently to one side is bias, which is the model, and the
  *     mean residual in the caption puts a number on it.
- *   - COLOUR is how far that one call missed, so a one-point near-miss and a thirty-point blowout
+ *   - color is how far that one call missed, so a one-point near-miss and a thirty-point blowout
  *     stop looking alike. The eye finds the bad nights without measuring anything.
  *   - The SHADED corners are the calls that picked the wrong winner outright. They were two bare
  *     reference lines at zero before, one shade off the gridlines and named nowhere, which made
  *     the most meaningful lines on the chart read as decoration.
  *
- * Colour and quadrant are kept apart on purpose. Quadrant correctness is the coarser of the two
+ * color and quadrant are kept apart on purpose. Quadrant correctness is the coarser of the two
  * and sometimes the more misleading - a game called at +1 that finishes -1 picked the wrong side
  * while being the model's best night of the season - so it gets the quieter channel, and the
  * honest measure of error gets the loud one.
@@ -54,7 +54,7 @@ const ChartResidual = (
     /**
      * The miss, in the units of the axes, that paints a mark the full "bad" end of the ramp.
      *
-     * Fixed rather than taken from the worst game in the set, so the colours mean the same thing
+     * Fixed rather than taken from the worst game in the set, so the colors mean the same thing
      * on every team's chart. Scaled to the data, a season where the model was never more than six
      * points out would still render a red mark, and the reader would have no way to know the
      * whole chart was a good one.
@@ -176,7 +176,7 @@ const ChartResidual = (
                   formatValue = {(entry, row) => {
                     const point = row as ResidualPoint;
 
-                    // the miss is what the colour is saying, so the tooltip says it in words
+                    // the miss is what the color is saying, so the tooltip says it in words
                     // rather than leaving the reader to subtract the two rows above it
                     if (entry.dataKey === 'actual') {
                       const miss = point.actual - point.predicted;

@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Chart, { getChartPalette } from '@/components/generic/Chart';
+import HelperChart from '@/components/helpers/Chart';
 import { LineProps, YAxisProps } from 'recharts';
 import { RankingColumns } from '@/types/general';
 import { Chip, useTheme } from '@esmalley/react-material-ui';
 
-import trendsExampleData from './trendsExampleData';
+import { trendRows } from '../data/trends';
 
 
 const TrendsExample = () => {
@@ -40,26 +41,26 @@ const TrendsExample = () => {
     );
   }
 
-  let minYaxis: number | null = null;
-  let maxYaxis: number | null = null;
+  const formattedData = trendRows;
 
-  if (selectedChip === 'adjusted_efficiency_rating') {
-    minYaxis = 0;
-    maxYaxis = 60;
-  }
+  /**
+   * Fitted to the three lines, the way the team page fits its own.
+   *
+   * A hand picked pair of bounds per statistic is a second thing to keep true: the pair this chart
+   * carried held the adjusted margin to 0 - 60, which pinned a league that averages zero to the
+   * floor of the plot, and held points to 70 - 100, which cut the top off a 121 point opener.
+   */
+  const domain = useMemo(() => {
+    let bounds: [number | null, number | null] = [null, null];
 
-  if (selectedChip === 'three_point_field_goal_percentage') {
-    minYaxis = 25;
-    maxYaxis = 60;
-  }
+    for (const row of formattedData) {
+      bounds = HelperChart.extend(bounds, row[selectedChip]);
+      bounds = HelperChart.extend(bounds, row[`conf_${selectedChip}`]);
+      bounds = HelperChart.extend(bounds, row[`league_${selectedChip}`]);
+    }
 
-  if (selectedChip === 'points') {
-    minYaxis = 70;
-    maxYaxis = 100;
-  }
-
-
-  const formattedData = trendsExampleData;
+    return HelperChart.getDomain(bounds[0], bounds[1]);
+  }, [formattedData, selectedChip]);
 
   let chart: React.JSX.Element | null = null;
 
@@ -97,8 +98,8 @@ const TrendsExample = () => {
     ];
 
     const YAxisProps: YAxisProps = { scale: 'auto' };
-    if (minYaxis !== null && maxYaxis !== null) {
-      YAxisProps.domain = [minYaxis, maxYaxis];
+    if (domain) {
+      YAxisProps.domain = domain;
     }
     chart = <Chart key = {selectedChip} XAxisDataKey={'date_friendly'} YAxisLabel={statistic.label} rows={formattedData} lines={lines} YAxisProps={YAxisProps} />;
   }

@@ -5,7 +5,9 @@ import {
 } from 'recharts';
 
 import ChartTooltip from './ChartTooltip';
+import RankSpan from '@/components/generic/RankSpan';
 import { getChartPalette } from './palette';
+import { Numbers } from '@esmalley/ts-utils';
 import { Typography, useTheme } from '@esmalley/react-material-ui';
 
 export type RadarSpoke = {
@@ -13,7 +15,9 @@ export type RadarSpoke = {
   label: string;
   /** 0 to 100, where 100 is the best in the league on this measure. */
   percentile: number;
-  /** The underlying figure and rank, read in the tooltip and in the table beside the chart. */
+  /** The rank the percentile was derived from, printed beside the figure as a RankSpan. */
+  rank: number;
+  /** The underlying figure, read in the tooltip and in the table beside the chart. */
   detail: string;
 };
 
@@ -28,16 +32,24 @@ export type RadarSpoke = {
  * So the numbers are printed beside it rather than left to the shape. The chart answers "what kind
  * of player is this" and the list answers "how good, exactly" - and the list is the part a reader
  * should use for anything that matters.
+ *
+ * The rank in that list is the same RankSpan the stat tables print, rather than the percentile the
+ * shape is drawn from. A percentile is the right thing to plot, because every spoke has to share
+ * one ring, and the wrong thing to read: "95th" and "262nd of 5634" are the same fact, and only
+ * one of them carries its denominator.
  */
 const ChartPercentileRadar = (
   {
     spokes,
+    max,
     title,
     height = 300,
     caption,
   }:
   {
     spokes: RadarSpoke[];
+    /** Number of ranked players; the denominator every rank beside the shape is measured against. */
+    max: number;
     title?: string;
     height?: number;
     caption?: string;
@@ -69,7 +81,7 @@ const ChartPercentileRadar = (
                 content = {
                   <ChartTooltip
                     formatLabel = {(row) => (row as RadarSpoke).label}
-                    formatValue = {(entry, row) => `${(row as RadarSpoke).detail} · ${Math.round(Number(entry.value))}th pct`}
+                    formatValue = {(entry, row) => `${(row as RadarSpoke).detail} · ${Numbers.formatOrdinal(Math.round(Number(entry.value)))} pct`}
                   />
                 }
               />
@@ -88,9 +100,14 @@ const ChartPercentileRadar = (
         {/* the table view the shape is not a substitute for */}
         <div style = {{ flex: '1 1 220px', minWidth: 200, padding: '0px 10px' }}>
           {usable.map((spoke) => (
-            <div key = {spoke.key} style = {{ display: 'flex', justifyContent: 'space-between', padding: '2px 0px' }}>
+            <div key = {spoke.key} style = {{
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '2px 0px',
+            }}>
               <Typography type = 'caption' style = {{ color: theme.text.secondary }}>{spoke.label}</Typography>
-              <Typography type = 'caption'>{spoke.detail} · {Math.round(spoke.percentile)}th</Typography>
+              <div style = {{ display: 'flex', alignItems: 'center' }}>
+                <Typography type = 'caption'>{spoke.detail}</Typography>
+                <RankSpan rank = {spoke.rank} max = {max} useOrdinal = {true} />
+              </div>
             </div>
           ))}
         </div>

@@ -58,7 +58,7 @@ const GameFlow = (
   // the fill runs between the line and the coin flip, so the shape reaches from the furthest the
   // line strayed on one side to the furthest on the other, with 50 always inside it. The gradient
   // is painted across that shape's box rather than the plot's, so the stop goes where 50 falls in
-  // it - otherwise the colours swap somewhere other than the halfway line
+  // it - otherwise the colors swap somewhere other than the halfway line
   const probabilityMax = Math.max(50, ...probabilities);
   const probabilityMin = Math.min(50, ...probabilities);
   const probabilityOffset = probabilityMax === probabilityMin ?
@@ -86,7 +86,7 @@ const GameFlow = (
                   <XAxis dataKey = 'time' type = 'category' hide = {true} />
                   {/* no rotated axis title: this axis is the home side's chance, so a "Michigan"
                       label beside it reads as though the bottom half were Michigan's too. The key
-                      under the panel says which colour is whom, which is the thing in doubt */}
+                      under the panel says which color is whom, which is the thing in doubt */}
                   <YAxis domain = {[0, 100]} ticks = {[0, 50, 100]} width = {52} tickLine = {false} axisLine = {false} unit = '%' />
                   {/* a coin flip is the line everything on this panel is read against */}
                   <ReferenceLine y = {50} stroke = {palette.ink.secondary} strokeWidth = {1} />
@@ -137,7 +137,7 @@ const GameFlow = (
               </div>
             </div>
             <Typography type = 'caption' style = {{ color: theme.text.secondary, display: 'block', textAlign: 'center' }}>
-              from the live money line, with the book&apos;s margin removed
+              from the live market line, with the book&apos;s margin removed
             </Typography>
           </div>
           : ''

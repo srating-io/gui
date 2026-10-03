@@ -16,7 +16,7 @@ export type SequenceCell = {
    */
   intensity: number | null;
   /**
-   * The rating behind this cell has not arrived yet, so the bar is a skeleton instead of a colour.
+   * The rating behind this cell has not arrived yet, so the bar is a skeleton instead of a color.
    *
    * This is not the same as a null intensity, and the strip would be lying if it used one for the
    * other: null is a settled answer - there is nothing to rate, and there never will be - while
@@ -29,7 +29,7 @@ export type SequenceCell = {
    */
   mark?: React.ReactNode;
   outcome?: 'good' | 'bad' | null;
-  /** Overrides the colour the outcome would give a text mark, for a scale of its own. */
+  /** Overrides the color the outcome would give a text mark, for a scale of its own. */
   markColor?: string;
   tooltip: string;
   onSelect?: () => void;
@@ -41,12 +41,12 @@ export type SequenceCell = {
 };
 
 /**
- * How a ramp colour is actually painted.
+ * How a ramp color is actually painted.
  *
  * The last tenth of the way back towards the surface takes the edge off every cell at once, which
  * matters more here than in a chart with a handful of marks: thirty saturated blocks in a row
  * shout, and the reader is meant to be reading the pattern across them rather than any one of
- * them. The legend swatch is mixed the same way so that it shows the colours the strip has.
+ * them. The legend swatch is mixed the same way so that it shows the colors the strip has.
  */
 const getFill = (palette: ChartPalette, color: string): string => Color.lerpColor(palette.surface, color, 0.9);
 
@@ -87,7 +87,7 @@ const Cell = (
   };
 
   /**
-   * The skeleton takes the bar's exact box, so nothing moves when the colour arrives - the strip
+   * The skeleton takes the bar's exact box, so nothing moves when the color arrives - the strip
    * is a row of thirty small things, and a reflow at this size reads as the whole chart twitching.
    */
   const bar = cell.loading ?
@@ -165,7 +165,7 @@ const Cell = (
 };
 
 /**
- * One cell per event, in order, each coloured by how hard it was.
+ * One cell per event, in order, each colored by how hard it was.
  *
  * A season read as a list of rows is a season nobody reads: thirty tiles, each needing its own
  * glance, and the pattern across them - a brutal December, a soft run into March, three straight
@@ -174,7 +174,7 @@ const Cell = (
  *
  * Two things are encoded and they are kept apart rather than layered into one swatch: the bar is
  * how strong the opponent was, the mark underneath is what happened. Putting difficulty into the
- * background behind a coloured letter would have the two encodings fighting for the same pixels,
+ * background behind a colored letter would have the two encodings fighting for the same pixels,
  * and the letter would lose against the dark end of the ramp.
  */
 const ChartSequenceStrip = (

@@ -168,8 +168,8 @@ const Client = (
      * The seven rating systems, each pinned to its own palette slot.
      *
      * The slot is keyed to the system, not to its position in the array, so hiding the AP poll on a
-     * CBB team does not hand AP's colour to the Coach Poll, and a CFB team - which only ever has
-     * the first two - keeps the same two colours it would have on a CBB page.
+     * CBB team does not hand AP's color to the Coach Poll, and a CFB team - which only ever has
+     * the first two - keeps the same two colors it would have on a CBB page.
      */
     const rankSeries = [
       { dataKey: 'rank', name: 'SRating.io (rank)', slot: 0, cbbOnly: false },

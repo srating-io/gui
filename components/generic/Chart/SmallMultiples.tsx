@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
 import {
   LineChart, Line, YAxis, Tooltip, ResponsiveContainer,
 } from 'recharts';
 import { Payload } from 'recharts/types/component/DefaultLegendContent';
 
 import ChartLegend from './ChartLegend';
+import LazyPanel from './LazyPanel';
 import ChartTooltip from './ChartTooltip';
 import useInactiveSeries from './useInactiveSeries';
 import { getChartPalette } from './palette';
@@ -34,7 +34,7 @@ export type SmallMultipleSeries = {
   name?: string;
   /** Prepended to each panel's dataKey to reach this series' field on the row. */
   prefix?: string;
-  /** Palette slot, so a colour belongs to the entity and not to its position in the array. */
+  /** Palette slot, so a color belongs to the entity and not to its position in the array. */
   slot: number;
   /** Shows this series' rank out of `rankMax` in the tooltip, as the one-stat chart does. */
   showRank?: boolean;
@@ -42,51 +42,6 @@ export type SmallMultipleSeries = {
 
 /** One line, the panel's own measure, for a caller that has nothing to compare it against. */
 const DEFAULT_SERIES: SmallMultipleSeries[] = [{ key: 'value', prefix: '', slot: 0, showRank: true }];
-
-/**
- * Mounts its chart the first time it comes near the viewport.
- *
- * The grid can run to a hundred panels, and a hundred recharts charts measured and laid out at
- * once costs seconds of blocked main thread for the eight a reader can actually see. The box keeps
- * its height either way, so nothing below it moves when a panel fills in and the scrollbar does
- * not grow as the page is read.
- */
-const LazyPanel = ({ height, children }: { height: number, children: React.ReactNode }) => {
-  const ref = useRef<HTMLDivElement>(null);
-  const [shown, setShown] = useState(false);
-
-  useEffect(() => {
-    if (shown || !ref.current) {
-      return undefined;
-    }
-
-    // older browsers and the server-rendered pass get everything at once rather than nothing
-    if (typeof IntersectionObserver === 'undefined') {
-      setShown(true);
-      return undefined;
-    }
-
-    const observer = new IntersectionObserver((entries) => {
-      for (const entry of entries) {
-        if (entry.isIntersecting) {
-          setShown(true);
-          observer.disconnect();
-        }
-      }
-      // a screen of lead time, so a panel is drawn by the time it is scrolled to
-    }, { rootMargin: '400px' });
-
-    observer.observe(ref.current);
-
-    return () => observer.disconnect();
-  }, [shown]);
-
-  return (
-    <div ref = {ref} style = {{ height }}>
-      {shown ? children : null}
-    </div>
-  );
-};
 
 /**
  * The same season plotted once per statistic, side by side on a shared time axis.
@@ -101,7 +56,7 @@ const LazyPanel = ({ height, children }: { height: number, children: React.React
  * What is shared is the x axis - every panel covers the same dates in the same order - so the eye
  * can travel down a column and find the same week in every statistic.
  *
- * Series are shared too: the same two or three lines in every panel, in the same colours, named
+ * Series are shared too: the same two or three lines in every panel, in the same colors, named
  * once in a legend at the top rather than restated a hundred times in panels too small to hold a
  * legend each. Switching one off there switches it off everywhere, and the axes refit to what is
  * left.

@@ -14,12 +14,12 @@ import { Typography, useTheme } from '@esmalley/react-material-ui';
  * One measure that runs either side of a meaningful zero, filled to the zero line.
  *
  * A margin plotted as an ordinary line asks the reader to hold "which side of the axis is this"
- * in their head for the whole game. Filling to zero and colouring each side means the answer is
- * already on the page: who was ahead is the colour, and by how much is the height. The run of
- * colour across the x axis is then the shape of the game.
+ * in their head for the whole game. Filling to zero and coloring each side means the answer is
+ * already on the page: who was ahead is the color, and by how much is the height. The run of
+ * color across the x axis is then the shape of the game.
  *
- * The two colours are the two entities, so they are passed in rather than taken from the
- * categorical order - on a game page they are the teams' own colours, which the reader has
+ * The two colors are the two entities, so they are passed in rather than taken from the
+ * categorical order - on a game page they are the teams' own colors, which the reader has
  * already learnt from the header.
  */
 const ChartDivergingArea = (
@@ -42,7 +42,7 @@ const ChartDivergingArea = (
     rows: object[];
     dataKey: string;
     xAxisDataKey: string;
-    /** Colour for the half above zero, and the entity it belongs to. */
+    /** color for the half above zero, and the entity it belongs to. */
     positiveColor: string;
     negativeColor: string;
     /** Short name for each side, read in the tooltip right after the value. */
@@ -82,7 +82,7 @@ const ChartDivergingArea = (
   const domain = HelperChart.getDomain(-reach, reach) || [-reach, reach];
 
   // A gradient is painted across the filled shape's own bounding box, not across the plot, so the
-  // colour stop belongs where zero falls between the lowest and highest point the shape reaches -
+  // color stop belongs where zero falls between the lowest and highest point the shape reaches -
   // not where zero falls on the axis. The shape always reaches zero, because zero is its baseline.
   const shapeMax = Math.max(bounds[1] ?? 0, 0);
   const shapeMin = Math.min(bounds[0] ?? 0, 0);
@@ -126,7 +126,7 @@ const ChartDivergingArea = (
                     return `${entry.value}`;
                   }
 
-                  // the sign is carried by the colour and by the team named beside it, so a bare
+                  // the sign is carried by the color and by the team named beside it, so a bare
                   // "-8" here would only read as a second, contradictory minus
                   return `${Math.abs(number)} ${number < 0 ? negativeLabel : positiveLabel}`;
                 }}
@@ -145,7 +145,7 @@ const ChartDivergingArea = (
           />
         </AreaChart>
       </ResponsiveContainer>
-      {/* which colour is which team, stated once - the fill has no legend of its own and the
+      {/* which color is which team, stated once - the fill has no legend of its own and the
           reader should not have to infer it from who happened to win */}
       <div style = {{ display: 'flex', justifyContent: 'center', gap: 16, marginTop: 2 }}>
         <div style = {{ display: 'flex', alignItems: 'center', gap: 5 }}>

@@ -30,9 +30,9 @@ const MARKER = 13;
  * rank does alone.
  *
  * Better is to the right on every row, whichever direction the underlying stat runs, so the rows
- * can be compared down the column rather than read one at a time. The marker takes its colour from
+ * can be compared down the column rather than read one at a time. The marker takes its color from
  * the same diverging ramp as the ranking heat map, so blue means the same thing on both surfaces -
- * and the rank is printed beside every strip, so the colour never carries the reading alone.
+ * and the rank is printed beside every strip, so the color never carries the reading alone.
  */
 const ChartRankStrip = (
   {
@@ -72,7 +72,7 @@ const ChartRankStrip = (
     // 1 at the top of the league, 0 at the bottom, which is also the fraction of the track the
     // marker sits along - better to the right
     const standing = 1 - ((Math.min(row.rank, max) - 1) / (max - 1));
-    const colour = palette.diverging(1 - standing);
+    const color = palette.diverging(1 - standing);
 
     const label = (
       <Typography type = 'caption' style = {{ color: theme.text.secondary }}>{row.label}</Typography>
@@ -121,7 +121,7 @@ const ChartRankStrip = (
             marginTop: -(MARKER / 2),
             marginLeft: -(MARKER / 2),
             borderRadius: '50%',
-            backgroundColor: colour,
+            backgroundColor: color,
             // the 2px surface ring that keeps the dot legible wherever it lands on the track
             boxShadow: `0 0 0 2px ${palette.surface}`,
           }} />

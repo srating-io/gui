@@ -5,8 +5,6 @@ import SettingsIcon from '@esmalley/react-material-icons/Settings';
 import CheckIcon from '@esmalley/react-material-icons/Check';
 import VisibilityIcon from '@esmalley/react-material-icons/Visibility';
 import FilterAltIcon from '@esmalley/react-material-icons/FilterAlt';
-import ScatterPlotIcon from '@esmalley/react-material-icons/ScatterPlot';
-import TableIcon from '@esmalley/react-material-icons/TableChart';
 import GradientIcon from '@esmalley/react-material-icons/Gradient';
 
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
@@ -56,16 +54,6 @@ const AdditionalOptions = ({ view }: {view: string}) => {
     }
   };
 
-  const handleChartView = () => {
-    handleClose();
-    dispatch(setDataKey({ key: 'chartView', value: !chartView }));
-
-    // the chart tabs only exist inside chart view, so the url stops naming one on the way back to
-    // the table rather than carrying a dead param around the rest of the site
-    if (chartView) {
-      dispatch(setDataKey({ key: 'chart', value: null }));
-    }
-  };
 
   const handleHeatMap = () => {
     handleClose();
@@ -84,17 +72,6 @@ const AdditionalOptions = ({ view }: {view: string}) => {
 
   const getMenuOptions = () => {
     const menuOptions: MenuOption[] = [];
-
-    // team is the only view whose rows carry two measures worth crossing
-    if (view === 'team') {
-      menuOptions.push({
-        value: 'chart-view-display',
-        label: chartView ? 'Show table' : 'Show chart',
-        selectable: true,
-        onSelect: handleChartView,
-        icon: chartView ? <TableIcon style = {{ fontSize: 20 }} /> : <ScatterPlotIcon style = {{ fontSize: 20 }} />,
-      });
-    }
 
     if (!chartView) {
       menuOptions.push({

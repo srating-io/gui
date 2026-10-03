@@ -17,7 +17,7 @@ import { Typography, useTheme } from '@esmalley/react-material-ui';
  * points apart, the band opens and the reader can see that the market has not made its mind up -
  * which is itself the signal, and is exactly what a lone consensus figure hides.
  *
- * The band is the same hue as the line at low opacity rather than a second colour, because it is
+ * The band is the same hue as the line at low opacity rather than a second color, because it is
  * not a second series: it is the uncertainty around this one.
  */
 const ChartBandLine = (

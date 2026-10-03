@@ -80,7 +80,7 @@ const ChartDumbbell = (
       <Typography type = 'caption' style = {{ color: theme.text.secondary }}>{row.label}</Typography>
     );
 
-    const dot = (at: number, colour: string) => (
+    const dot = (at: number, color: string) => (
       <div style = {{
         position: 'absolute',
         top: '50%',
@@ -90,7 +90,7 @@ const ChartDumbbell = (
         marginTop: -(MARKER / 2),
         marginLeft: -(MARKER / 2),
         borderRadius: '50%',
-        backgroundColor: colour,
+        backgroundColor: color,
         boxShadow: `0 0 0 2px ${palette.surface}`,
       }} />
     );

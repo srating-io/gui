@@ -9,6 +9,7 @@ import OptionPicker from '../OptionPicker';
 import { updateDataKey } from '@/redux/features/display-slice';
 import { updateDataKey as updateDataKeyRanking } from '@/redux/features/ranking-slice';
 import AdditionalOptions from './AdditionalOptions';
+import ViewSwitch from './ViewSwitch';
 import Search from './Search';
 import LastUpdated from './LastUpdated';
 import Organization from '@/components/helpers/Organization';
@@ -205,6 +206,7 @@ const Base = (
               {chartView ? '' : <ColumnChipPicker view = {view} organization_id={organization_id} />}
               <div style = {{ display: 'flex', justifyContent: 'space-between', marginTop: '10px' }}>
                 <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <ViewSwitch view = {view} />
                   <AdditionalOptions view = {view} />
                   {view !== 'conference' ? <ConferencePicker /> : ''}
                   {view === 'player' || view === 'transfer' ? <PositionPicker selected = {positions} isRadio = {Organization.getCFBID() === organization_id} /> : ''}

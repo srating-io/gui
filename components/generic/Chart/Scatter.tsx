@@ -37,11 +37,11 @@ export type ScatterPoint = {
  * better on both measures no matter which way the underlying number runs. The crosshairs sit on the
  * league mean, which is what makes a quadrant mean anything.
  *
- * Every mark is the same colour on purpose. One series needs no legend, and colouring by conference
+ * Every mark is the same color on purpose. One series needs no legend, and coloring by conference
  * or by rank would either exceed what anyone can tell apart or repaint the survivors when the
  * reader filters - identity here is carried by position and by the label on hover.
  *
- * The one exception is a highlight: marks flagged `highlighted` keep the colour and are named,
+ * The one exception is a highlight: marks flagged `highlighted` keep the color and are named,
  * while the rest drop back to the muted shade. That is two values of one encoding, not a second
  * series, and it only ever answers "which of these is the one I asked for".
  */
@@ -145,7 +145,7 @@ const ChartScatter = (
   const highlighting = highlightedCount > 0;
 
   // few enough to name everyone, so everyone is named - a search on top of that is carried by the
-  // colour alone, since the name it would add is already on the plot
+  // color alone, since the name it would add is already on the plot
   const labelAll = points.length <= threshold;
 
   // a broad search can match half a conference, and twenty names stacked over each other is worse

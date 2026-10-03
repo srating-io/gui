@@ -74,7 +74,7 @@ const ChartTooltip = (
 
           return (
             <div key = {`${entry.dataKey || entry.name}-${index}`} style = {{ display: 'flex' }}>
-              <Typography type = 'body1' style = {{ color }}>{Textor.toSentenceCase(entry.name)}:</Typography>
+              <Typography type = 'body1' style = {{ color }}>{entry.name}:</Typography>
               <Typography type = 'body1' style = {{ marginLeft: 5, color }}>
                 {formatValue ? formatValue(entry, row) : entry.value}
                 {rank ? <RankSpan rank = {rank} max = {rankMax} useOrdinal = {true} /> : ''}

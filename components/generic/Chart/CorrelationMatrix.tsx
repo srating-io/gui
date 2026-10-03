@@ -80,7 +80,7 @@ const correlate = (a: number[], b: number[]): number | null => {
  * measure wearing two names, and seeing that block light up is what stops a reader treating them
  * as two pieces of evidence.
  *
- * Diverging colour because correlation has a meaningful zero and a direction: blue for measures
+ * Diverging color because correlation has a meaningful zero and a direction: blue for measures
  * that move together, orange for ones that move apart, and nothing at all in the middle, where no
  * relationship is exactly what the reader should see.
  */
@@ -94,7 +94,7 @@ const ChartCorrelationMatrix = (
   {
     measures: CorrelationMeasure[];
     title?: string;
-    /** One line on how to read the grid. Colours are not named: the ramp is the theme's. */
+    /** One line on how to read the grid. colors are not named: the ramp is the theme's. */
     explanation?: string;
     caption?: string;
   },

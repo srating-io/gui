@@ -224,6 +224,7 @@ const Client = ({ organization_id, division_id, season, player_statistic_ranking
         key,
         label: column.getAltLabel ? column.getAltLabel() : column.getLabel(),
         percentile,
+        rank,
         detail: `${player_statistic_ranking[key]}`,
       });
     }
@@ -262,6 +263,7 @@ const Client = ({ organization_id, division_id, season, player_statistic_ranking
           <>
             <ChartPercentileRadar
               spokes = {radarSpokes}
+              max = {maxPlayers}
               caption = {`percentile among ${maxPlayers} ranked players · the numbers beside the shape are the ones to use`}
             />
             <hr />

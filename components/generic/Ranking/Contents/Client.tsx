@@ -85,6 +85,15 @@ export type DecorateRowsOptions = {
    * shape, which is the one thing a table of numbers cannot otherwise do.
    */
   heatMap?: boolean;
+  /**
+   * The denominator every rank is measured against, when the rows themselves cannot say.
+   *
+   * The default - the number of rows on screen - is right for the ranking page, where the table
+   * is the league. It is wrong for any caller holding an excerpt: a top-forty sample still carries
+   * the ranks it had out of three hundred, and measuring those against forty paints most of that
+   * excerpt as the bottom of the league.
+   */
+  max?: number;
 };
 
 /**
@@ -94,7 +103,7 @@ export type DecorateRowsOptions = {
  * anything the renderer needs to know beyond the row itself has to be closed over.
  */
 export const createDecorateRows = (
-  { heatMap = false }: DecorateRowsOptions = {},
+  { heatMap = false, max: maxOverride }: DecorateRowsOptions = {},
 ) => <T extends (Basketball.RankingTable | Football.RankingTable), >(
   {
     rows,
@@ -111,7 +120,7 @@ export const createDecorateRows = (
   CustomDecorateRows<T>,
 ) => {
   // the exact ramp RankSpan paints its badge with, so a cell and the badge sitting in it are one
-  // colour at one rank rather than two competing readings of it
+  // color at one rank rather than two competing readings of it
   const heatBest = theme.mode === 'light' ? theme.success.main : theme.success.dark;
   const heatWorst = theme.mode === 'light' ? theme.error.main : theme.error.dark;
 
@@ -334,8 +343,8 @@ export const createDecorateRows = (
         }
 
         if (row[`${displayColumns[i]}_rank`] && row[displayColumns[i]] !== null) {
-          let max = rows.length;
-          if ('max' in row) {
+          let max = maxOverride || rows.length;
+          if (!maxOverride && 'max' in row) {
             max = row.max;
           }
           const rank = row[`${displayColumns[i]}_rank`];

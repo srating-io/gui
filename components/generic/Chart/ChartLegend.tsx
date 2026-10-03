@@ -6,7 +6,7 @@ import { Typography, useTheme } from '@esmalley/react-material-ui';
 
 export type ChartLegendProps = {
   payload?: Payload[];
-  /** Keys the reader has switched off. Series stay in their colour slot either way. */
+  /** Keys the reader has switched off. Series stay in their color slot either way. */
   inactive: string[];
   onToggle: (dataKey: string) => void;
   /** 'horizontal' reads as a row under the plot, 'vertical' as a column beside it. */
@@ -19,8 +19,8 @@ export type ChartLegendProps = {
  *
  * A legend is present for any chart with two or more series, and not because it looks tidy: two of
  * the palette's slots fall below 3:1 against the surface in each theme, and a visible label is what
- * discharges that. It also means identity is never carried by colour alone, which matters for
- * anyone reading the chart without full colour vision.
+ * discharges that. It also means identity is never carried by color alone, which matters for
+ * anyone reading the chart without full color vision.
  *
  * Clicking an entry hides that series. The entry greys out but keeps its position, so the reader
  * can find it again.
