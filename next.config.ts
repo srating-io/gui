@@ -39,6 +39,17 @@ export default bundleAnalyzer({
   // experimental: {
   //   scrollRestoration: false,
   // },
+  /**
+   * `/_global-error` is the only page this app prerenders at build time, and Next 16 intermittently
+   * fails it with `InvariantError: Expected workStore to be initialized`. The prerender's
+   * AsyncLocalStorage scope has already unwound by the time metadata resolution reads the store, so
+   * it is a race inside Next rather than anything this app does - the same build passes on a rerun.
+   * Next exits the whole build on the first miss, so the export worker is given retries instead.
+   * https://github.com/vercel/next.js/issues/98200
+   */
+  experimental: {
+    staticGenerationRetryCount: 3,
+  },
   env: {
     COMMIT_HASH: commitHash,
     COMMIT_DATE: commitDate,
