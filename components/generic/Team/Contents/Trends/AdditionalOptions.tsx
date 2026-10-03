@@ -6,6 +6,8 @@ import { useState } from 'react';
 import SettingsIcon from '@esmalley/react-material-icons/Settings';
 import CheckIcon from '@esmalley/react-material-icons/Check';
 import VisibilityIcon from '@esmalley/react-material-icons/Visibility';
+import GridIcon from '@esmalley/react-material-icons/GridView';
+import TimelineIcon from '@esmalley/react-material-icons/ShowChart';
 
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { setDataKey } from '@/redux/features/team-slice';
@@ -17,6 +19,7 @@ const AdditionalOptions = () => {
 
   const dispatch = useAppDispatch();
   const trendsBoxscoreLine = useAppSelector((state) => state.teamReducer.trendsBoxscoreLine);
+  const trendsSmallMultiples = useAppSelector((state) => state.teamReducer.trendsSmallMultiples);
 
 
   const handleOpen = (event) => {
@@ -33,15 +36,32 @@ const AdditionalOptions = () => {
     handleClose();
   };
 
+  const handleSmallMultiples = () => {
+    dispatch(setDataKey({ key: 'trendsSmallMultiples', value: !trendsSmallMultiples }));
+    handleClose();
+  };
+
   const menuOptions: MenuOption[] = [
     {
+      value: 'show-small-multiples',
+      label: trendsSmallMultiples ? 'Show one stat' : 'Show all stats',
+      selectable: true,
+      onSelect: handleSmallMultiples,
+      icon: trendsSmallMultiples ? <TimelineIcon style = {{ fontSize: 20 }} /> : <GridIcon style = {{ fontSize: 20 }} />,
+    },
+  ];
+
+  // the grid gives every stat its own panel, and there is no room in one for four lines, so the
+  // option that adds a fifth is not offered against it
+  if (!trendsSmallMultiples) {
+    menuOptions.push({
       value: 'show-boxscore-line',
       label: 'Show boxscore data',
       selectable: true,
       onSelect: handleTrendsBoxscore,
       icon: trendsBoxscoreLine ? <CheckIcon style = {{ fontSize: 20 }} /> : <VisibilityIcon style = {{ fontSize: 20 }} />,
-    },
-  ];
+    });
+  }
 
 
   return (

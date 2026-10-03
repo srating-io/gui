@@ -2,6 +2,7 @@
 
 import { Paper, Skeleton, Typography, useTheme } from '@esmalley/react-material-ui';
 import { Color, Dates, Objector } from '@esmalley/ts-utils';
+import { CalibrationPoint, ChartCalibration } from '@/components/generic/Chart';
 
 
 const getCardStyle = () => {
@@ -137,8 +138,55 @@ const Client = ({ date, stats }) => {
   }
 
 
+  /**
+   * The season's bands, read as claimed-against-actual.
+   *
+   * The season bucket and nothing else: the day and week buckets hold a handful of games each, and
+   * a calibration point built on nine games wobbles far enough to say the opposite of the truth.
+   */
+  const getCalibrationPoints = (): CalibrationPoint[] => {
+    const bucket = stats && 'season' in stats ? stats.season : null;
+
+    if (!bucket) {
+      return [];
+    }
+
+    const points: CalibrationPoint[] = [];
+
+    for (const band of [50, 60, 70, 80, 90]) {
+      const total = bucket[`${band}_total`] || 0;
+      const correct = bucket[`${band}_correct`] || 0;
+
+      if (!total) {
+        continue;
+      }
+
+      points.push({
+        key: `${band}`,
+        // the band's midpoint is what it claims on average, so that is what gets tested
+        predicted: band + 5,
+        observed: +((correct / total) * 100).toFixed(1),
+        total,
+        correct,
+        label: `${band}-${band + 10}%`,
+      });
+    }
+
+    return points;
+  };
+
+  const calibrationPoints = getCalibrationPoints();
+
   return (
     <>
+      {
+        calibrationPoints.length ?
+          <div style = {{ maxWidth: 560, margin: '0px auto 10px auto' }}>
+            <Typography style={{ fontSize: 14, textAlign: 'center', color: theme.info.dark }} type = 'h6'>Season calibration</Typography>
+            <ChartCalibration points = {calibrationPoints} />
+          </div>
+          : ''
+      }
       <div style = {{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center' }}>
         {
           statContainers.length === 0 ? skeletonContainers : statContainers

@@ -13,7 +13,9 @@ import { headerBarHeight } from '@/components/generic/Header';
 // import FunctionsIcon from '@esmalley/react-material-icons/Functions';
 // import LockOpenIcon from '@esmalley/react-material-icons/LockOpen';
 // import LockIcon from '@esmalley/react-material-icons/Lock';
-import { Color } from '@esmalley/ts-utils';
+import { Color, Dates } from '@esmalley/ts-utils';
+import { ChartBandLine } from '@/components/generic/Chart';
+import { General } from '@srating-io/types';
 import { LinearProgress, Paper, Typography, useTheme } from '@esmalley/react-material-ui';
 import Analysis from '@/components/generic/Analysis/Analysis';
 import { useAppSelector } from '@/redux/hooks';
@@ -51,7 +53,7 @@ const ClientSkeleton = () => {
 };
 
 
-const Client = ({ game, oddsStats }) => {
+const Client = ({ game, oddsStats, odds }: { game; oddsStats; odds: General.Oddsz }) => {
   const theme = useTheme();
 
   // The game page keeps its fresher scores and prediction in its own slice; the accuracy
@@ -93,11 +95,61 @@ const Client = ({ game, oddsStats }) => {
     homeRows.push(getWinRows('Underdog:', homeOS.underdog_wins, homeOS.underdog_games));
   }
 
-  // https://gemini.google.com/app/4d6ea89566f3d71e
-  // todo show oddes history like this example
+  /**
+   * The home spread as it moved, with the spread of the books behind it.
+   *
+   * One consensus number implies an agreement that is often not there. When the books all post the
+   * same line the band closes onto it and the number means what it says; when they are two points
+   * apart the band opens, and that disagreement is a signal in its own right - it is the market
+   * saying it has not settled, which is the moment a model's edge is worth most and trusted least.
+   */
+  const getMovementRows = () => {
+    const sorted = Object.values(odds || {})
+      .filter((row) => !row.live && row.spread_home !== null && row.spread_home !== undefined)
+      .sort((a, b) => (a.date_of_entry < b.date_of_entry ? -1 : 1));
+
+    return sorted.map((row) => {
+      const spreads: number[] = [];
+
+      for (const key in row.json_bookmakers || {}) {
+        const book = row.json_bookmakers ? row.json_bookmakers[key] : null;
+
+        if (book && book.spread_home !== null && book.spread_home !== undefined && Number.isFinite(+book.spread_home)) {
+          spreads.push(+book.spread_home);
+        }
+      }
+
+      return {
+        time: Dates.format(row.date_of_entry, 'M jS g:ia'),
+        consensus: +row.spread_home,
+        // a single book, or none, is not a range worth drawing - the band collapses onto the line
+        range: spreads.length > 1 ? [Math.min(...spreads), Math.max(...spreads)] : null,
+        books: spreads.length,
+      };
+    });
+  };
+
+  const movementRows = getMovementRows();
 
   return (
     <Contents>
+      {
+        movementRows.length > 1 ?
+          <Paper style = {{ maxWidth: 600, margin: 'auto', marginTop: 8, paddingTop: 8 }}>
+            <Typography type = 'h6' style = {{ textAlign: 'center' }}>Line movement</Typography>
+            <ChartBandLine
+              rows = {movementRows}
+              lineKey = 'consensus'
+              bandKey = 'range'
+              xAxisDataKey = 'time'
+              yAxisLabel = {`${Game.getTeamName('home')} spread`}
+              height = {260}
+              caption = 'the band is the gap between the books; where it closes they agree'
+              formatValue = {(value) => (value > 0 ? `+${value}` : `${value}`)}
+            />
+          </Paper>
+          : ''
+      }
       <Paper style = {{ maxWidth: 600, margin: 'auto', marginTop: 8 }}>
         <Typography type = 'h6' style = {{ textAlign: 'center' }}>{`${game.season - 1}-${game.season} season`}</Typography>
         <div style={{ display: 'flex', justifyContent: 'space-between', padding: 8 }}>

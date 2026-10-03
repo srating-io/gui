@@ -19,7 +19,11 @@ type InitialState = {
   scrollTop: number,
   loadingView: boolean,
   trendsBoxscoreLine: boolean,
+  /** Swaps the one-stat chart for a grid of one small chart per headline stat. */
+  trendsSmallMultiples: boolean,
   trendsColumn: string | null,
+  /** The summary charts at the top of the stats tab, off until the reader asks for them. */
+  statsCharts: boolean,
 };
 
 type InitialStateKeys = keyof InitialState;
@@ -43,7 +47,10 @@ stateController.set_url_param_type_x_keys({
   ],
   number: [],
   array: [],
-  boolean: [],
+  boolean: [
+    'trendsSmallMultiples',
+    'statsCharts',
+  ],
 });
 
 stateController.setInitialState({
@@ -62,7 +69,9 @@ stateController.setInitialState({
   scrollTop: 0,
   loadingView: true,
   trendsBoxscoreLine: false,
+  trendsSmallMultiples: false,
   trendsColumn: null,
+  statsCharts: false,
 });
 
 

@@ -1,4 +1,4 @@
-import { configureStore } from '@reduxjs/toolkit';
+import { combineReducers, configureStore } from '@reduxjs/toolkit';
 
 import generalReducer from './features/general-slice';
 import themeReducer from './features/theme-slice';
@@ -26,35 +26,42 @@ import paymentRouterReducer from './features/payment_router-slice';
 // IF YOU ADD MORE SLICES HERE, MAKE SURE TO UPDATE LayoutWrapper useEffect for back / forward buttons!
 
 
-export const makeStore = () => configureStore({
-  reducer: {
-    generalReducer,
-    themeReducer,
-    userReducer,
-    favoriteReducer,
-    displayReducer,
-    gamesReducer,
-    rankingReducer,
-    teamReducer,
-    picksReducer,
-    compareReducer,
-    dictionaryReducer,
-    coachReducer,
-    conferenceReducer,
-    organizationReducer,
-    gameReducer,
-    playerReducer,
-    loadingReducer,
-    cacheReducer,
-    fantasyReducer,
-    fantasyGroupReducer,
-    fantasyEntryReducer,
-    paymentRouterReducer,
-  },
+const rootReducer = combineReducers({
+  generalReducer,
+  themeReducer,
+  userReducer,
+  favoriteReducer,
+  displayReducer,
+  gamesReducer,
+  rankingReducer,
+  teamReducer,
+  picksReducer,
+  compareReducer,
+  dictionaryReducer,
+  coachReducer,
+  conferenceReducer,
+  organizationReducer,
+  gameReducer,
+  playerReducer,
+  loadingReducer,
+  cacheReducer,
+  fantasyReducer,
+  fantasyGroupReducer,
+  fantasyEntryReducer,
+  paymentRouterReducer,
+});
+
+export type RootState = ReturnType<typeof rootReducer>;
+
+/**
+ * `preloadedState` is how anything the server knows reaches the store before the first render -
+ * the theme mode, which has to match on both sides or React hydrates against the wrong markup.
+ */
+export const makeStore = (preloadedState?: Partial<RootState>) => configureStore({
+  reducer: rootReducer,
+  preloadedState,
 });
 
 // Infer the type of makeStore
 export type AppStore = ReturnType<typeof makeStore>;
-// Infer the `RootState` and `AppDispatch` types from the store itself
-export type RootState = ReturnType<AppStore['getState']>;
 export type AppDispatch = AppStore['dispatch'];

@@ -1,5 +1,5 @@
-import HomePage from './home-page';
 import { Metadata } from 'next';
+import Home from './index';
 
 /**
  * https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadata-fields
@@ -24,5 +24,6 @@ export const metadata: Metadata = {
 };
 
 export default async function Page() {
-  return <HomePage />;
+  // this is dumb, but so is nextjs
+  return <Home />;
 }

@@ -12,7 +12,8 @@ import { Objector, socket, toast } from '@esmalley/ts-utils';
 import { setDataKey as setDataKeyGeneral } from '@/redux/features/general-slice';
 import { getStore } from './StoreProvider';
 import { InitialState, setDataKey as setDataKeyUser } from '@/redux/features/user-slice';
-import { ThemeProvider, Themes, Toast, useWindowDimensions, UXBaseline } from '@esmalley/react-material-ui';
+import { ThemeProvider, Toast, useWindowDimensions, UXBaseline } from '@esmalley/react-material-ui';
+import { resolveStoredMode, updateTheme } from '@/redux/features/theme-slice';
 
 
 const Template = ({ children }: { children: React.ReactNode }) => {
@@ -33,6 +34,15 @@ const Template = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     setIsMounted(true);
+
+    // the cookie is all the server render had to go on. A first visit has none, and anyone who
+    // picked a mode before it was kept in one has it only in localStorage, so those are applied
+    // here - after hydration, where changing the mode is a re-render rather than a mismatch
+    const stored = resolveStoredMode();
+
+    if (stored !== themeMode) {
+      dispatch(updateTheme(stored));
+    }
   }, []);
 
 
@@ -148,7 +158,7 @@ const Template = ({ children }: { children: React.ReactNode }) => {
   }
 
   return (
-    <ThemeProvider theme={themeMode as Themes}>
+    <ThemeProvider theme={themeMode}>
       <UXBaseline />
       {
       isMounted ?

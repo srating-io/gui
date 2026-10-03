@@ -5,6 +5,7 @@ import 'typeface-roboto';
 
 import React from 'react';
 import Script from 'next/script';
+import { cookies } from 'next/headers';
 
 import StoreProvider from './StoreProvider';
 import SessionHandler from '@/components/handlers/SessionHandler';
@@ -18,6 +19,7 @@ import MutationHandler from '@/components/handlers/MutationHandler';
 // import Style from '@/components/utils/Style';
 import NewUpdateHandler from '@/components/handlers/NewUpdateHandler';
 import { useServerAPI } from '@/components/serverAPI';
+import { asMode, defaultMode, themeCookieKey } from '@/redux/features/theme-slice';
 
 
 
@@ -40,6 +42,10 @@ export default async function RootLayout({ children }: {children: React.ReactNod
     arguments: {},
   });
 
+  // the mode is part of what gets rendered, so it has to be known here rather than looked up in the
+  // browser afterwards; the cookie is the only copy of it the request carries
+  const themeMode = asMode((await cookies()).get(themeCookieKey)?.value) || defaultMode;
+
 
 
   return (
@@ -47,7 +53,7 @@ export default async function RootLayout({ children }: {children: React.ReactNod
       {/* <head>
         <style srating-ssr-css = "true" dangerouslySetInnerHTML={{ __html: css }}></style>
       </head> */}
-      <StoreProvider>
+      <StoreProvider themeMode = {themeMode}>
         <LayoutWrapper>
           <div id = 'menu-root'></div>
           <NewUpdateHandler />

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Profiler, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 
@@ -14,12 +14,14 @@ import Organization from '@/components/helpers/Organization';
 import { getConferenceChips } from '../../ConferenceChips';
 import TableColumns from '@/components/helpers/TableColumns';
 import ClassSpan from '../../ClassSpan';
+import { ChartCorrelationMatrix, ChartHistogram, ChartScatter, CorrelationMeasure, ScatterPoint } from '@/components/generic/Chart';
 import { Arithmetic, Color, Objector } from '@esmalley/ts-utils';
 import { useNavigation } from '@/components/hooks/useNavigation';
 import {
-  CustomDecorateHeaderRow, CustomDecorateRows, defaultSortOrderType, LinearProgress, Td, Th, Tooltip, Tr, Typography, useTheme, useWindowDimensions, VirtualTable,
+  CustomDecorateHeaderRow, CustomDecorateRows, defaultSortOrderType, LinearProgress, Tab, Td, Th, Tooltip, Tr, Typography, useTheme, useWindowDimensions, VirtualTable,
 } from '@esmalley/react-material-ui';
 import { Basketball, Football } from '@srating-io/types';
+import { maxWidth } from '../../Picks/Tile';
 
 
 
@@ -53,7 +55,56 @@ const ClientSkeleton = () => {
   );
 };
 
-export const decorateRows = <T extends (Basketball.RankingTable | Football.RankingTable), >(
+/**
+ * The charts chart view offers, in tab order.
+ *
+ * Stacked, the three of them made chart view a scroll, and the scatter - the one most readers came
+ * for - shrank to fit alongside questions they only sometimes have. A tab bar keeps whichever one
+ * is being read at the height the table had.
+ *
+ * `short` is what a narrow screen gets: the long titles are the questions each chart answers, which
+ * is worth the width when there is width to spend.
+ */
+const chartTabs = [
+  { value: 'scatter', title: 'Offence vs defence', short: 'Scatter' },
+  { value: 'distribution', title: 'League distribution', short: 'Spread' },
+  // the matrix heads itself "What goes with what", so the tab says the shorter thing rather than
+  // printing the same phrase twice, one line apart
+  { value: 'correlation', title: 'Correlations', short: 'Correlations' },
+];
+
+/** The chart a reader lands on in chart view, and so the one the url does not need to name. */
+const defaultChart = 'scatter';
+
+export type DecorateRowsOptions = {
+  /**
+   * Tints each ranked cell by where its team falls in the league.
+   *
+   * The rank badge already states the position precisely, but reading a whole column means reading
+   * every badge in it. A tint on the cell itself is what lets the eye run down a column and see its
+   * shape, which is the one thing a table of numbers cannot otherwise do.
+   */
+  heatMap?: boolean;
+  /**
+   * The denominator every rank is measured against, when the rows themselves cannot say.
+   *
+   * The default - the number of rows on screen - is right for the ranking page, where the table
+   * is the league. It is wrong for any caller holding an excerpt: a top-forty sample still carries
+   * the ranks it had out of three hundred, and measuring those against forty paints most of that
+   * excerpt as the bottom of the league.
+   */
+  max?: number;
+};
+
+/**
+ * Builds the row renderer VirtualTable calls.
+ *
+ * A factory rather than a plain function because VirtualTable fixes the signature it calls with, so
+ * anything the renderer needs to know beyond the row itself has to be closed over.
+ */
+export const createDecorateRows = (
+  { heatMap = false, max: maxOverride }: DecorateRowsOptions = {},
+) => <T extends (Basketball.RankingTable | Football.RankingTable), >(
   {
     rows,
     startIndex,
@@ -68,6 +119,11 @@ export const decorateRows = <T extends (Basketball.RankingTable | Football.Ranki
   }:
   CustomDecorateRows<T>,
 ) => {
+  // the exact ramp RankSpan paints its badge with, so a cell and the badge sitting in it are one
+  // color at one rank rather than two competing readings of it
+  const heatBest = theme.mode === 'light' ? theme.success.main : theme.success.dark;
+  const heatWorst = theme.mode === 'light' ? theme.error.main : theme.error.dark;
+
   let minDelta = -1;
   let maxDelta = 1;
 
@@ -287,11 +343,18 @@ export const decorateRows = <T extends (Basketball.RankingTable | Football.Ranki
         }
 
         if (row[`${displayColumns[i]}_rank`] && row[displayColumns[i]] !== null) {
-          let max = rows.length;
-          if ('max' in row) {
+          let max = maxOverride || rows.length;
+          if (!maxOverride && 'max' in row) {
             max = row.max;
           }
-          rankSpan = <RankSpan rank = {row[`${displayColumns[i]}_rank`]} useOrdinal = {!('player_id' in row)} max = {max} />;
+          const rank = row[`${displayColumns[i]}_rank`];
+          rankSpan = <RankSpan rank = {rank} useOrdinal = {!('player_id' in row)} max = {max} />;
+
+          if (heatMap) {
+            cellStyle.backgroundColor = Color.lerpColor(heatBest, heatWorst, (rank / max));
+            // the badge already settled white as the one legible choice across this whole ramp
+            cellStyle.color = '#fff';
+          }
         }
 
         tableCells.push(
@@ -326,6 +389,9 @@ export const decorateRows = <T extends (Basketball.RankingTable | Football.Ranki
 
   return elements;
 };
+
+/** The plain renderer, for the callers that want the table exactly as it has always looked. */
+export const decorateRows = createDecorateRows();
 
 export const decorateHeaderRow = (
   {
@@ -460,7 +526,13 @@ const Client = ({ generated, organization_id, division_id, season, view }) => {
   const orderBy = useAppSelector((state) => state.rankingReducer.orderBy);
   const tableScrollTop = useAppSelector((state) => state.rankingReducer.tableScrollTop);
   const tableFullscreen = useAppSelector((state) => state.rankingReducer.tableFullscreen);
+  const chartView = useAppSelector((state) => state.rankingReducer.chartView);
+  const chart = useAppSelector((state) => state.rankingReducer.chart);
+  const heatMap = useAppSelector((state) => state.rankingReducer.heatMap);
   const positions = useAppSelector((state) => state.displayReducer.positions);
+  // not used directly - it is one of the two things the row contents below are built from, and so
+  // one of the dependencies the correlation square is held against
+  const selectedConferences = useAppSelector((state) => state.displayReducer.conferences);
 
   const allRows = getRows({ view });
 
@@ -486,10 +558,116 @@ const Client = ({ generated, organization_id, division_id, season, view }) => {
 
   const headCells = TableColumns.getColumns({ organization_id, view, career: (career === 1 || career_active === 1) });
 
+  /**
+   * Which measures actually go with winning, across the whole league.
+   *
+   * Everywhere else the app says what a team's numbers are. This says which of those numbers were
+   * worth printing: a column that runs with winning describes good teams, and one sitting near
+   * zero is a stat the site has shown for years that tells nobody anything. The square also shows
+   * redundancy - two measures correlating at .95 are one measure under two names.
+   *
+   * Held across renders because the chart it feeds measures every pair of these series, and this
+   * component reads the window width - without it, dragging the window edge re-correlated the
+   * whole square per frame.
+   *
+   * The dependencies are what the *contents* of `allRows` come from rather than `allRows` itself,
+   * which is a fresh array on every render: getRows rebuilds it from `data` and, on the team view
+   * this square is restricted to, the conference filter. The rest of the filters it applies only
+   * touch player and transfer rows.
+   */
+  const correlationMeasures: CorrelationMeasure[] = useMemo(() => {
+    // the square is only ever drawn on the team view, and the player views carry thousands of
+    // rows, so there is no reason to walk them for a chart that cannot appear
+    if (view !== 'team') {
+      return [];
+    }
+
+    let columns = [
+      'elo',
+      'offensive_rating',
+      'defensive_rating',
+      'elo_sos',
+      'pace',
+      'field_goal_percentage',
+      'three_point_field_goal_percentage',
+      'offensive_rebounds',
+      'defensive_rebounds',
+      'assists',
+      'steals',
+      'blocks',
+      'turnovers',
+    ];
+
+    if (Organization.getCFBID() === organization_id) {
+      columns = [
+        'elo',
+        'points',
+        'opponent_points',
+        'elo_sos',
+        'yards_per_play',
+        'opponent_yards_per_play',
+        'passing_yards',
+        'rushing_yards',
+        'passing_touchdowns',
+        'passing_interceptions',
+      ];
+    }
+
+    // read through a variable key: allRows is typed as a union that includes player rows, which
+    // carry no record, even though the square only ever runs on the team view
+    const numeric = (row, key: string): number => (typeof row[key] === 'number' ? row[key] : NaN);
+
+    // win rate leads, because "does this go with winning" is the question the square is here for
+    const winRates: number[] = [];
+
+    for (const row of allRows) {
+      const wins = numeric(row, 'wins');
+      const losses = numeric(row, 'losses');
+      const played = (Number.isFinite(wins) ? wins : 0) + (Number.isFinite(losses) ? losses : 0);
+
+      winRates.push(played ? (wins / played) * 100 : NaN);
+    }
+
+    const measures: CorrelationMeasure[] = [{
+      key: 'win_rate', label: 'Win%', full: 'Win rate', values: winRates,
+    }];
+
+    for (const column of columns) {
+      if (!headCells[column]) {
+        continue;
+      }
+
+      const values = allRows.map((row) => numeric(row, column));
+
+      // a column the sport does not carry comes back all NaN, and an empty square is worse than
+      // a smaller one
+      if (!values.some((value) => Number.isFinite(value))) {
+        continue;
+      }
+
+      measures.push({
+        key: column,
+        label: headCells[column].getAltLabel ? headCells[column].getAltLabel() : headCells[column].getLabel(),
+        full: headCells[column].getLabel(),
+        values,
+      });
+    }
+
+    return measures;
+  }, [data, selectedConferences, organization_id, view]);
+
+  // rebuilt only when the heat toggle moves; VirtualTable re-renders every visible row when the
+  // renderer's identity changes, which is not something a hover or a resize should be paying for
+  const rowRenderer = useMemo(() => createDecorateRows({ heatMap }), [heatMap]);
+
+  // both memos sit above this return, not below it: a hook that runs only on the renders where
+  // the data has arrived changes the hook count between renders, which React treats as an error
   if (data === null) {
     return <ClientSkeleton />;
   }
 
+
+  const searching = filteredRows !== null && filteredRows !== false && filteredRows !== true;
 
   let rows: (Basketball.RankingTable | Football.RankingTable)[] = allRows;
 
@@ -618,9 +796,11 @@ const Client = ({ generated, organization_id, division_id, season, view }) => {
     confHeightModifier = confChipsLength < 4 ? 40 : 80;
   }
 
+  const availableHeight = height - (tableFullscreen ? 100 : 280) - (width < 380 ? 30 : 0) - (tableFullscreen ? 0 : confHeightModifier) - 40;
+
   const tableStyle = {
-    maxHeight: height - (tableFullscreen ? 100 : 280) - (width < 380 ? 30 : 0) - (tableFullscreen ? 0 : confHeightModifier) - 40,
-    height: height - (tableFullscreen ? 100 : 280) - (width < 380 ? 30 : 0) - (tableFullscreen ? 0 : confHeightModifier) - 40,
+    maxHeight: availableHeight,
+    height: availableHeight,
   };
 
   if ((rows.length + 2) * 26 < tableStyle.height) {
@@ -631,6 +811,14 @@ const Client = ({ generated, organization_id, division_id, season, view }) => {
     tableStyle.maxHeight = 250;
     tableStyle.height = 250;
   }
+
+  /**
+   * The plot takes the room the viewport allows, never the room the rows would have needed.
+   *
+   * A table of two rows should be two rows tall. The scatter behind a search is still the whole
+   * league, so sizing it the same way flattened three hundred teams into a two-row strip.
+   */
+  const chartHeight = height < 450 ? 250 : availableHeight;
 
 
 
@@ -660,14 +848,206 @@ const Client = ({ generated, organization_id, division_id, season, view }) => {
   // }
 
 
+  /**
+   * The two measures the scatter plots, per sport.
+   *
+   * Basketball and the NBA carry ratings per 100 possessions, which is already pace-adjusted.
+   * Football has no equivalent on the ranking row, so it uses points scored against points allowed,
+   * which answers the same question with the data that exists.
+   *
+   * The y measure is one where lower is better in both cases, so the plot reverses that axis and
+   * "up and to the right" means good at both ends of the floor.
+   */
+  const getScatterAxes = () => {
+    if (Organization.getCFBID() === organization_id) {
+      return { xKey: 'points', yKey: 'opponent_points', xFallback: 'Points', yFallback: 'Opp. points' };
+    }
+
+    return { xKey: 'offensive_rating', yKey: 'defensive_rating', xFallback: 'Offensive rating', yFallback: 'Defensive rating' };
+  };
+
+  /**
+   * Every team on the plot, with the searched ones picked out.
+   *
+   * The table narrows to a search because a table is a list of answers. The scatter is not: a mark
+   * means "here, against everyone else", so dropping the other teams would delete the thing the
+   * reader is measuring against and leave a dot floating in an empty box. The search highlights
+   * instead, and the league stays behind it.
+   */
+  const getScatterPoints = (xKey: string, yKey: string): ScatterPoint[] => {
+    const searched: Set<string> = new Set();
+
+    if (searching) {
+      for (const row of rows) {
+        searched.add(row[rowKey]);
+      }
+    }
+
+    const points: ScatterPoint[] = [];
+
+    for (const row of allRows) {
+      const x = row[xKey];
+      const y = row[yKey];
+
+      // a team missing either measure has no position to occupy, so it is left out rather than
+      // dropped onto an axis at zero
+      if (typeof x !== 'number' || typeof y !== 'number' || !Number.isFinite(x) || !Number.isFinite(y)) {
+        continue;
+      }
+
+      points.push({
+        id: row[rowKey],
+        name: row.name,
+        x,
+        y,
+        xRank: row[`${xKey}_rank`],
+        yRank: row[`${yKey}_rank`],
+        highlighted: searching && searched.has(row[rowKey]),
+      });
+    }
+
+    return points;
+  };
+
+  const getChart = () => {
+    const { xKey, yKey, xFallback, yFallback } = getScatterAxes();
+    const xLabel = (headCells[xKey] && headCells[xKey].getLabel()) || xFallback;
+    const yLabel = (headCells[yKey] && headCells[yKey].getLabel()) || yFallback;
+
+    return (
+      <ChartScatter
+        points = {getScatterPoints(xKey, yKey)}
+        xLabel = {xLabel}
+        yLabel = {yLabel}
+        yLowerIsBetter = {true}
+        quadrantLabels = {{
+          topLeft: 'Defence carries them',
+          topRight: 'Strong both ends',
+          bottomLeft: 'Struggling both ends',
+          bottomRight: 'Offence carries them',
+        }}
+        onSelect = {(team_id) => { handleTeam(team_id); }}
+        height = {chartHeight}
+      />
+    );
+  };
+
+  /**
+   * The league's spread on whichever column is currently sorted, with the searched team marked.
+   *
+   * The scatter above answers where a team sits against two measures. This answers the question
+   * the table never does - whether the number it is sorted by is one where the league bunches up
+   * or spreads out, and so whether being twentieth on it means much at all.
+   *
+   * Built from `allRows` rather than `rows`, because the point is the whole league: filtering to
+   * one team and drawing that team's distribution would be a chart of a single bar.
+   */
+  const getDistribution = () => {
+    const { xKey } = getScatterAxes();
+
+    // A rank column is a permutation of 1..N, so its histogram is flat by construction - one team
+    // per bar, telling the reader only how many teams there are. Since rank is also the default
+    // sort, following `orderBy` blindly would show that flat bar to most readers most of the time.
+    const isRank = !orderBy || orderBy === 'rank' || orderBy.endsWith('_rank');
+
+    const column = (!isRank && allRows.length && typeof allRows[0][orderBy] === 'number') ? orderBy : xKey;
+
+    const values: number[] = [];
+
+    for (const row of allRows) {
+      if (typeof row[column] === 'number' && Number.isFinite(row[column])) {
+        values.push(row[column]);
+      }
+    }
+
+    // one row left after the search is the reader pointing at a team, so that is the one to mark
+    const marker = (rows.length === 1 && typeof rows[0][column] === 'number') ?
+      { value: rows[0][column], label: rows[0].name } :
+      null;
+
+    const label = (headCells[column] && headCells[column].getLabel()) || column;
+
+    return (
+      <ChartHistogram
+        values = {values}
+        marker = {marker}
+        xLabel = {label}
+        noun = 'teams'
+        markerHint = 'search a team to mark it'
+      />
+    );
+  };
+
+  const showChart = chartView && view === 'team';
+
+  /**
+   * Which chart the tabs have selected.
+   *
+   * An unknown value falls back to the default rather than drawing nothing, so a stale or
+   * hand-edited `?chart=` cannot leave a reader staring at an empty chart view.
+   */
+  const selectedChart = chartTabs.some((tab) => tab.value === chart) ? chart : defaultChart;
+
+  const handleChart = (e, value) => {
+    if (value !== selectedChart) {
+      dispatch(setDataKey({ key: 'chart', value }));
+    }
+  };
+
+  const getChartTabs = () => {
+    return (
+      <div style = {{ display: 'flex', justifyContent: 'center', overflowX: 'scroll', overflowY: 'hidden', scrollbarWidth: 'none' }}>
+        {chartTabs.map((tab) => {
+          return (
+            <Tab
+              key = {tab.value}
+              value = {tab.value}
+              title = {width < 600 ? tab.short : tab.title}
+              selected = {tab.value === selectedChart}
+              onClick = {handleChart}
+            />
+          );
+        })}
+      </div>
+    );
+  };
+
+  const getSelectedChart = () => {
+    if (selectedChart === 'distribution') {
+      return getDistribution();
+    }
+
+    if (selectedChart === 'correlation') {
+      return (
+        <div style = {{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+          <div style = {{ maxWidth: 1000 }}>
+            <ChartCorrelationMatrix
+              measures = {correlationMeasures}
+              caption = {`Across ${allRows.length} teams`}
+            />
+          </div>
+        </div>
+      );
+    }
+
+    return getChart();
+  };
+
   return (
-    <Profiler id="Ranking.Base.Contents.Client" onRender={(id, phase, actualDuration) => {
-      console.log(id, phase, actualDuration);
-    }}>
     <Contents>
       <div style = {{ padding: width < 600 ? `${tableFullscreen ? '10px' : '0px'} 10px 0px 10px` : `${tableFullscreen ? '10px' : '0px'} 20px 0px 20px` }}>
         {
-          rows.length ?
+          rows.length && showChart ?
+            <>
+              {getChartTabs()}
+              <div style = {{ marginTop: 10 }}>
+                {getSelectedChart()}
+              </div>
+            </> :
+            null
+        }
+        {
+          rows.length && !showChart ?
             <VirtualTable
               ref = {tableRef}
               rows = {rows}
@@ -698,7 +1078,7 @@ const Client = ({ generated, organization_id, division_id, season, view }) => {
                   handleCoach(row.coach_id);
                 }
               }}
-              decorateRows={decorateRows}
+              decorateRows={rowRenderer}
               decorateHeaderRow={decorateHeaderRow}
               customHandleSort = {handleSort}
               customSortComparator={getComparator}
@@ -706,11 +1086,15 @@ const Client = ({ generated, organization_id, division_id, season, view }) => {
               defaultSortOrderBy = {orderBy}
               initialScrollTop={tableScrollTop}
             />
-            : <div><Typography type='h6' style = {{ textAlign: 'center' }}>No results :(</Typography></div>
+            : null
+        }
+        {
+          !rows.length ?
+            <div><Typography type='h6' style = {{ textAlign: 'center' }}>No results :(</Typography></div> :
+            null
         }
       </div>
     </Contents>
-    </Profiler>
   );
 };
 

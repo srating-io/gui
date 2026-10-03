@@ -1,6 +1,7 @@
 'use client';
 
 import Chart from '@/components/generic/Chart';
+import HelperChart from '@/components/helpers/Chart';
 import { LineProps, YAxisProps } from 'recharts';
 import { getNavHeaderHeight, getSubNavHeaderHeight } from '@/components/generic/Game/NavBar';
 import { footerNavigationHeight } from '@/components/generic/FooterNavigation';
@@ -194,50 +195,23 @@ const Client = ({ statistic_rankings }) => {
   const maxYaxisElo = 2000;
 
   // const rows: Data[] = Object.values(date_of_rank_x_data);
-  let minYaxis: number | null = null;
-  let maxYaxis: number | null = null;
+  let bounds: [number | null, number | null] = [null, null];
   const rows: Data[] = [];
   for (const dor in date_of_rank_x_data) {
     const data = date_of_rank_x_data[dor];
-    const homeValue = data[`home_${trendsColumn}`];
-    const awayValue = data[`away_${trendsColumn}`];
 
-    if (
-      `home_${trendsColumn}` in data ||
-      `away_${trendsColumn}` in data
-    ) {
-      if (
-        minYaxis === null ||
-        homeValue < minYaxis ||
-        awayValue < minYaxis
-      ) {
-        minYaxis = homeValue < awayValue ? homeValue : awayValue;
-      }
-
-      if (
-        maxYaxis === null ||
-        homeValue > maxYaxis ||
-        awayValue > maxYaxis
-      ) {
-        maxYaxis = homeValue > awayValue ? homeValue : awayValue;
-      }
-    }
+    // taken one side at a time, so a date with only one team's row still contributes
+    bounds = HelperChart.extend(bounds, data[`home_${trendsColumn}`]);
+    bounds = HelperChart.extend(bounds, data[`away_${trendsColumn}`]);
 
     rows.push(data);
   }
 
-  // give the min and max some buffer
-  const buffer = Math.ceil(((minYaxis || 0) + (maxYaxis || 0)) * 0.05);
-  if (minYaxis !== null) {
-    minYaxis = +(minYaxis - buffer).toFixed(0);
-  }
-  if (maxYaxis !== null) {
-    maxYaxis = +(maxYaxis + buffer).toFixed(0);
-  }
+  let domain = HelperChart.getDomain(bounds[0], bounds[1]);
 
+  // hold elo on a fixed frame so the same gap reads the same size on every comparison
   if (trendsColumn === 'elo') {
-    minYaxis = minYaxis && minYaxis < minYaxisElo ? minYaxis : minYaxisElo;
-    maxYaxis = maxYaxis && maxYaxis > maxYaxisElo ? maxYaxis : maxYaxis;
+    domain = HelperChart.expandDomain(domain, minYaxisElo, maxYaxisElo);
   }
 
 
@@ -299,10 +273,10 @@ const Client = ({ statistic_rankings }) => {
     ];
 
     const YAxisProps: YAxisProps = { scale: 'auto' };
-    if (minYaxis !== null && maxYaxis !== null) {
-      YAxisProps.domain = [minYaxis, maxYaxis];
+    if (domain) {
+      YAxisProps.domain = domain;
     }
-    chart = <Chart XAxisDataKey={'date_friendly'} YAxisLabel={statistic.getLabel()} rows={formattedData} lines={lines} YAxisProps={YAxisProps} />;
+    chart = <Chart key = {trendsColumn} XAxisDataKey={'date_friendly'} YAxisLabel={statistic.getLabel()} rows={formattedData} lines={lines} YAxisProps={YAxisProps} />;
   }
 
   return (

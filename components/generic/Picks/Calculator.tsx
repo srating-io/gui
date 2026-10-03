@@ -10,6 +10,7 @@ import Organization from '@/components/helpers/Organization';
 import Odds from '@/components/helpers/Odds';
 import Scenario, { ScenarioPick, ScenarioSummary } from '@/components/helpers/Scenario';
 import useDebounce from '@/components/hooks/useDebounce';
+import { ChartDivergingArea } from '@/components/generic/Chart';
 
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { setLoading } from '@/redux/features/loading-slice';
@@ -307,6 +308,58 @@ const Calculator = ({ games, date }) => {
     );
   };
 
+  /**
+   * The running bankroll over the slate, pick by pick in the order the games tipped.
+   *
+   * A single net figure says where the day ended and nothing about how it got there. Two days can
+   * both finish at plus forty with one never behind and the other two hundred down at one point,
+   * and only one of those is a day anyone could actually have sat through. The path is the part
+   * the summary throws away.
+   */
+  const getEquityRows = () => {
+    const settledPicks = eligible
+      .filter((pick) => pick.settled && pick.won !== null)
+      .sort((a, b) => a.start_timestamp - b.start_timestamp);
+
+    let running = 0;
+
+    return settledPicks.map((pick) => {
+      running += pick.won ? pick.profit : -filters.bet;
+
+      return {
+        label: new HelperGame({ game: pick.game }).getTeamName(pick.side),
+        net: +running.toFixed(2),
+      };
+    });
+  };
+
+  const getEquityBlock = () => {
+    const rows = getEquityRows();
+
+    // two settled picks is the least that can make a path rather than a point
+    if (rows.length < 2) {
+      return null;
+    }
+
+    return (
+      <div key = 'equity' style = {{ marginTop: 10 }}>
+        <Typography type = 'subtitle2' style = {{ color: theme.text.secondary }}>Running bankroll</Typography>
+        <ChartDivergingArea
+          rows = {rows}
+          dataKey = 'net'
+          xAxisDataKey = 'label'
+          positiveColor = {theme.success[theme.mode === 'light' ? 'main' : 'dark']}
+          negativeColor = {theme.error[theme.mode === 'light' ? 'main' : 'dark']}
+          positiveLabel = 'up'
+          negativeLabel = 'down'
+          legendPositive = 'in profit'
+          legendNegative = 'in the red'
+          yAxisLabel = 'Net $'
+        />
+      </div>
+    );
+  };
+
   const getWinRateHeading = (winRate: number) => `${(winRate * 100).toFixed(0)}% win rate`;
 
   const getStraightBlock = (row) => getSummaryBlock(`straight-${row.winRate}`, getWinRateHeading(row.winRate), row.straight, 'games', row.straight.games);
@@ -348,6 +401,7 @@ const Calculator = ({ games, date }) => {
         inputs,
         <Typography key = 'blurb' type = 'subtitle1' style = {{ color: theme.text.secondary }}>{`Hypothetical pre-game ML betting $${filters.bet} on each pick with odds greater than ${filters.priceMin} and less than ${filters.priceMax}`}</Typography>,
         getSummaryBlock('settled', null, settled, 'games', settled.games),
+        getEquityBlock(),
         roundRobinBlurb,
         roundRobinInput,
         getSummaryBlock('settled-rr', null, settledRoundRobin, 'parlays', settledRoundRobin.combos),
@@ -400,7 +454,7 @@ const Calculator = ({ games, date }) => {
 
   return (
     <div style = {{ padding: '0px 5px' }}>
-      <Typography type="h6">Betting calculator</Typography>
+      <Typography type="h6">Calculator</Typography>
       <Paper elevation={3} style = {{ padding: '10px', margin: '0px 0px 10px 0px' }}>
         {getContents()}
       </Paper>

@@ -1,6 +1,7 @@
 'use client';
 
-import Chart from '@/components/generic/Chart';
+import Chart, { getChartPalette } from '@/components/generic/Chart';
+import HelperChart from '@/components/helpers/Chart';
 import { LineProps, YAxisProps } from 'recharts';
 import Organization from '@/components/helpers/Organization';
 import TableColumns from '@/components/helpers/TableColumns';
@@ -62,6 +63,7 @@ const StatsGraph = (
 
 
   const theme = useTheme();
+  const palette = getChartPalette(theme);
 
   const handleColumn = (value: string) => {
     dispatch(setDataKey({ key: 'trendsColumn', value }));
@@ -210,72 +212,32 @@ const StatsGraph = (
 
 
   // const rows: Data[] = Object.values(date_of_rank_x_data);
-  let minYaxis: number | null = null;
-  let maxYaxis: number | null = null;
+  let bounds: [number | null, number | null] = [null, null];
   const rows: Data[] = [];
   for (const dor in date_of_rank_x_data) {
     const data = date_of_rank_x_data[dor];
-    const value = data[trendsColumn];
-    const playerBoxscoreValue = data[`player_boxscore_${trendsColumn}${trendsColumn.includes('percentage') ? '' : '_per_game'}`];
-    const leagueValue = data[`league_${trendsColumn}`];
-    const confValue = data[`conf_${trendsColumn}`];
 
-    let compareMaxValue = value;
-    if (!compareMaxValue || leagueValue > compareMaxValue) {
-      compareMaxValue = leagueValue;
-    }
-    if (!compareMaxValue || confValue > compareMaxValue) {
-      compareMaxValue = confValue;
-    }
-    if (!compareMaxValue || playerBoxscoreValue > compareMaxValue) {
-      compareMaxValue = playerBoxscoreValue;
-    }
+    // the axis has to fit every line that gets drawn, not just the player's own
+    bounds = HelperChart.extend(bounds, data[trendsColumn]);
+    bounds = HelperChart.extend(bounds, data[`league_${trendsColumn}`]);
+    bounds = HelperChart.extend(bounds, data[`conf_${trendsColumn}`]);
 
-    let compareMixValue = value;
-    if (!compareMixValue || leagueValue < compareMixValue) {
-      compareMixValue = leagueValue;
-    }
-    if (!compareMixValue || confValue < compareMixValue) {
-      compareMixValue = confValue;
-    }
-    if (!compareMixValue || playerBoxscoreValue < compareMixValue) {
-      compareMixValue = playerBoxscoreValue;
-    }
-
-    if (compareMixValue !== null || compareMixValue !== undefined) {
-      if (
-        minYaxis === null ||
-        compareMixValue < minYaxis
-      ) {
-        minYaxis = compareMixValue;
-      }
-    }
-
-    if (compareMaxValue !== null || compareMaxValue !== undefined) {
-      if (
-        maxYaxis === null ||
-        compareMaxValue > maxYaxis
-      ) {
-        maxYaxis = compareMaxValue;
-      }
+    if (trendsBoxscoreLine) {
+      // the column id already carries its own `_per_game` where it has one, so appending another
+      // built a key - `player_boxscore_points_per_game_per_game` - that nothing was ever stored
+      // under. Every per-game stat therefore sized its axis as though the boxscore marks were not
+      // there, and a big night could land outside the frame. This is the key the series plots on.
+      bounds = HelperChart.extend(bounds, data[`player_boxscore_${trendsColumn}`]);
     }
 
     rows.push(data);
   }
 
+  let domain = HelperChart.getDomain(bounds[0], bounds[1]);
 
-  // give the min and max some buffer
-  const buffer = Math.ceil(((minYaxis || 0) + (maxYaxis || 0)) * 0.05);
-  if (minYaxis !== null) {
-    minYaxis = +(minYaxis - buffer).toFixed(0);
-  }
-  if (maxYaxis !== null) {
-    maxYaxis = +(maxYaxis + buffer).toFixed(0);
-  }
-
+  // hold elo on a fixed frame so the same climb reads the same size on every player's chart
   if (trendsColumn === 'elo') {
-    minYaxis = minYaxisElo;
-    maxYaxis = maxYaxisElo;
+    domain = [minYaxisElo, maxYaxisElo];
   }
 
   const formattedData: Data[] = rows.sort((a: Data, b: Data) => (a.date_of_rank > b.date_of_rank ? 1 : -1));
@@ -292,6 +254,10 @@ const StatsGraph = (
     }
   }
 
+  if (trendsBoxscoreLine) {
+    HelperChart.trailingMean(formattedData, `player_boxscore_${trendsColumn}`, `player_boxscore_avg_${trendsColumn}`);
+  }
+
 
   let chart: React.JSX.Element | null = null;
 
@@ -305,7 +271,7 @@ const StatsGraph = (
         type: 'monotone',
         name: statistic.getLabel(),
         dataKey: statistic.id,
-        stroke: theme.info.main,
+        stroke: palette.series(0),
         strokeWidth: 2,
         dot: false,
         connectNulls: true,
@@ -315,7 +281,7 @@ const StatsGraph = (
         type: 'monotone',
         name: `${leagueName} ${statistic.getLabel()}`,
         dataKey: `league_${statistic.id}`,
-        stroke: theme.secondary.dark,
+        stroke: palette.series(2),
         strokeWidth: 2,
         dot: false,
         connectNulls: true,
@@ -324,7 +290,7 @@ const StatsGraph = (
         type: 'monotone',
         name: `Conf ${statistic.getLabel()}`,
         dataKey: `conf_${statistic.id}`,
-        stroke: theme.warning.dark,
+        stroke: palette.series(1),
         strokeWidth: 2,
         dot: false,
         connectNulls: true,
@@ -332,23 +298,36 @@ const StatsGraph = (
     ];
 
     if (trendsBoxscoreLine) {
-      // insert the line in the second position
+      // the games themselves, as marks with nothing joining them, and the trailing mean through
+      // them. Both wear the same hue because they are the same measure - the dots are the
+      // observations, the line is what those observations add up to
       lines.splice(1, 0, {
         type: 'bump',
         name: `Box. ${statistic.getLabel()}`,
         dataKey: `player_boxscore_${statistic.id}`,
-        stroke: theme.success.dark,
+        stroke: palette.series(3),
+        strokeWidth: 0,
+        dot: { r: 4, fill: palette.series(3), strokeWidth: 0 },
+        connectNulls: false,
+        isAnimationActive: false,
+      });
+
+      lines.splice(2, 0, {
+        type: 'monotone',
+        name: `${HelperChart.TRAILING_WINDOW}-game avg.`,
+        dataKey: `player_boxscore_avg_${statistic.id}`,
+        stroke: palette.series(3),
         strokeWidth: 2,
-        dot: true,
+        dot: false,
         connectNulls: true,
       });
     }
 
     const YAxisProps: YAxisProps = { scale: 'auto' };
-    if (minYaxis !== null && maxYaxis !== null) {
-      YAxisProps.domain = [minYaxis, maxYaxis];
+    if (domain) {
+      YAxisProps.domain = domain;
     }
-    chart = <Chart XAxisDataKey={trendsSeasons.length > 1 ? 'season' : 'date_friendly'} tooltipLabel={'date_friendly'} YAxisLabel={statistic.getLabel()} rows={formattedData} lines={lines} YAxisProps={YAxisProps} rankMax = {max} />;
+    chart = <Chart key = {trendsColumn} XAxisDataKey={trendsSeasons.length > 1 ? 'season' : 'date_friendly'} tooltipLabel={'date_friendly'} YAxisLabel={statistic.getLabel()} rows={formattedData} lines={lines} YAxisProps={YAxisProps} rankMax = {max} />;
   }
 
 

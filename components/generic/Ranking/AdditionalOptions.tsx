@@ -5,6 +5,7 @@ import SettingsIcon from '@esmalley/react-material-icons/Settings';
 import CheckIcon from '@esmalley/react-material-icons/Check';
 import VisibilityIcon from '@esmalley/react-material-icons/Visibility';
 import FilterAltIcon from '@esmalley/react-material-icons/FilterAlt';
+import GradientIcon from '@esmalley/react-material-icons/Gradient';
 
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { setDataKey } from '@/redux/features/ranking-slice';
@@ -23,6 +24,8 @@ const AdditionalOptions = ({ view }: {view: string}) => {
   const dispatch = useAppDispatch();
   const hideCommitted = useAppSelector((state) => state.rankingReducer.hideCommitted);
   const hideUnderTwoMPG = useAppSelector((state) => state.rankingReducer.hideUnderTwoMPG);
+  const chartView = useAppSelector((state) => state.rankingReducer.chartView);
+  const heatMap = useAppSelector((state) => state.rankingReducer.heatMap);
   const class_years = useAppSelector((state) => state.rankingReducer.class_years);
   const organization_id = useAppSelector((state) => state.organizationReducer.organization_id);
 
@@ -51,6 +54,12 @@ const AdditionalOptions = ({ view }: {view: string}) => {
     }
   };
 
+
+  const handleHeatMap = () => {
+    handleClose();
+    dispatch(setDataKey({ key: 'heatMap', value: !heatMap }));
+  };
+
   const handleConferenceFilter = () => {
     handleClose();
     setConfOptionsOpen(true);
@@ -63,6 +72,16 @@ const AdditionalOptions = ({ view }: {view: string}) => {
 
   const getMenuOptions = () => {
     const menuOptions: MenuOption[] = [];
+
+    if (!chartView) {
+      menuOptions.push({
+        value: 'heat-map-display',
+        label: 'Color cells by rank',
+        selectable: true,
+        onSelect: handleHeatMap,
+        icon: heatMap ? <CheckIcon style = {{ fontSize: 20 }} /> : <GradientIcon style = {{ fontSize: 20 }} />,
+      });
+    }
 
     if (view === 'transfer') {
       menuOptions.push({

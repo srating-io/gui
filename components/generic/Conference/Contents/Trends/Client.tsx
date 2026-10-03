@@ -5,10 +5,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, Label, Brush,
   YAxisProps,
 } from 'recharts';
-import LinearScaleIcon from '@esmalley/react-material-icons/LinearScale';
-
-
-import { Payload } from 'recharts/types/component/DefaultLegendContent';
+import { ChartLegend, ChartTooltip, useInactiveSeries, getChartPalette } from '@/components/generic/Chart';
 import { footerNavigationHeight } from '@/components/generic/FooterNavigation';
 import { headerBarHeight } from '@/components/generic/Header';
 import Organization from '@/components/helpers/Organization';
@@ -16,8 +13,9 @@ import { useAppSelector } from '@/redux/hooks';
 import Team from '@/components/helpers/Team';
 import TableColumns from '@/components/helpers/TableColumns';
 import { Color, Dates } from '@esmalley/ts-utils';
+import HelperChart from '@/components/helpers/Chart';
 import ColumnPicker from '@/components/generic/ColumnPicker';
-import { Chip, LinearProgress, Paper, Typography, useTheme, useWindowDimensions } from '@esmalley/react-material-ui';
+import { Chip, LinearProgress, Typography, useTheme, useWindowDimensions } from '@esmalley/react-material-ui';
 import { Basketball, Football, General } from '@srating-io/types';
 
 export interface TrendsType {
@@ -87,7 +85,8 @@ const Client = ({ organization_id, conference_id, data }: { organization_id: str
   const games = (data && data.games) || {};
   const statistic_rankings = (data && data.statistic_rankings) || {};
 
-  const [inactiveSeries, setInactiveSeries] = useState<Array<string>>([]);
+  const series = useInactiveSeries();
+  const palette = getChartPalette(theme);
   const [selectedChip, setSelectedChip] = useState(standardColumns[0]);
   const [customColumn, setCustomColumn] = useState<string | null>(null);
 
@@ -190,8 +189,7 @@ const Client = ({ organization_id, conference_id, data }: { organization_id: str
     elo?: number;
   };
 
-  let minYaxis: number | null = null;
-  let maxYaxis: number | null = null;
+  let bounds: [number | null, number | null] = [null, null];
   const formattedData: Data[] = [];
 
   for (let i = 0; i < sorted_date_of_ranks.length; i++) {
@@ -208,23 +206,8 @@ const Client = ({ organization_id, conference_id, data }: { organization_id: str
         const value = data[selectedChip];
         row[`${team_id}_${selectedChip}`] = value;
 
-        if (value !== null || value !== undefined) {
-          if (
-            minYaxis === null ||
-            value < minYaxis
-          ) {
-            minYaxis = value;
-          }
-        }
-
-        if (value !== null || value !== undefined) {
-          if (
-            maxYaxis === null ||
-            value > maxYaxis
-          ) {
-            maxYaxis = value;
-          }
-        }
+        // every team in the conference is its own line, so all of them feed the axis
+        bounds = HelperChart.extend(bounds, value);
       }
     }
 
@@ -254,106 +237,48 @@ const Client = ({ organization_id, conference_id, data }: { organization_id: str
     }
   }
 
-  if (selectedChip === 'elo') {
-    if (minYaxis !== null) {
-      minYaxis -= 20;
-    }
-    if (maxYaxis !== null) {
-      maxYaxis += 20;
-    }
-  } else {
-    // give the min and max some buffer
-    const buffer = Math.ceil(((minYaxis || 0) + (maxYaxis || 0)) * 0.1);
-    if (minYaxis !== null) {
-      minYaxis = +(minYaxis - buffer).toFixed(0);
-    }
-    if (maxYaxis !== null) {
-      maxYaxis = +(maxYaxis + buffer).toFixed(0);
-    }
-  }
+  // elo keeps its flat +/- 20, which already reads well against a conference's spread of lines
+  const domain = selectedChip === 'elo' ?
+    HelperChart.padDomain(bounds[0], bounds[1], 20) :
+    HelperChart.getDomain(bounds[0], bounds[1]);
 
 
   const YAxisProps: YAxisProps = { scale: 'auto' };
-  if (minYaxis !== null && maxYaxis !== null) {
-    YAxisProps.domain = [minYaxis, maxYaxis];
+  if (domain) {
+    YAxisProps.domain = domain;
   }
 
 
   const getRankingGraph = () => {
-    const CustomLegend = ({ payload }: { payload: Payload[]}) => {
-      const onClick = (dataKey) => {
-        if (inactiveSeries.includes(dataKey)) {
-          setInactiveSeries(inactiveSeries.filter((el) => el !== dataKey));
-        } else {
-          setInactiveSeries((prev) => [...prev, dataKey]);
-        }
-      };
+    const renderLegend = ({ payload }) => (
+      <ChartLegend
+        payload = {payload}
+        inactive = {series.inactive}
+        onToggle = {series.toggle}
+        layout = {width > breakPoint ? 'vertical' : 'horizontal'}
+        size = 'caption'
+      />
+    );
 
-      const divStyle: React.CSSProperties = {
-        display: (width > breakPoint ? 'flex' : 'inline-flex'),
-        alignItems: 'center',
-        margin: (width > breakPoint ? '5px 0px' : '5px 5px'),
-        cursor: 'pointer',
-      };
+    // many teams share one plot, so reading the hovered column best-first is the point of the
+    // tooltip here rather than a nicety
+    const sortTooltipEntries = (a, b) => {
+      const column = allColumns[selectedChip];
 
-      return (
-        <div style = {{ marginLeft: 10, textAlign: (width > breakPoint ? 'initial' : 'center') }}>
-          {
-            payload.map((entry, index) => {
-              const color = entry.dataKey && inactiveSeries.includes(entry.dataKey as string) ? theme.grey[500] : entry.color;
-              return (
-                <div key={`item-${index}`} style = {divStyle} onClick={() => { onClick(entry.dataKey); }}>
-                  <div style = {{ display: 'flex' }}>
-                    <LinearScaleIcon style = {{ fontSize: '14px', color }} />
-                  </div>
-                  <div style = {{ display: 'flex', marginLeft: 5 }}>
-                    <Typography type='caption' style = {{ color }}>{entry.value}</Typography>
-                  </div>
-                </div>
-              );
-            })
-          }
-        </div>
-      );
-    };
-
-    type TooltipProps = {
-      active?: boolean;
-      payload?: { value: number, name: string, stroke: string, payload: {date: string} }[];
-      label?: number;
-    };
-
-    const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
-      if (active && payload && payload.length) {
-        const column = allColumns[selectedChip];
-        const sortedPayload = payload.sort((a, b) => {
-          if (column.sort === 'higher') {
-            return a.value > b.value ? -1 : 1;
-          }
-
-          if (column.sort === 'lower') {
-            return a.value > b.value ? 1 : -1;
-          }
-
-          return 0;
-        });
-
-        return (
-          <Paper elevation={3} style = {{ padding: '5px 10px' }}>
-            <div><Typography type ='subtitle2' style = {{ color: theme.text.secondary }}>{payload[0].payload?.date ? Dates.format(payload[0].payload?.date, 'M jS \'y') : label}</Typography></div>
-            {
-              sortedPayload.map((entry, index) => {
-                return (
-                  <div key = {index} style = {{ display: 'flex' }}><Typography type='body1' style = {{ color: entry.stroke }}>{entry.name}:</Typography><Typography style = {{ color: entry.stroke, marginLeft: 5 }} type='body1'>{entry.value}</Typography></div>
-                );
-              })
-            }
-          </Paper>
-        );
+      if (column.sort === 'higher') {
+        return a.value > b.value ? -1 : 1;
       }
 
-      return null;
+      if (column.sort === 'lower') {
+        return a.value > b.value ? 1 : -1;
+      }
+
+      return 0;
     };
+
+    const formatTooltipLabel = (row, label) => (
+      row && row.date ? Dates.format(row.date, 'M jS \'y') : label
+    );
 
     const getLines = () => {
       const lines: React.JSX.Element[] = [];
@@ -362,7 +287,7 @@ const Client = ({ organization_id, conference_id, data }: { organization_id: str
         const TeamHelper = new Team({ team });
         const key = `${team_id}_${selectedChip}`;
         lines.push(
-          <Line type = 'monotone' hide={inactiveSeries.includes(key)} name = {TeamHelper.getNameShort()} dataKey = {key} stroke = {Color.getTextColor(TeamHelper.getPrimaryColor(), backgroundColor)} strokeWidth={2} dot = {false} connectNulls = {true} />,
+          <Line type = 'monotone' hide={series.isHidden(key)} name = {TeamHelper.getNameShort()} dataKey = {key} stroke = {Color.getTextColor(TeamHelper.getPrimaryColor(), backgroundColor)} strokeWidth={2} dot = {false} connectNulls = {true} />,
         );
       }
 
@@ -379,22 +304,22 @@ const Client = ({ organization_id, conference_id, data }: { organization_id: str
                 right: 10,
               }}
             >
-              <CartesianGrid strokeDasharray = '3 3' />
+              <CartesianGrid stroke = {palette.grid} />
               <XAxis dataKey = {'date_friendly'} minTickGap={20} tickLine = {false} axisLine = {false} type='category' />
               <YAxis {...YAxisProps}>
                 <Label offset={10} value={(selectedChip in allColumns ? allColumns[selectedChip].getLabel() : 'Rank')} angle={-90} position="insideLeft" style={{ textAnchor: 'middle', fill: theme.info.main, fontSize: 18 }} />
               </YAxis>
               {
                 width > breakPoint ?
-                <Legend layout='vertical' align='right' verticalAlign='middle' content={CustomLegend} /> :
-                <Legend layout='horizontal' align='center' verticalAlign='top' content={CustomLegend} />
+                <Legend layout='vertical' align='right' verticalAlign='middle' content={renderLegend} /> :
+                <Legend layout='horizontal' align='center' verticalAlign='top' content={renderLegend} />
               }
               {
                 width > breakPoint ?
                   <Brush dataKey = 'name' startIndex={0} height={20} stroke = {theme.success.dark} /> :
                   ''
               }
-              <RechartsTooltip cursor = {{ stroke: theme.warning.main, strokeWidth: 2 }} content={<CustomTooltip />} />
+              <RechartsTooltip cursor = {{ stroke: theme.warning.main, strokeWidth: 2 }} content={<ChartTooltip formatLabel = {formatTooltipLabel} sortEntries = {sortTooltipEntries} />} />
               {getLines()}
             </LineChart>
           </ResponsiveContainer>
