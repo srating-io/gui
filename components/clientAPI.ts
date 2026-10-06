@@ -5,6 +5,7 @@ import { setDataKey, setSecret } from '@/redux/features/user-slice';
 import { setLoading } from '@/redux/features/loading-slice';
 import { refresh } from './generic/actions';
 import { getTagLabel } from './handlers/secret/shared';
+import { describe, report } from './monitoring/report';
 
 const protocol = process.env.NEXT_PUBLIC_CLIENT_PROTOCAL;
 const hostname = process.env.NEXT_PUBLIC_CLIENT_HOST;
@@ -68,19 +69,32 @@ function handleResponse(json: ApiResponse, isRetry: boolean = false): object {
  * Executes the actual fetch request and handles JSON parsing and error processing.
  * @param url - The target URL for the API request.
  * @param fetchArgs - Arguments to pass to the fetch function (including method, headers, body).
+ * @param args - The request being made, for the failure report. Every failure here arrives as a
+ *   bare "Failed to fetch" with nothing in it to say what was being called, so without this the
+ *   whole app files one indistinguishable row. `serverAPI` prefixes the same way.
  * @param isRetry - Flag to pass to handleResponse.
  * @returns The JSON response or an empty object on fetch/parse error.
  */
-async function executeFetch(url: string, fetchArgs: RequestInit, isRetry: boolean = false): Promise<ApiResponse> {
+async function executeFetch(url: string, fetchArgs: RequestInit, args: ClientAPIRequest, isRetry: boolean = false): Promise<ApiResponse> {
   try {
     const response = await fetch(url, fetchArgs);
     const json = await response.json();
     return handleResponse(json, isRetry);
   } catch (error) {
-    // Re-throw AbortErrors so the caller component's catch block receives it
-    if (error.name === 'AbortError') {
+    // Re-throw AbortErrors so the caller component's catch block receives it. Read defensively:
+    // fetch always rejects with a TypeError or a DOMException, but a json parse further up does not
+    // promise anything in particular.
+    if (error && error.name === 'AbortError') {
       throw error;
     }
+    // Still swallowed on purpose - callers render empty rather than tripping the error boundary,
+    // and every transient hiccup reaching global-error would be worse than the missing data. The
+    // report is so that "worse than the missing data" is something we can actually see happening.
+    const payload = describe(error, 'api-failure');
+
+    payload.message = `${args.class}:${args.function}() ${payload.message}`;
+
+    report(payload);
     console.log(error);
     return {};
   }
@@ -129,7 +143,7 @@ export async function useClientAPI(args: ClientAPIRequest, optional_fetch_args: 
     body: JSON.stringify(args),
   };
 
-  let fetchRequest = await executeFetch(url, fetchArgs, false);
+  let fetchRequest = await executeFetch(url, fetchArgs, args, false);
 
 
   if (fetchRequest.error && fetchRequest.code === 103) {
@@ -143,7 +157,7 @@ export async function useClientAPI(args: ClientAPIRequest, optional_fetch_args: 
     // @ts-expect-error it will be defined
     fetchArgs.headers['X-SECRET-ID'] = secret;
 
-    fetchRequest = await executeFetch(url, fetchArgs, true);
+    fetchRequest = await executeFetch(url, fetchArgs, args, true);
   }
 
   return fetchRequest;

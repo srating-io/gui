@@ -190,6 +190,109 @@ const readError = (error: unknown) => {
   };
 };
 
+/**
+ * Report the error that got us here.
+ *
+ * Written out longhand rather than calling `components/monitoring/report` because importing
+ * anything here would break the rule the header sets out - this file renders when the root layout
+ * is already broken, and every import is another thing that can fail on the way in. The cost is
+ * this duplication; the benefit is that the page of last resort depends on nothing.
+ *
+ * The redux snapshot is best effort twice over: the store may never have initialized in this
+ * scenario, and only an allowlist of it is sent. A whole `getState()` would carry the session id,
+ * the secret and the kryptos straight into the database.
+ */
+let reported = false;
+
+const send = (details: ReturnType<typeof readError>) => {
+  let state = '';
+
+  try {
+    const store = (window as unknown as {
+      globalStore?: { getState: () => Record<string, Record<string, unknown>> }
+    }).globalStore;
+    const full = store?.getState?.();
+
+    if (full) {
+      state = JSON.stringify({
+        display: full.displayReducer,
+        organization: full.organizationReducer,
+        theme: full.themeReducer,
+        isValidSession: full.userReducer?.isValidSession,
+      });
+    }
+  } catch {
+    // the store is the likeliest casualty of whatever broke; the error itself is what matters
+  }
+
+  /**
+   * Straight at the api server, the same address `clientAPI` uses -- our own origin in production,
+   * where nginx proxies `/api` to it. Spelled out here rather than imported, like everything else in
+   * this file.
+   *
+   * A keepalive fetch rather than `sendBeacon` because the kryptos travels as a header, and a
+   * beacon cannot carry one. It is sent when the tab has one but nothing here depends on it:
+   * `isReport` in internal.ts lets `audit_gui.log` through with no credential at all, which is the
+   * only reason a layout that threw before `handlers/kryptos/Client` ever ran can report anything.
+   */
+  try {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    let kryptos: string | null = null;
+
+    try {
+      kryptos = sessionStorage.getItem('kryptos');
+    } catch {
+      // private windows throw on access; nothing to do about it here
+    }
+
+    if (kryptos) {
+      headers['X-KRYPTOS-ID'] = kryptos;
+    }
+
+    const url = (process.env.NEXT_PUBLIC_CLIENT_USE_ORIGIN === 'true')
+      ? window.location.origin + (process.env.NEXT_PUBLIC_CLIENT_PATH || '')
+      : `${process.env.NEXT_PUBLIC_CLIENT_PROTOCAL}://${process.env.NEXT_PUBLIC_CLIENT_HOST}:${process.env.NEXT_PUBLIC_CLIENT_PORT || 4000}`;
+
+    /**
+     * Cut to what the columns hold, for the reason spelled out beside `BUDGET` in
+     * `components/monitoring/report.ts`: a keepalive body over 64KiB is a network error, and a
+     * report that is too big to send is lost rather than shortened. A recursion stack is the field
+     * that gets there. Written out again rather than imported, like everything else in this file.
+     */
+    const body = JSON.stringify({
+      class: 'audit_gui',
+      function: 'log',
+      arguments: {
+        source: 'global-error',
+        release: (process.env.COMMIT_HASH || 'unknown').slice(0, 64),
+        name: details.name.slice(0, 255),
+        message: details.message.slice(0, 1024),
+        digest: details.digest.slice(0, 64),
+        stack: details.stack.slice(0, 8000),
+        // collapsed the same way toPattern does in the monitoring helper -- both halves of it, ids
+        // and numbers, so a global error on two different teams reads as one route rather than two
+        route: window.location.pathname
+          .replace(/\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(?=\/|$)/gi, '/[id]')
+          .replace(/\/\d+(?=\/|$)/g, '/[n]')
+          .slice(0, 255),
+        state: state.slice(0, 16000),
+      },
+    });
+
+    fetch(url, {
+      method: 'POST',
+      headers,
+      keepalive: true,
+      body,
+    }).catch(() => {});
+  } catch {
+    // nothing left to try, and a reporting failure must not replace the error page with a blank one
+  }
+};
+
 export default function GlobalError({
   error,
   retry,
@@ -200,6 +303,27 @@ export default function GlobalError({
   reset?: () => void;
 }) {
   const details = readError(error);
+
+  /**
+   * Reported from the render body rather than an effect, because `useEffect` would have to be
+   * imported and this file imports nothing. The module flag covers the double render that strict
+   * mode does, and the `window` check covers the build: `/_global-error` is prerendered, so this
+   * component is rendered once on the server where there is no `navigator` to beacon with.
+   *
+   * Off outside production unless asked for, the same condition `enabled()` applies in
+   * `components/monitoring/report.ts` -- spelled out again rather than imported, like everything
+   * else here. HMR, strict mode and the dev overlay all throw routinely and none of it means
+   * anything. Both of these are inlined at build time, so reading them costs no import.
+   */
+  const enabled = (
+    process.env.NODE_ENV === 'production' ||
+    process.env.NEXT_PUBLIC_AUDIT_GUI === '1'
+  );
+
+  if (typeof window !== 'undefined' && !reported && enabled) {
+    reported = true;
+    send(details);
+  }
 
   // a server error arrives stripped of its message and carrying only the digest, which is the one
   // string that matches it to the server log - so it is worth showing even on its own
@@ -220,6 +344,12 @@ export default function GlobalError({
    * reload is what is left if this ever renders without either.
    */
   const handleRetry = () => {
+    // the next error of the session is a new one and worth hearing about. The flag is there for the
+    // double render, not for the session, and leaving it set here would silence everything that
+    // broke after the visitor tried again -- `handleReload` needs no such thing, since a reload
+    // re-evaluates the module and the flag with it
+    reported = false;
+
     if (retry) {
       retry();
       return;
