@@ -1,7 +1,7 @@
 'use client';
 
 import { useAppSelector } from '@/redux/hooks';
-import { Typography, useTheme } from '@esmalley/react-material-ui';
+import { Paper, Typography, useTheme } from '@esmalley/react-material-ui';
 import VpnKeyIcon from '@esmalley/react-material-icons/VpnKey';
 import RankTable from '@/components/generic/RankTable';
 import { Empty } from '../Panel';
@@ -124,11 +124,11 @@ const Keys = () => {
   }));
 
   return (
-    <>
-      <div style = {{ display: 'flex', alignItems: 'center' }}>
-        <span style = {{ display: 'flex', marginRight: 8 }}><VpnKeyIcon style = {{ color: theme.warning.main, fontSize: 24 }} /></span>
-        <Typography type = 'h6'>{`API keys (${data.rows.length})`}</Typography>
-      </div>
+    <Paper
+      elevation={0}
+      titleIcon={<VpnKeyIcon style = {{ color: theme.warning.main, fontSize: 24 }} />}
+      title = {`API keys (${data.rows.length})`}
+    >
       {
         rows.length ?
           <RankTable
@@ -143,7 +143,7 @@ const Keys = () => {
           />
           : <Empty message = 'No api keys.' />
       }
-    </>
+    </Paper>
   );
 };
 

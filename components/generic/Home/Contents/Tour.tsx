@@ -65,7 +65,7 @@ const Tour = ({ path }: { path: string }) => {
   return (
     <div style = {{ width: '100%', maxWidth: getMaxWidth(), margin: '0px auto', padding: '24px 8px 0px 8px' }}>
       <Typography type = 'h5' style = {{ textAlign: 'center', color: theme.text.primary, margin: '0px 0px 4px 0px' }}>
-        Five tools, thirteen ways to read a season
+        Advanced statistical tools
       </Typography>
       <Typography type = 'body2' style = {{ textAlign: 'center', color: theme.text.secondary, margin: '0px 0px 12px 0px' }}>
         Pick one. Every chart below is the one the live page draws, on numbers from a real season.

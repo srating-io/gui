@@ -18,11 +18,6 @@ export { getNavHeaderHeight };
  */
 const backSlotWidth = 40;
 
-/**
- * The dictionary is a separate route on a branch that has not landed yet, so the tab that would
- * take you there is off. Turn this on once `/dictionary` exists on master and the tab works.
- */
-const SHOW_DICTIONARY = false;
 
 const NavBar = () => {
   const theme = useTheme();
@@ -31,7 +26,7 @@ const NavBar = () => {
   const view = useAppSelector((state) => state.dashboardReducer.view) || 'overview';
   const audit_gui_id = useAppSelector((state) => state.dashboardReducer.audit_gui_id);
 
-  const tabOrder = ['overview', 'errors', 'traffic', 'revenue', 'keys'];
+  const tabOrder = ['overview', 'errors', 'traffic', 'revenue', 'keys', 'dictionary'];
 
   const tabOptions = {
     overview: 'Overview',
@@ -42,9 +37,6 @@ const NavBar = () => {
     dictionary: 'Dictionary',
   };
 
-  if (SHOW_DICTIONARY) {
-    tabOrder.push('dictionary');
-  }
 
   const handleTabClick = (e, value) => {
     const newView = value;

@@ -1,6 +1,6 @@
 
 
-import { Objector } from '@esmalley/ts-utils';
+import State from '@/components/helpers/State';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Fantasy, General } from '@srating-io/types';
 
@@ -14,9 +14,34 @@ type InitialState = {
   organization_id_x_division_id_x_season_x_count: object,
   organization_id_x_division_id_x_season_x_conference_id_x_true: object,
   organization_id_x_division_id_x_ranking_seasons: object,
+  row: object | undefined,
+  rows: Record<string, Record<string, unknown>>,
+  // The row as edited in RowDetails. Lives here so the header's save button can read it.
+  form: object | undefined,
+  formError: string,
+  loadingView: boolean,
 };
 
-const initialState = {
+
+type InitialStateKeys = keyof InitialState;
+
+type ActionPayload<K extends keyof InitialState> = {
+  key: K;
+  value: InitialState[K];
+};
+
+const stateController = new State<InitialState>({
+  type: 'dictionary',
+});
+
+stateController.set_url_param_type_x_keys({
+  string: [],
+  number: [],
+  array: [],
+  boolean: [],
+});
+
+stateController.setInitialState({
   conference: {},
   organization: {},
   division: {},
@@ -25,13 +50,17 @@ const initialState = {
   organization_id_x_division_id_x_season_x_count: {},
   organization_id_x_division_id_x_season_x_conference_id_x_true: {},
   organization_id_x_division_id_x_ranking_seasons: {},
-} as InitialState;
+  row: {},
+  rows: {},
+  form: {},
+  formError: '',
+  loadingView: true,
+});
 
-const defaultState = Object.freeze(Objector.deepClone(initialState));
 
 export const dictionary = createSlice({
   name: 'dictionary',
-  initialState,
+  initialState: stateController.getInitialState(),
   reducers: {
     load: (state, action: PayloadAction<object>) => {
       const data = action.payload;
@@ -39,8 +68,14 @@ export const dictionary = createSlice({
         state[table] = data[table];
       }
     },
+    setDataKey: <K extends keyof InitialState>(state: InitialState, action: PayloadAction<ActionPayload<K>>) => {
+      const { value, key } = action.payload;
+      stateController.setDataKey(state, key, value);
+    },
   },
 });
 
-export const { load } = dictionary.actions;
+export const { load, setDataKey } = dictionary.actions;
 export default dictionary.reducer;
+
+stateController.updateStateFromUrlParams(stateController.getInitialState());

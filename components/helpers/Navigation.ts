@@ -502,6 +502,26 @@ class Navigation {
     });
   }
   /**
+   * Navigate to the dictionary, which is its own route rather than a dashboard view.
+   *
+   * Deliberately resets nothing. The dictionary slice is the app-wide reference data every page
+   * reads -- conferences, organizations, divisions, terminologies -- loaded once by the dictionary
+   * handler. Clearing it here would empty the pickers across the whole app, so the route loads its
+   * own rows and leaves the slice alone.
+   */
+  public dictionary(path: string, onRouter: null | undefined | (() => void) = null) {
+    if (this.pathName !== path) {
+      this.dispatch(setLoading(true));
+    }
+    this.startTransition(() => {
+      this.router.push(path);
+      if (onRouter) {
+        onRouter();
+      }
+    });
+  }
+
+  /**
    * Navigate to something on a dashboard view. Must already be on the dashboard.
    */
   public dashboardView<K extends InitialStateKeysDashboard>(args: Pick<InitialStateDashboard, K>, onRouter: null | undefined | (() => void) = null) {

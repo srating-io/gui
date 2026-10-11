@@ -100,11 +100,7 @@ const Section = (
           ''
       }
 
-      <div style = {{ display: 'grid', gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`, gap: 10, alignItems: 'start' }}>
-        {children}
-      </div>
-
-      <div style = {{ margin: '12px 0px 0px 0px' }}>
+      <div style = {{ margin: '0px 0px 12px 0px' }}>
         <a
           href = {href}
           onClick = {handleClick}
@@ -119,6 +115,10 @@ const Section = (
               <ArrowForwardIcon style = {{ fontSize: 18, marginLeft: 4 }} />
           }
         </a>
+      </div>
+
+      <div style = {{ display: 'grid', gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`, gap: 10, alignItems: 'start' }}>
+        {children}
       </div>
     </section>
   );
