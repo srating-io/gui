@@ -55,9 +55,11 @@ const RankTable = (
   const [order, setOrder] = useState<string>(sessionOrder || defaultSortOrder);
   const [orderBy, setOrderBy] = useState<string>(sessionOrderBy || defaultSortOrderBy);
 
+  // Sort a copy. `sort` is in place, so sorting the prop reorders whatever the caller holds -- and
+  // when that is an array straight out of redux, which freezes its state, the write throws.
   const sortedRows = customSortComparator ?
-    rows.sort(customSortComparator(order, orderBy, (columns[orderBy] && columns[orderBy].sort))) :
-    rows.sort(Sorter.getComparator(order, orderBy, (columns[orderBy] && columns[orderBy].sort)));
+    [...rows].sort(customSortComparator(order, orderBy, (columns[orderBy] && columns[orderBy].sort))) :
+    [...rows].sort(Sorter.getComparator(order, orderBy, (columns[orderBy] && columns[orderBy].sort)));
 
 
   // Update internal state whenever the prop changes

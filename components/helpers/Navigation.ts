@@ -18,6 +18,7 @@ import { reset as resetFantasy, setDataKey as setDataKeyFantasy, InitialStateKey
 import { resetDataKey as resetDataKeyUser, setDataKey as setDataKeyUser, InitialStateKeys as InitialStateKeysUser, InitialState as InitialStateUser, stateController as UserStateController } from '@/redux/features/user-slice';
 import { reset as resetFantasyGroup, setDataKey as setDataKeyFantasyGroup, InitialStateKeys as InitialStateKeysFantasyGroup, InitialState as InitialStateFantasyGroup, stateController as FantasyGroupStateController } from '@/redux/features/fantasy_group-slice';
 import { reset as resetFantasyEntry } from '@/redux/features/fantasy_entry-slice';
+import { setDataKey as setDataKeyDashboard, InitialStateKeys as InitialStateKeysDashboard, InitialState as InitialStateDashboard, stateController as DashboardStateController } from '@/redux/features/dashboard-slice';
 
 // todo remove nextjs router :D
 
@@ -495,6 +496,55 @@ class Navigation {
 
     this.startTransition(() => {
       this.router.replace(`${this.pathName}${query}`);
+      if (onRouter) {
+        onRouter();
+      }
+    });
+  }
+  /**
+   * Navigate to something on a dashboard view. Must already be on the dashboard.
+   */
+  public dashboardView<K extends InitialStateKeysDashboard>(args: Pick<InitialStateDashboard, K>, onRouter: null | undefined | (() => void) = null) {
+    if (!this.pathName.includes('dashboard')) {
+      throw new Error('dashboardView only usable when already navigated to the dashboard');
+    }
+
+    let pushState = false;
+
+    const stateController = DashboardStateController;
+
+    /**
+     * Changing which panel is showing abandons whichever row was open in the old one. It is dropped
+     * before the rest of the args so the history entry that drop pushes still carries the old view,
+     * which is where the back button should land -- on the bug, not on the panel just left.
+     *
+     * The url is the check rather than the slice because nothing here can read state, and clearing
+     * a row that was never open would push an entry that goes nowhere.
+     */
+    if (
+      'view' in args &&
+      !('audit_gui_id' in args) &&
+      new URLSearchParams(window.location.search).get('audit_gui_id')
+    ) {
+      this.dispatch(setDataKeyDashboard({ key: 'audit_gui_id', value: '' }));
+    }
+
+    for (const key in args) {
+      this.dispatch(setDataKeyDashboard({ key, value: args[key] }));
+      if (!pushState) {
+        pushState = stateController.isKeyPushState(key);
+      }
+    }
+
+    this.dispatch(setDataKeyDashboard({ key: 'loadingView', value: true }));
+
+    // the slice has already written the params; read them back for the router
+    const current = new URLSearchParams(window.location.search);
+    const search = current.toString();
+    const query = search ? `?${search}` : '';
+
+    this.startTransition(() => {
+      this.router[pushState ? 'push' : 'replace'](`${this.pathName}${query}`);
       if (onRouter) {
         onRouter();
       }

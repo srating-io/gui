@@ -17,6 +17,7 @@ import AccountCircleIcon from '@esmalley/react-material-icons/AccountCircle';
 import ShoppingCartIcon from '@esmalley/react-material-icons/ShoppingCart';
 import SportsEsportsIcon from '@esmalley/react-material-icons/SportsEsports';
 import NotificationsIcon from '@esmalley/react-material-icons/Notifications';
+import DashboardIcon from '@esmalley/react-material-icons/Dashboard';
 
 import sratingLogo from '../../public/favicon-32x32.png';
 
@@ -28,6 +29,7 @@ import { reset } from '@/redux/features/compare-slice';
 import { setLoading } from '@/redux/features/loading-slice';
 import OrganizationPicker from './OrganizationPicker';
 import Organization from '../helpers/Organization';
+import { isAdmin } from '../helpers/Admin';
 import { setDataKey } from '@/redux/features/user-slice';
 import General from '../helpers/General';
 import { Objector, Style } from '@esmalley/ts-utils';
@@ -47,6 +49,7 @@ const Header = () => {
   const theme = useTheme();
   const dispatch = useAppDispatch();
   const validSession = useAppSelector((state) => state.userReducer.isValidSession);
+  const user = useAppSelector((state) => state.userReducer.user);
   const notifications = useAppSelector((state) => state.userReducer.notifications);
   const organizations = useAppSelector((state) => state.dictionaryReducer.organization);
   const organization_id = useAppSelector((state) => state.organizationReducer.organization_id);
@@ -151,6 +154,21 @@ const Header = () => {
     setAccountOpen(true);
   };
 
+  /**
+   * The dashboard is admin only, but the gate is the api's, not this menu's. The entry is hidden
+   * from everyone else because it would be useless to them, not because hiding it protects
+   * anything -- `/dashboard` renders its shell for whoever types it and the panels come back empty.
+   */
+  const handleDashboard = () => {
+    handleClose();
+
+    if (pathName !== '/dashboard') {
+      startTransition(() => {
+        router.push('/dashboard');
+      });
+    }
+  };
+
   const handleAccountClose = () => {
     setAccountOpen(false);
   };
@@ -232,6 +250,13 @@ const Header = () => {
       onSelect: handleAccountFantasy,
       icon: <SportsEsportsIcon style = {{ fontSize: 20 }} />,
     },
+    ...(validSession && isAdmin(user) ? [{
+      value: 'dashboard',
+      selectable: true,
+      label: 'Dashboard',
+      onSelect: handleDashboard,
+      icon: <DashboardIcon style = {{ fontSize: 20 }} />,
+    }] : []),
     {
       value: null,
       selectable: false,

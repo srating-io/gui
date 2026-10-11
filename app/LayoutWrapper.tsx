@@ -16,6 +16,7 @@ import { updateFromURL as K } from '@/redux/features/fantasy_group-slice';
 import { updateFromURL as L } from '@/redux/features/payment_router-slice';
 import { updateFromURL as M } from '@/redux/features/fantasy_entry-slice';
 import { updateFromURL as N, setDataKey as setDataKeyGeneral } from '@/redux/features/general-slice';
+import { updateFromURL as O } from '@/redux/features/dashboard-slice';
 // import { toast } from '@/components/utils/Toaster';
 import { useAppDispatch } from '@/redux/hooks';
 
@@ -46,6 +47,7 @@ const LayoutWrapper = ({ children }) => {
       store.dispatch(L());
       store.dispatch(M());
       store.dispatch(N());
+      store.dispatch(O());
     };
 
     const handleOnline = () => {

@@ -5,8 +5,6 @@ import { useServerAPI } from '@/components/serverAPI';
 
 
 const Server = async ({ organization_id, division_id, date, season }) => {
-  const revalidateSeconds = 60 * 5; // cache for 5 mins
-
   const stats = await useServerAPI({
     class: 'odds',
     function: 'getStatsData',
@@ -16,12 +14,12 @@ const Server = async ({ organization_id, division_id, date, season }) => {
       date,
       season,
     },
-    cache: revalidateSeconds,
+    cache: 60 * 5,
   });
 
   return (
     <>
-      <Client stats = {stats} date = {date} />
+      <Client stats = {stats} date = {date} season = {season} />
     </>
   );
 };

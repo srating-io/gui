@@ -1,69 +1,91 @@
 # https://www.robotstxt.org/robotstxt.html
 User-agent: Applebot
 Allow: /
+Disallow: /dashboard
 
 User-agent: baiduspider
 Allow: /
+Disallow: /dashboard
 
 User-agent: Bingbot
 Allow: /
+Disallow: /dashboard
 
 User-agent: Facebot
 Allow: /
+Disallow: /dashboard
 
 User-agent: Googlebot
 Allow: /
+Disallow: /dashboard
 
 User-agent: Google-Extended
 Allow: /
+Disallow: /dashboard
 
 User-agent: ClaudeBot
 Allow: /
+Disallow: /dashboard
 
 User-agent: Claude-User
 Allow: /
+Disallow: /dashboard
 
 User-agent: Claude-SearchBot
 Allow: /
+Disallow: /dashboard
 
 User-agent: ChatGPT-User
 Allow: /
+Disallow: /dashboard
 
 User-agent: OAI-SearchBot
 Allow: /
+Disallow: /dashboard
 
 User-agent: GPTBot
 Allow: /
+Disallow: /dashboard
 
 User-agent: msnbot
 Allow: /
+Disallow: /dashboard
 
 User-agent: Naverbot
 Allow: /
+Disallow: /dashboard
 
 User-agent: seznambot
 Allow: /
+Disallow: /dashboard
 
 User-agent: Slurp
 Allow: /
+Disallow: /dashboard
 
 User-agent: teoma
 Allow: /
+Disallow: /dashboard
 
 User-agent: Twitterbot
 Allow: /
+Disallow: /dashboard
 
 User-agent: Yandex
 Allow: /
+Disallow: /dashboard
 
 User-agent: Yeti
 Allow: /
+Disallow: /dashboard
 
 User-agent: DuckDuckBot
 Allow: /
+Disallow: /dashboard
 
 User-agent: archive.org_bot
 Allow: /
+Disallow: /dashboard
 
 
 User-agent: *

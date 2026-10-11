@@ -11,6 +11,7 @@ import teamReducer from './features/team-slice';
 import picksReducer from './features/picks-slice';
 import compareReducer from './features/compare-slice';
 import dictionaryReducer from './features/dictionary-slice';
+import dashboardReducer from './features/dashboard-slice';
 import coachReducer from './features/coach-slice';
 import conferenceReducer from './features/conference-slice';
 import organizationReducer from './features/organization-slice';
@@ -38,6 +39,7 @@ const rootReducer = combineReducers({
   picksReducer,
   compareReducer,
   dictionaryReducer,
+  dashboardReducer,
   coachReducer,
   conferenceReducer,
   organizationReducer,

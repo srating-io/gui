@@ -10,13 +10,13 @@ const getCardStyle = () => {
 };
 
 const getOrderedBuckets = () => {
-  return ['season', 'today', 'yesterday', 'week', 'month'];
+  return ['career', 'season', 'today', 'yesterday', 'week', 'month'];
 };
 
 export { getCardStyle, getOrderedBuckets };
 
 
-const Client = ({ date, stats }) => {
+const Client = ({ date, stats, season }) => {
   const theme = useTheme();
 
   const orderedBuckets = getOrderedBuckets();
@@ -64,7 +64,9 @@ const Client = ({ date, stats }) => {
         } else if (orderedBuckets[i] === 'month') {
           label = `${monthDate} - ${todayDate}`;
         } else if (orderedBuckets[i] === 'season') {
-          label = 'Season';
+          label = `Season ${season}`;
+        } else if (orderedBuckets[i] === 'career') {
+          label = 'All time';
         }
 
         const subBucketContainers: React.JSX.Element[] = [];
@@ -182,7 +184,7 @@ const Client = ({ date, stats }) => {
       {
         calibrationPoints.length ?
           <div style = {{ maxWidth: 560, margin: '0px auto 10px auto' }}>
-            <Typography style={{ fontSize: 14, textAlign: 'center', color: theme.info.dark }} type = 'h6'>Season calibration</Typography>
+            <Typography style={{ fontSize: 14, textAlign: 'center', color: theme.info.dark }} type = 'h6'>{`Season ${season} calibration`}</Typography>
             <ChartCalibration points = {calibrationPoints} />
           </div>
           : ''
