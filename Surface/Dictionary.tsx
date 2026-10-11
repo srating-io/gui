@@ -49,7 +49,8 @@ class Dictionary extends Surface {
   ) {
     const getContent = () => {
       if (table && table_id) {
-        return <RowDetailsClient table={table} table_id={table_id} />;
+        // return <RowDetailsClient table={table} table_id={table_id} />;
+        return <div>todo</div>;
       }
       return <SearchClient table={table} />;
     };

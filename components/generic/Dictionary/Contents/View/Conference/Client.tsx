@@ -57,6 +57,8 @@ const RowDetails = ({ table, table_id }: { table: string; table_id: string }) =>
     );
   }
 
+  return <>todo</>;
+  /*
   const id = table_id || (formData[`${table}_id`] as string) || (row[`${table}_id`] as string) || '';
   const sections = tableDetails.resolveSections(formData);
 
@@ -68,7 +70,7 @@ const RowDetails = ({ table, table_id }: { table: string; table_id: string }) =>
         </Typography>
       )}
 
-      {/* Row ID Header */}
+
       <div style={{ marginBottom: '24px' }}>
         <Typography
           type="caption"
@@ -94,7 +96,7 @@ const RowDetails = ({ table, table_id }: { table: string; table_id: string }) =>
         </Typography>
       </div>
 
-      {/* Grouped Section Papers */}
+
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
         {sections.map((section) => (
           <div style = {{ gap: '16px' }}>
@@ -147,6 +149,7 @@ const RowDetails = ({ table, table_id }: { table: string; table_id: string }) =>
       </div>
     </div>
   );
+  */
 };
 
 export default RowDetails;
