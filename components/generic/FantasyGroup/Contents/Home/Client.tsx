@@ -57,7 +57,7 @@ const Client = () => {
 
   const fantasyHelper = new FantasyGroup({ fantasy_group });
 
-  const started = fantasy_group.started || (Dates.parse(fantasy_group.start_date, true) < new Date());
+  const started = fantasy_group.started || (!!fantasy_group.start_date && Dates.parse(fantasy_group.start_date, true) < new Date());
   return (
     <Profiler id="FantasyGroup.Contents.Home.Client" onRender={(id, phase, actualDuration) => {
       console.log(id, phase, actualDuration);

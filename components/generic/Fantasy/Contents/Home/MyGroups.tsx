@@ -49,7 +49,7 @@ const MyGroups = (
       if (index > limit) {
         return null;
       }
-      let secondary = `Starts ${Dates.format(Dates.parse(row.start_date, true), 'M jS g:i a')}`;
+      let secondary = row.start_date ? `Starts ${Dates.format(Dates.parse(row.start_date, true), 'M jS g:i a')}` : 'Start date not set';
 
       if (row.finished) {
         secondary = `Ended ${Dates.format(Dates.parse(row.end_date, true), 'M jS g:i a')}`;
