@@ -11,6 +11,7 @@
     "@esmalley/ts-utils": "^8.0.0",
     "@next/bundle-analyzer": "^15.2.2",
     "@reduxjs/toolkit": "^2.0.1",
+    "@srating-io/common": "^1.1.2",
     "@stripe/react-stripe-js": "^5.4.1",
     "@stripe/stripe-js": "^8.6.1",
     "cross-env": "^10.0.0",
@@ -55,7 +56,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
-    "@srating-io/types": "^2.0.0",
+    "@srating-io/types": "^2.0.1",
     "@testing-library/react": "^16.2.0",
     "@testing-library/user-event": "^14.5.1",
     "@types/lodash": "^4.17.10",

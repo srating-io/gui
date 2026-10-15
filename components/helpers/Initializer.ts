@@ -70,7 +70,8 @@ class Initializer {
       return DEFAULT_NBA_SEASON;
     }
 
-    return 2026;
+    // unreachable today, but match whatever DEFAULT_ORGANIZATION_ID is rather than a literal
+    return DEFAULT_CFB_SEASON;
   }
 }
 
