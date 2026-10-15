@@ -126,8 +126,11 @@ const Client = () => {
   const [triggerValidation, setTriggerValidation] = useState(false);
 
   // hardcoded for cbb, todo make this dynamic per org + season
-  const minDate = `${season - 1}-11-01`;
+  const seasonOpens = `${season - 1}-11-01`;
   const maxDate = `${season}-04-10`;
+  // part way into a season seasonOpens is already past, and a past date fails validation
+  const nowFormatted = Dates.format(Dates.parse(null), 'Y-m-d H:i:s');
+  const minDate = nowFormatted > seasonOpens ? nowFormatted : seasonOpens;
 
   const payoutOptions = Object.values(fantasy_payout_rules)
     .sort((a, b) => {
@@ -235,7 +238,7 @@ const Client = () => {
 
       if (
         formData.start_date &&
-        Dates.parse(formData.start_date).getTime() < now
+        Dates.parse(formData.start_date, true).getTime() < now
       ) {
         setErrorModalMessage('Start can not be in the past');
         return false;
@@ -243,7 +246,7 @@ const Client = () => {
 
       if (
         formData.draft_start_datetime &&
-        Dates.parse(formData.draft_start_datetime).getTime() < now
+        Dates.parse(formData.draft_start_datetime, true).getTime() < now
       ) {
         setErrorModalMessage('Draft start can not be in the past');
         return false;
@@ -301,8 +304,8 @@ const Client = () => {
                 }}
                 triggerValidation={triggerValidation}
                 value = {formData.draft_start_datetime ? Dates.format(Dates.parse(formData.draft_start_datetime, true), 'Y-m-d H:i:s') : undefined}
-                minDate = {Dates.format(Dates.add(Dates.parse(null), 30, 'minutes'), 'Y-m-d H:i:a')}
-                maxDate = {formData.start_date ? Dates.format(Dates.subtract(Dates.parse(formData.start_date), 6, 'hours'), 'Y-m-d H:i:s') : undefined}
+                minDate = {Dates.format(Dates.add(Dates.parse(null), 30, 'minutes'), 'Y-m-d H:i:s')}
+                maxDate = {formData.start_date ? Dates.format(Dates.subtract(Dates.parse(formData.start_date, true), 6, 'hours'), 'Y-m-d H:i:s') : undefined}
                 enableTime
               />
             </div>
