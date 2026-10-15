@@ -139,7 +139,7 @@ class FantasyGroup {
           return -1;
         }
 
-        if (b.pick > a.pick) {
+        if (a.pick > b.pick) {
           return 1;
         }
 
