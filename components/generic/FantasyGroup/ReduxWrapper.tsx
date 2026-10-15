@@ -3,7 +3,7 @@
 import React, { useEffect } from 'react';
 import { useAppDispatch } from '@/redux/hooks';
 import { InitialState, setDataKey } from '@/redux/features/fantasy_group-slice';
-import { updateDivisionID, updateOrganizationID } from '@/redux/features/organization-slice';
+import { updateDivisionID, updateOrganizationID, updateSeason } from '@/redux/features/organization-slice';
 import { AppDispatch } from '@/redux/store';
 import { getStore } from '@/app/StoreProvider';
 import { Objector } from '@esmalley/ts-utils';
@@ -86,6 +86,7 @@ const ReduxWrapper = (
   useEffect(() => {
     dispatch(updateOrganizationID(fantasy_group.organization_id));
     dispatch(updateDivisionID(fantasy_group.division_id));
+    dispatch(updateSeason(fantasy_group.season));
     dispatch(setDataKey({ key: 'fantasy_group', value: fantasy_group }));
   }, [dispatch, fantasy_group]);
 

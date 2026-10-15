@@ -3,7 +3,7 @@
 import React, { useEffect } from 'react';
 import { useAppDispatch } from '@/redux/hooks';
 import { setDataKey } from '@/redux/features/fantasy_entry-slice';
-import { updateDivisionID, updateOrganizationID } from '@/redux/features/organization-slice';
+import { updateDivisionID, updateOrganizationID, updateSeason } from '@/redux/features/organization-slice';
 import { AppDispatch } from '@/redux/store';
 import { Basketball, Fantasy, General } from '@srating-io/types';
 
@@ -62,6 +62,7 @@ const ReduxWrapper = (
     if (fantasy_group) {
       dispatch(updateOrganizationID(fantasy_group.organization_id));
       dispatch(updateDivisionID(fantasy_group.division_id));
+      dispatch(updateSeason(fantasy_group.season));
       dispatch(setDataKey({ key: 'fantasy_group', value: fantasy_group }));
     }
     if (fantasy_entry) {

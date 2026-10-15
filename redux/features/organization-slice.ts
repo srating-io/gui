@@ -55,8 +55,11 @@ export const organization = createSlice({
       // eslint-disable-next-line no-param-reassign
       state.division_id = action.payload;
     },
+    updateSeason: (state, action: PayloadAction<number>) => {
+      state.season = action.payload;
+    },
   },
 });
 
-export const { updateOrganizationID, updateDivisionID } = organization.actions;
+export const { updateOrganizationID, updateDivisionID, updateSeason } = organization.actions;
 export default organization.reducer;
