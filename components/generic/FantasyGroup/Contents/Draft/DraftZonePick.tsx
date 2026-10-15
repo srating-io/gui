@@ -70,7 +70,7 @@ const DraftZonePick = ({ selectedRow, onPick }) => {
     }
 
     const updateTimer = () => {
-      const difference = new Date(current_fantasy_draft_order.expires as string).getTime() - new Date().getTime();
+      const difference = Dates.parse(current_fantasy_draft_order.expires as string, true).getTime() - new Date().getTime();
 
       if (difference <= 0) {
         setTimeLeft('Times up! Auto-picking a player...');
