@@ -27,8 +27,26 @@ export interface ClientAPIRequest {
 }
 
 interface ApiResponse {
-  error?: boolean;
+  error?: boolean | string;
   code?: number;
+}
+
+/**
+ * The `code` on a response that never reached the api at all, and the message shown for it.
+ *
+ * Every caller tests `.error` to decide whether its write happened, so a transport failure has to
+ * arrive as an error rather than as an empty success - returning `{}` meant a lost pick, entry,
+ * invite or comment looked exactly like a successful one.
+ */
+export const REQUEST_FAILED_CODE = 0;
+export const REQUEST_FAILED_MESSAGE = 'Could not reach the server. Please check your connection and try again.';
+
+/**
+ * True when the request never reached the api, as opposed to the api returning an error of its own.
+ * Read paths use this to keep the data they already have rather than caching or dispatching nothing.
+ */
+export function isRequestFailure(response: ApiResponse | null | undefined): boolean {
+  return !response || response.code === REQUEST_FAILED_CODE;
 }
 
 /**
@@ -73,7 +91,7 @@ function handleResponse(json: ApiResponse, isRetry: boolean = false): object {
  *   bare "Failed to fetch" with nothing in it to say what was being called, so without this the
  *   whole app files one indistinguishable row. `serverAPI` prefixes the same way.
  * @param isRetry - Flag to pass to handleResponse.
- * @returns The JSON response or an empty object on fetch/parse error.
+ * @returns The JSON response, or a `REQUEST_FAILED_CODE` error response on fetch/parse error.
  */
 async function executeFetch(url: string, fetchArgs: RequestInit, args: ClientAPIRequest, isRetry: boolean = false): Promise<ApiResponse> {
   try {
@@ -87,16 +105,17 @@ async function executeFetch(url: string, fetchArgs: RequestInit, args: ClientAPI
     if (error && error.name === 'AbortError') {
       throw error;
     }
-    // Still swallowed on purpose - callers render empty rather than tripping the error boundary,
-    // and every transient hiccup reaching global-error would be worse than the missing data. The
-    // report is so that "worse than the missing data" is something we can actually see happening.
+    // Still swallowed rather than rethrown, so one transient hiccup does not take the page down
+    // through global-error. It comes back as an error response rather than an empty one though, so
+    // a caller about to report a successful write can tell the difference. The report is so that a
+    // run of these is something we can actually see happening.
     const payload = describe(error, 'api-failure');
 
     payload.message = `${args.class}:${args.function}() ${payload.message}`;
 
     report(payload);
     console.log(error);
-    return {};
+    return { error: REQUEST_FAILED_MESSAGE, code: REQUEST_FAILED_CODE };
   }
 }
 

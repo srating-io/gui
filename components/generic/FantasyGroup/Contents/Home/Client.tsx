@@ -1,6 +1,5 @@
 'use client';
 
-import { Profiler } from 'react';
 import { footerNavigationHeight } from '@/components/generic/FooterNavigation';
 import { headerBarHeight } from '@/components/generic/Header';
 import Members from './Members';
@@ -59,9 +58,6 @@ const Client = () => {
 
   const started = fantasy_group.started || (!!fantasy_group.start_date && Dates.parse(fantasy_group.start_date, true) < new Date());
   return (
-    <Profiler id="FantasyGroup.Contents.Home.Client" onRender={(id, phase, actualDuration) => {
-      console.log(id, phase, actualDuration);
-    }}>
     <Contents>
       {fantasy_group.finished ? <Winner /> : ''}
       <Columns numberOfColumns={2} style = {{ marginBottom: 20 }}>
@@ -81,7 +77,6 @@ const Client = () => {
         <Comments />
       </Columns>
     </Contents>
-    </Profiler>
   );
 };
 

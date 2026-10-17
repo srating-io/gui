@@ -44,6 +44,27 @@ class FantasyEntry extends Surface {
       },
     });
 
+    // Both calls run with the unrestricted server secret and no session, so anyone holding the id
+    // could read the entry and its league out of the html and the page title. Membership is only
+    // checked in the client load, so a private league is stripped back to what the page needs to
+    // boot and the client fills the rest in for a member.
+    if (fantasy_group && +fantasy_group.private === 1) {
+      return {
+        fantasy_entry: {
+          fantasy_entry_id: fantasy_entry.fantasy_entry_id,
+          fantasy_group_id: fantasy_entry.fantasy_group_id,
+          user_id: fantasy_entry.user_id,
+        } as Fantasy.FantasyEntry,
+        fantasy_group: {
+          fantasy_group_id: fantasy_group.fantasy_group_id,
+          organization_id: fantasy_group.organization_id,
+          division_id: fantasy_group.division_id,
+          season: fantasy_group.season,
+          private: fantasy_group.private,
+        } as Fantasy.FantasyGroup,
+      };
+    }
+
     return { fantasy_entry, fantasy_group };
   }
 
@@ -55,6 +76,22 @@ class FantasyEntry extends Surface {
 
     const sportText = Organization.getSportText({ organization_id });
 
+    // a private league's entry name is redacted above, so say nothing rather than "undefined"
+    if (!fantasy_entry || !fantasy_entry.name) {
+      return {
+        title: `Fantasy entry for ${sportText}`,
+        description: `Fantasy entry for ${sportText}`,
+        openGraph: {
+          title: 'Fantasy league entry',
+          description: `Fantasy league entry for ${sportText}`,
+        },
+        twitter: {
+          card: 'summary',
+          title: 'Fantasy league entry',
+          description: `Fantasy league entry for ${sportText}`,
+        },
+      };
+    }
 
     return {
       title: `${fantasy_entry?.name} fantasy entry for ${sportText}`,

@@ -106,8 +106,14 @@ const Roster = (
         if (fantasy_entry_player.fantasy_entry_id !== fantasy_entry.fantasy_entry_id) {
           continue;
         }
+        // a drafted player can go missing from the payload after roster churn, and the chain
+        // through player_team_season to player threw on the whole page when it did
         const player_team_season = player_team_seasons[fantasy_entry_player.player_team_season_id];
-        const player = players[player_team_season.player_id];
+        const player = player_team_season && players[player_team_season.player_id];
+
+        if (!player) {
+          continue;
+        }
 
         const player_name: string = (player.first_name ? `${player.first_name.charAt(0)}. ` : '') + player.last_name;
         const player_number: string = `#${player.number}`;
@@ -129,8 +135,12 @@ const Roster = (
         continue;
       }
       const fantasy_entry_player = fantasy_entry_players[row.fantasy_entry_player_id];
-      const player_team_season = player_team_seasons[fantasy_entry_player.player_team_season_id];
-      const player = players[player_team_season.player_id];
+      const player_team_season = fantasy_entry_player && player_team_seasons[fantasy_entry_player.player_team_season_id];
+      const player = player_team_season && players[player_team_season.player_id];
+
+      if (!player) {
+        continue;
+      }
 
       const player_name: string = (player.first_name ? `${player.first_name.charAt(0)}. ` : '') + player.last_name;
       const player_number: string = `#${player.number}`;
@@ -163,24 +173,27 @@ const Roster = (
       // }
 
       for (const key in row) {
-        let value;
-
         if (row[key] && key === 'minutes_played') {
           const splat = row[key].toString().split('.');
           const seconds = (+splat[1] || 0) + +splat[0] * 60;
 
-          if (!(key in footerRow)) {
-            value = seconds / 60;
-          } else {
-            value = +(+(footerRow[key] || 0) + (seconds / 60)).toFixed(2);
-          }
-        } else if (!(key in footerRow)) {
-          value = row[key];
-        } else {
-          value = +(+footerRow[key] + +row[key]).toFixed(2);
+          footerRow[key] = +(+(footerRow[key] || 0) + (seconds / 60)).toFixed(2);
+          continue;
         }
 
-        footerRow[key] = value;
+        // Every key used to be carried into the footer: the first row's ids and strings landed
+        // there verbatim, and the second row turned them into NaN. Only numbers are totals, and
+        // an id or a rank is not one even when it is a number.
+        if (
+          typeof row[key] !== 'number' ||
+          key.endsWith('_id') ||
+          key === 'rank' ||
+          key === 'season'
+        ) {
+          continue;
+        }
+
+        footerRow[key] = +(+(footerRow[key] || 0) + row[key]).toFixed(2);
       }
 
       playerRows.push(formattedRow);

@@ -1,6 +1,6 @@
 'use client';
 
-import { Profiler, useState } from 'react';
+import { useState } from 'react';
 import { footerNavigationHeight } from '@/components/generic/FooterNavigation';
 import { headerBarHeight } from '@/components/generic/Header';
 import { useClientAPI } from '@/components/clientAPI';
@@ -114,9 +114,6 @@ const Client = (
   const breakPoint = 700;
 
   return (
-    <Profiler id="FantasyGroupInvite.Client" onRender={(id, phase, actualDuration) => {
-      console.log(id, phase, actualDuration);
-    }}>
     <Contents>
       <div style = {{
         margin: 'auto',
@@ -160,7 +157,6 @@ const Client = (
         }}
       />
     </Contents>
-    </Profiler>
   );
 };
 

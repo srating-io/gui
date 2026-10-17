@@ -83,7 +83,8 @@ const BankAccountForm = (
         console.log(err);
         dispatch(setLoading(false));
         setSending(false);
-        setErrorMessage(err);
+        // a raw Error here renders as "Objects are not valid as a React child"
+        setErrorMessage(err instanceof Error ? err.message : 'Something went wrong, please try again later');
       });
   };
 
@@ -236,7 +237,8 @@ const DebitCardForm = (
           console.log(err);
           dispatch(setLoading(false));
           setSending(false);
-          setErrorMessage(err);
+          // a raw Error here renders as "Objects are not valid as a React child"
+          setErrorMessage(err instanceof Error ? err.message : 'Something went wrong, please try again later');
         });
     } else {
       setErrorMessage('Something went wrong, missing token');
@@ -357,7 +359,8 @@ const PayoutMethod = () => {
         console.log(err);
         dispatch(setLoading(false));
         setSending(false);
-        setErrorMessage(err);
+        // a raw Error here renders as "Objects are not valid as a React child"
+        setErrorMessage(err instanceof Error ? err.message : 'Something went wrong, please try again later');
       });
   };
 
@@ -396,7 +399,8 @@ const PayoutMethod = () => {
         console.log(err);
         dispatch(setLoading(false));
         setSending(false);
-        setErrorMessage(err);
+        // a raw Error here renders as "Objects are not valid as a React child"
+        setErrorMessage(err instanceof Error ? err.message : 'Something went wrong, please try again later');
       });
   };
 
@@ -413,6 +417,7 @@ const PayoutMethod = () => {
       if (user.default_user_payment_token_id !== user_payment_token_id) {
         buttons.push(
           <Button
+            key = {`default-${user_payment_token_id}`}
             title = 'Set default method'
             value = 'default'
             onClick={() => setDefault(user_payment_token_id)}
@@ -423,6 +428,7 @@ const PayoutMethod = () => {
 
       buttons.push(
         <Button
+          key = {`remove-${user_payment_token_id}`}
           title = 'Remove'
           value = 'remove'
           onClick={() => removeToken(user_payment_token_id)}
@@ -433,6 +439,7 @@ const PayoutMethod = () => {
       if (row.type === 'bank_account') {
         bank_accounts.push(
           <Tile
+            key = {user_payment_token_id}
             icon = {user.default_user_payment_token_id === user_payment_token_id ? <StarIcon style = {{ color: theme.yellow[500], fontSize: 24 }} /> : <AccountBalanceIcon style = {{ color: theme.info.main, fontSize: 24 }} /> }
             primary = {row.json_data && 'bank_name' in row.json_data ? row.json_data.bank_name as string : 'Bank account'}
             secondary = {row.json_data && 'last4' in row.json_data ? row.json_data.last4 as string : '1234'}
@@ -444,6 +451,7 @@ const PayoutMethod = () => {
       if (row.type === 'card') {
         debit_cards.push(
           <Tile
+            key = {user_payment_token_id}
             icon = {user.default_user_payment_token_id === user_payment_token_id ? <StarIcon style = {{ color: theme.yellow[500], fontSize: 24 }} /> : <CreditCardIcon style = {{ color: theme.info.main, fontSize: 24 }} /> }
             primary = {row.json_data && 'brand' in row.json_data ? row.json_data.brand as string : 'Debit card'}
             secondary = {row.json_data && 'last4' in row.json_data ? row.json_data.last4 as string : '1234'}

@@ -16,7 +16,8 @@ const Members = () => {
   const members = Object.values(fantasy_group_users || {});
 
   const memberRows = members.map((row, index) => {
-    if (index > limit) {
+    // `>` rendered one row more than the limit
+    if (index >= limit) {
       return null;
     }
     return (
@@ -35,6 +36,7 @@ const Members = () => {
   if (members.length > limit) {
     buttons.push(
       <Button
+        key = 'view-all'
         value = 'view-all'
         title = {`View all (${members.length})`}
         ink
@@ -44,6 +46,7 @@ const Members = () => {
   } else if (limit === Infinity) {
     buttons.push(
       <Button
+        key = 'hide-extra'
         value = 'hide-extra'
         title = {'Show less'}
         ink

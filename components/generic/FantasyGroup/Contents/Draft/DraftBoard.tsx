@@ -81,6 +81,7 @@ const DraftBoard = () => {
 
     elements.push(
       <Tile
+        key = {row.fantasy_draft_order_id}
         icon = {row.picked ? <CheckCircleIcon style = {{ fontSize: 24, color: theme.success.main }} /> : <HourglassBottomIcon style = {{ fontSize: 24 }} />}
         primary = {primary}
         secondary = {name}

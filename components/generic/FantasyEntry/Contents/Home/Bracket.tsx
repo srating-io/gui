@@ -12,7 +12,7 @@ import { setDataKey } from '@/redux/features/fantasy_entry-slice';
 import RadioButtonUncheckedIcon from '@esmalley/react-material-icons/RadioButtonUnchecked';
 import CheckCircleOutlineIcon from '@esmalley/react-material-icons/CheckCircleOutline';
 import CancelIcon from '@esmalley/react-material-icons/Cancel';
-import { Objector, Style } from '@esmalley/ts-utils';
+import { Dates, Objector, Style, toast } from '@esmalley/ts-utils';
 import { useNavigation } from '@/components/hooks/useNavigation';
 import Game from '@/components/helpers/Game';
 import QueryStatsIcon from '@esmalley/react-material-icons/QueryStats';
@@ -42,20 +42,53 @@ const Connector = ({ isRightSide = false, width }: { isRightSide?: boolean; widt
   );
 };
 
-const RoundBanner = () => {
+/**
+ * Which region sits in which quadrant, read from the pairings the api generated.
+ *
+ * The layout used to name East, West, South and Midwest directly, with nothing tying the two it
+ * drew on the left to the two that actually meet in that semi final.
+ */
+const getRegionQuadrants = (fantasy_bracket_slots: Fantasy.FantasyBracketSlots) => {
+  const national = Object.values(fantasy_bracket_slots).find((slot) => slot.round === 6 && slot.region === 'National') || null;
+
+  const sideRegions = (final_four_fantasy_bracket_slot_id: string | null | undefined) => {
+    const slot = final_four_fantasy_bracket_slot_id ? fantasy_bracket_slots[final_four_fantasy_bracket_slot_id] : null;
+
+    if (!slot) {
+      return [];
+    }
+
+    return [slot.first_parent_fantasy_bracket_slot_id, slot.second_parent_fantasy_bracket_slot_id]
+      .map((id) => (id ? fantasy_bracket_slots[id]?.region : null))
+      .filter((region): region is string => !!region);
+  };
+
+  const left = sideRegions(national?.first_parent_fantasy_bracket_slot_id);
+  const right = sideRegions(national?.second_parent_fantasy_bracket_slot_id);
+
+  return {
+    topLeft: left[0] || 'East',
+    bottomLeft: left[1] || 'South',
+    topRight: right[0] || 'West',
+    bottomRight: right[1] || 'Midwest',
+  };
+};
+
+const RoundBanner = ({ round_x_date }: { round_x_date: Record<number, string>; }) => {
   const theme = useTheme();
 
-  // Left side sequence
+  // Left side sequence. The dates come from the scheduled games, because they were literal strings
+  // from a past tournament before, without even a year on them.
   const leftRounds = [
-    { name: 'Round 1', label: 'R64', date: '3/19-20' },
-    { name: 'Round 2', label: 'R32', date: '3/21-22' },
-    { name: 'Sweet 16', label: 'S16', date: '3/26-27' },
-    { name: 'Elite 8', label: 'E8', date: '3/28' },
-    { name: 'Final Four', label: 'F4', date: '4/4' },
+    { name: 'Round 1', label: 'R64', date: round_x_date[1] || '' },
+    { name: 'Round 2', label: 'R32', date: round_x_date[2] || '' },
+    { name: 'Sweet 16', label: 'S16', date: round_x_date[3] || '' },
+    { name: 'Elite 8', label: 'E8', date: round_x_date[4] || '' },
+    { name: 'Final Four', label: 'F4', date: round_x_date[5] || '' },
   ];
 
   // The center point
-  const champion = { name: 'Championship', date: '4/6' };
+  const champion = { name: 'Championship', date: round_x_date[6] || '' };
 
   // Reverse the left side for the right side
   const rightRounds = [...leftRounds].reverse();
@@ -177,11 +210,19 @@ const BracketSlot = (
       game.status === 'final' &&
       game.boxscore === 1
     ) {
-      const loser_team_id = (
-        game.home_score &&
-        game.away_score &&
-        game.home_score > game.away_score
-      ) ? game.away_team_id : game.home_team_id;
+      // A null or 0 score used to fall through to "the home team lost" and strike out a team that
+      // is still alive. Without two real scores there is no result to read.
+      if (
+        game.home_score === null ||
+        game.away_score === null ||
+        game.home_score === undefined ||
+        game.away_score === undefined ||
+        game.home_score === game.away_score
+      ) {
+        continue;
+      }
+
+      const loser_team_id = game.home_score > game.away_score ? game.away_team_id : game.home_team_id;
 
       team_id_x_eliminated[loser_team_id] = true;
     }
@@ -273,6 +314,8 @@ const BracketSlot = (
     return <Typography type = 'body2'>TBD</Typography>;
   };
 
+  const slot_quadrants = getRegionQuadrants(fantasy_bracket_slots);
+
   let stylePosition = 'top';
   if (fantasy_bracket_slot.slot % 2 === 0 && isLargeScreen) {
     stylePosition = 'bottom';
@@ -281,7 +324,8 @@ const BracketSlot = (
       fantasy_bracket_slot.slot % 2 === 0 ||
       (
         fantasy_bracket_slot.round === 4 &&
-        (fantasy_bracket_slot.region === 'Midwest' || fantasy_bracket_slot.region === 'South') // todo this changes each year based on #1 seed
+        // the two regions drawn along the bottom, read from the pairings rather than named
+        [slot_quadrants.bottomLeft, slot_quadrants.bottomRight].includes(fantasy_bracket_slot.region)
       )
     ) {
       stylePosition = 'bottom';
@@ -334,7 +378,11 @@ const BracketSlot = (
   };
 
   const handlePick = (team_id: string | null) => {
+    // kept so a refused pick can be rolled back rather than left on screen as if it had saved
+    const previous_fantasy_bracket_slots = fantasy_bracket_slots;
+
     updateInternalObjects(team_id);
+
     useClientAPI({
       class: 'fantasy_bracket_slot',
       function: 'pick',
@@ -344,21 +392,36 @@ const BracketSlot = (
       },
     })
       .then((data) => {
-        if (data.error) {
-          console.log(data.error);
-          // return;
+        // The optimistic update used to stand whatever the server said - the bail out was
+        // commented out and the returned slots were discarded - so a bracket could quietly stop
+        // matching the one that gets scored.
+        if (!data || data.error) {
+          dispatch(setDataKey({ key: 'fantasy_bracket_slots', value: previous_fantasy_bracket_slots }));
+          toast.error(data?.error || 'Could not save that pick, please try again.');
+          return;
         }
 
-        // if (data && data.fantasy_bracket_slots) {
-        //   dispatch(setDataKey({ key: 'fantasy_bracket_slots', value: Objector.extender({}, fantasy_bracket_slots, data.fantasy_bracket_slots) }));
-        // }
+        // pick() returns every slot it changed, children it had to clear included
+        if (data.fantasy_bracket_slots) {
+          dispatch(setDataKey({ key: 'fantasy_bracket_slots', value: Objector.extender({}, previous_fantasy_bracket_slots, data.fantasy_bracket_slots) }));
+        }
       })
       .catch((err) => {
         console.log(err);
+        dispatch(setDataKey({ key: 'fantasy_bracket_slots', value: previous_fantasy_bracket_slots }));
+        toast.error('Could not save that pick, please try again.');
       });
   };
 
+  // The cutoff used to rest entirely on flags a handler sets, so an outage left a bracket editable
+  // after tip off. The server checks start_date too; this keeps the ui honest about it.
+  const hasStarted = !!(
+    fantasy_group.started ||
+    (fantasy_group.start_date && Dates.parse(fantasy_group.start_date, true).getTime() <= Date.now())
+  );
+
   const canPick = (
+    !hasStarted &&
     fantasy_group.locked === 0 &&
     fantasy_bracket_slot.locked === 0 &&
     (
@@ -430,12 +493,25 @@ const BracketSlot = (
           game.status === 'final' &&
           game.boxscore === 1
         ) {
-          const winner_team_id = game.home_score && game.away_score && game.home_score > game.away_score ? game.home_team_id : game.away_team_id;
+          // Same trap as the elimination list: a null or 0 score used to declare the away team
+          // the winner, which flipped the tick against the user's pick.
+          const home_score = game.home_score;
+          const away_score = game.away_score;
 
-          if (winner_team_id === fantasy_bracket_slot.picked_winner_team_id) {
-            icon = <CheckCircleOutlineIcon style = {{ color: theme.success.main, fontSize: 20 }} />;
-          } else {
-            icon = <CancelIcon style = {{ color: theme.error.main, fontSize: 20 }} />;
+          if (
+            home_score !== null &&
+            away_score !== null &&
+            home_score !== undefined &&
+            away_score !== undefined &&
+            home_score !== away_score
+          ) {
+            const winner_team_id = home_score > away_score ? game.home_team_id : game.away_team_id;
+
+            if (winner_team_id === fantasy_bracket_slot.picked_winner_team_id) {
+              icon = <CheckCircleOutlineIcon style = {{ color: theme.success.main, fontSize: 20 }} />;
+            } else {
+              icon = <CancelIcon style = {{ color: theme.error.main, fontSize: 20 }} />;
+            }
           }
         }
       }
@@ -649,10 +725,51 @@ const Bracket = () => {
   const fantasy_bracket_slots = useAppSelector((state) => state.fantasyEntryReducer.fantasy_bracket_slots);
   const fantasy_entry = useAppSelector((state) => state.fantasyEntryReducer.fantasy_entry);
   const bracket_teams = useAppSelector((state) => state.fantasyEntryReducer.bracket_teams);
+  const games = useAppSelector((state) => state.fantasyEntryReducer.games);
 
   // State for responsive view
   const [isLargeScreen, setIsLargeScreen] = useState(width > 1200);
   const [selectedRound, setSelectedRound] = useState<number>(1);
+
+  const quadrants = getRegionQuadrants(fantasy_bracket_slots);
+
+  const slot_values = Object.values(fantasy_bracket_slots);
+  const picked_slot_count = slot_values.filter((slot) => !!slot.picked_winner_team_id).length;
+
+  // The date range each round is actually played over, taken from the games the slots point at.
+  const round_x_date = useMemo(() => {
+    const round_x_range: Record<number, {min: number, max: number}> = {};
+
+    for (const fantasy_bracket_slot_id in fantasy_bracket_slots) {
+      const slot = fantasy_bracket_slots[fantasy_bracket_slot_id];
+      const game = slot.game_id ? games[slot.game_id] : null;
+
+      if (!game || !game.start_date) {
+        continue;
+      }
+
+      const time = Dates.parse(game.start_date, true).getTime();
+
+      if (!(slot.round in round_x_range)) {
+        round_x_range[slot.round] = { min: time, max: time };
+        continue;
+      }
+
+      round_x_range[slot.round].min = Math.min(round_x_range[slot.round].min, time);
+      round_x_range[slot.round].max = Math.max(round_x_range[slot.round].max, time);
+    }
+
+    const labels: Record<number, string> = {};
+
+    for (const round in round_x_range) {
+      const start = Dates.format(new Date(round_x_range[round].min), 'n/j');
+      const end = Dates.format(new Date(round_x_range[round].max), 'n/j');
+
+      labels[round] = start === end ? start : `${start}-${end.split('/').pop()}`;
+    }
+
+    return labels;
+  }, [fantasy_bracket_slots, games]);
 
   const region_x_round_x_seed_x_bracket_teams = {};
   const team_id_x_seed = {};
@@ -715,21 +832,22 @@ const Bracket = () => {
     return (
       <>
         <Typography type = 'h5' style = {{ textAlign: 'center' }}>{fantasy_entry.name}</Typography>
-        <RoundBanner />
+        <Typography type = 'body2' style = {{ textAlign: 'center', color: theme.text.secondary }}>{picked_slot_count} of {slot_values.length} picked</Typography>
+        <RoundBanner round_x_date = {round_x_date} />
         <div style={{ display: 'flex', justifyContent: 'space-between', padding: 5 }}>
           <div style = {{ marginRight: 20 }}>
-            {getRegionTitle('East', 'left')}
+            {getRegionTitle(quadrants.topLeft, 'left')}
             <BracketSlot
-              fantasy_bracket_slot_id={roots.East}
+              fantasy_bracket_slot_id={roots[quadrants.topLeft]}
               fantasy_bracket_slots={fantasy_bracket_slots}
               region_x_round_x_seed_x_bracket_teams = {region_x_round_x_seed_x_bracket_teams}
               team_id_x_seed={team_id_x_seed}
             />
           </div>
           <div>
-            {getRegionTitle('West', 'right')}
+            {getRegionTitle(quadrants.topRight, 'right')}
             <BracketSlot
-              fantasy_bracket_slot_id={roots.West}
+              fantasy_bracket_slot_id={roots[quadrants.topRight]}
               fantasy_bracket_slots={fantasy_bracket_slots}
               isRightSide={true}
               region_x_round_x_seed_x_bracket_teams = {region_x_round_x_seed_x_bracket_teams}
@@ -785,18 +903,18 @@ const Bracket = () => {
 
         <div style={{ display: 'flex', justifyContent: 'space-between', padding: 5 }}>
           <div style = {{ marginRight: 20 }}>
-            {getRegionTitle('South', 'left')}
+            {getRegionTitle(quadrants.bottomLeft, 'left')}
             <BracketSlot
-              fantasy_bracket_slot_id={roots.South}
+              fantasy_bracket_slot_id={roots[quadrants.bottomLeft]}
               fantasy_bracket_slots={fantasy_bracket_slots}
               region_x_round_x_seed_x_bracket_teams = {region_x_round_x_seed_x_bracket_teams}
               team_id_x_seed={team_id_x_seed}
             />
           </div>
           <div>
-            {getRegionTitle('Midwest', 'right')}
+            {getRegionTitle(quadrants.bottomRight, 'right')}
             <BracketSlot
-              fantasy_bracket_slot_id={roots.Midwest}
+              fantasy_bracket_slot_id={roots[quadrants.bottomRight]}
               fantasy_bracket_slots={fantasy_bracket_slots}
               isRightSide={true}
               region_x_round_x_seed_x_bracket_teams = {region_x_round_x_seed_x_bracket_teams}
@@ -873,6 +991,19 @@ const Bracket = () => {
       </>
     );
   };
+
+  // With no slots the layout still drew every region heading over a grid of empty boxes, which is
+  // exactly what a bracket group looks like before the api has built it.
+  if (!slot_values.length) {
+    return (
+      <div style = {{ padding: 40, textAlign: 'center' }}>
+        <Typography type = 'h6'>This bracket is not ready yet</Typography>
+        <Typography type = 'body1' style = {{ color: theme.text.secondary }}>
+          The games are set once the tournament field is announced. Check back then to make your picks.
+        </Typography>
+      </div>
+    );
+  }
 
   return (
     <div>

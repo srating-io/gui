@@ -8,6 +8,7 @@ import FantasyGroup from '@/components/helpers/FantasyGroup';
 import { setLoading } from '@/redux/features/loading-slice';
 import { useClientAPI } from '@/components/clientAPI';
 import { handleData } from '../../ReduxWrapper';
+import { getStore } from '@/app/StoreProvider';
 import { Dates, toast } from '@esmalley/ts-utils';
 import { Button, Paper, Tile, Typography, useTheme } from '@esmalley/react-material-ui';
 
@@ -24,7 +25,6 @@ const DraftZonePick = ({ selectedRow, onPick }) => {
   const [timeLeft, setTimeLeft] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [sending, setSending] = useState(false);
-  const [autoPicked, setAutoPicked] = useState(false);
 
   const fantasyHelper = new FantasyGroup({ fantasy_group });
 
@@ -73,13 +73,11 @@ const DraftZonePick = ({ selectedRow, onPick }) => {
       const difference = Dates.parse(current_fantasy_draft_order.expires as string, true).getTime() - new Date().getTime();
 
       if (difference <= 0) {
-        setTimeLeft('Times up! Auto-picking a player...');
-
-        // if I have a selected row, but didnt press the button, try to pick it for them
-        if (selectedRow && isMyPick && !autoPicked) {
-          setAutoPicked(true);
-          handlePick();
-        }
+        // The scraper's autoPick handler makes the pick. The client used to try as well, but only
+        // when this tab happened to be open with a player already selected, and it disabled itself
+        // after a single failure while still saying it had acted. It also called handlePick from
+        // inside the interval, where the throw below was unhandled.
+        setTimeLeft('Time is up, a player will be picked for you.');
         return;
       }
 
@@ -98,7 +96,7 @@ const DraftZonePick = ({ selectedRow, onPick }) => {
 
     // eslint-disable-next-line consistent-return
     return () => clearInterval(timerId);
-  }, [isMyPick, selectedRow, current_fantasy_draft_order?.expires, autoPicked]);
+  }, [current_fantasy_draft_order?.expires]);
 
 
   const handlePick = () => {
@@ -111,8 +109,22 @@ const DraftZonePick = ({ selectedRow, onPick }) => {
       !selectedRow.player_team_season ||
       !selectedRow.player_team_season.player_team_season_id
     ) {
-      throw new Error('Missing player_team_season_id');
+      setErrorMessage('Pick a player first.');
+      return;
     }
+
+    // Read the pick that is open right now rather than the one this render closed over. A socket
+    // broadcast landing between render and click used to submit against the previous slot.
+    const store = getStore();
+    const live_fantasy_draft_order = fantasyHelper.getCurrentPick({
+      fantasy_draft_orders: store.getState().fantasyGroupReducer.fantasy_draft_orders,
+    });
+
+    if (!live_fantasy_draft_order || !live_fantasy_draft_order.fantasy_draft_order_id) {
+      setErrorMessage('The draft has already moved on.');
+      return;
+    }
+
     setErrorMessage('');
     setSending(true);
     dispatch(setLoading(true));
@@ -121,7 +133,7 @@ const DraftZonePick = ({ selectedRow, onPick }) => {
       class: 'fantasy_draft_order',
       function: 'pick',
       arguments: {
-        fantasy_draft_order_id: current_fantasy_draft_order?.fantasy_draft_order_id,
+        fantasy_draft_order_id: live_fantasy_draft_order.fantasy_draft_order_id,
         player_team_season_id: selectedRow.player_team_season.player_team_season_id,
       },
     })
@@ -134,8 +146,6 @@ const DraftZonePick = ({ selectedRow, onPick }) => {
           toast.error(data.error);
           return;
         }
-
-        setAutoPicked(false);
 
         onPick();
 

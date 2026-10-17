@@ -40,7 +40,7 @@ const Invites = () => {
         key = {row.fantasy_group_invite_id}
         icon={<MarkEmailReadIcon style = {{ fontSize: 24 }} />}
         primary={row.email}
-        secondary={`Expires: ${Dates.format(row.expires, 'M jS Y')}`}
+        secondary={row.expires ? `Expires: ${Dates.format(Dates.parse(row.expires, true), 'M jS Y')}` : 'Expired'}
       />
     );
   });
@@ -75,14 +75,18 @@ const Invites = () => {
       dispatch(setLoading(false));
       setIsSending(false);
       if (!new_fantasy_group_invites || new_fantasy_group_invites.error) {
-        setErrorMessage(new_fantasy_group_invites.error);
-      } else {
-        setEmails('');
-        setInviteModalOpen(false);
-        dispatch(setDataKey({ key: 'fantasy_group_invites', value: Objector.extender({}, fantasy_group_invites, new_fantasy_group_invites) }));
+        setErrorMessage(new_fantasy_group_invites?.error || 'Could not send the invites, please try again.');
+        return;
       }
+
+      setEmails('');
+      setInviteModalOpen(false);
+      dispatch(setDataKey({ key: 'fantasy_group_invites', value: Objector.extender({}, fantasy_group_invites, new_fantasy_group_invites) }));
     }).catch((err) => {
-      // nothing for now
+      console.log(err);
+      dispatch(setLoading(false));
+      setIsSending(false);
+      setErrorMessage('Could not send the invites, please try again.');
     });
   };
 

@@ -8,6 +8,8 @@ import { AppDispatch } from '@/redux/store';
 import { Basketball, Fantasy, General } from '@srating-io/types';
 
 export interface FantasyEntryLoadData {
+  fantasy_entry: Fantasy.FantasyEntry;
+  fantasy_group: Fantasy.FantasyGroup;
   fantasy_entry_players: Fantasy.FantasyEntryPlayers;
   player_team_seasons: General.PlayerTeamSeasons;
   players: General.Players;
@@ -33,6 +35,10 @@ export const handleLoad = (
     data: FantasyEntryLoadData;
   },
 ) => {
+  // Without these the page kept the copy it was server rendered with, so a draft that finished
+  // or a bracket that locked never showed until a full page reload.
+  dispatch(setDataKey({ key: 'fantasy_entry', value: data.fantasy_entry }));
+  dispatch(setDataKey({ key: 'fantasy_group', value: data.fantasy_group }));
   dispatch(setDataKey({ key: 'fantasy_entry_players', value: data.fantasy_entry_players }));
   dispatch(setDataKey({ key: 'player_team_seasons', value: data.player_team_seasons }));
   dispatch(setDataKey({ key: 'players', value: data.players }));

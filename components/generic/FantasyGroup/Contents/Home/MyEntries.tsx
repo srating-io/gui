@@ -23,6 +23,7 @@ const MyEntries = () => {
   const fantasyHelper = new FantasyGroup({ fantasy_group });
 
   const [joining, setJoining] = useState(false);
+  const [resumeName, setResumeName] = useState('');
 
   const my_fantasy_entrys: Fantasy.FantasyEntry[] = [];
 
@@ -47,16 +48,29 @@ const MyEntries = () => {
         primary={row.name}
         secondary={`${fantasy_group.entry_fee ? (row.paid ? 'Paid' : 'Pending payment') : 'Free'} ${fantasyHelper.isDraft() ? 'draft entry' : 'bracket entry'}`}
         buttons = {[
+          // An unpaid entry used to be a dead end - "Pending payment" with nothing but View, while
+          // still taking up one of the user's slots. billing resumes it rather than duplicating it.
+          ...(fantasy_group.entry_fee && !row.paid ? [
+            <Button key = {`pay-${row.fantasy_entry_id}`} title = 'Pay now' value = {row.fantasy_entry_id} ink onClick={handlePay} />,
+          ] : []),
           <Button key = {row.fantasy_entry_id} title = 'View' value = {row.fantasy_entry_id} ink onClick={handleTileClick} />,
         ]}
       />
     );
   }).filter((r) => r !== null);
 
+  // A seat in a paid league is taken by a paid entry, which is what billing enforces. Counting the
+  // unpaid ones here locked a user out of their own league after one abandoned checkout.
+  const taken_entries = (
+    fantasy_group.entry_fee ?
+      my_fantasy_entrys.filter((row) => +row.paid === 1).length
+      : my_fantasy_entrys.length
+  );
+
   // todo check start date too? I guess this assumes i will lock the group after it starts
   const canJoin = (
     fantasy_group.locked === 0 &&
-    fantasy_group.entries_per_user > my_fantasy_entrys.length
+    fantasy_group.entries_per_user > taken_entries
   );
 
   const handleJoin = () => {
@@ -64,6 +78,16 @@ const MyEntries = () => {
       return;
     }
 
+    setResumeName('');
+    setJoining(true);
+  };
+
+  const handlePay = (e, fantasy_entry_id) => {
+    if (joining) {
+      return;
+    }
+
+    setResumeName(fantasy_entrys[fantasy_entry_id]?.name || '');
     setJoining(true);
   };
 
@@ -104,8 +128,10 @@ const MyEntries = () => {
     <div>
       <CreateEntry
         open = {joining}
+        initialName = {resumeName}
         closeHandler = {(fantasy_entry_id) => {
           setJoining(false);
+          setResumeName('');
 
           if (fantasyHelper.isNCAABracket() && fantasy_entry_id) {
             handleTileClick(null, fantasy_entry_id);

@@ -1,6 +1,6 @@
 'use client';
 
-import { Profiler, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { footerNavigationHeight } from '@/components/generic/FooterNavigation';
 import { headerBarHeight } from '@/components/generic/Header';
 import { getNavHeaderHeight } from '../../NavBar';
@@ -10,7 +10,7 @@ import { useAppSelector } from '@/redux/hooks';
 import PublicBracketsGroups from './PublicBracketsGroups';
 import PublicDraftGroups from './PublicDraftGroups';
 import CreateGroup from './CreateGroup';
-import { Columns, LinearProgress, useTheme } from '@esmalley/react-material-ui';
+import { Button, Columns, LinearProgress, Typography, useTheme } from '@esmalley/react-material-ui';
 import { Fantasy } from '@srating-io/types';
 
 
@@ -18,6 +18,7 @@ interface Data {
   fantasy_groups: Fantasy.FantasyGroups;
   fantasy_group_users?: Fantasy.FantasyGroupUsers;
   fantasy_entrys?: Fantasy.FantasyEntrys;
+  error?: string;
 }
 
 /**
@@ -58,19 +59,19 @@ const Client = () => {
   const season = useAppSelector((state) => state.organizationReducer.season);
   const session_id = useAppSelector((state) => state.userReducer.session_id);
 
-  const [request, setRequest] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [data, setData] = useState<Data | null>(null);
+  const [loadFailed, setLoadFailed] = useState(false);
 
-  useEffect(() => {
-    setLoaded(false);
-    setRequest(false);
-    setData(null);
-  }, [session_id]);
+  const requesting = useRef(false);
 
+  const loadHome = useCallback(() => {
+    if (requesting.current) {
+      return;
+    }
+    requesting.current = true;
+    setLoadFailed(false);
 
-  const loadHome = () => {
-    setRequest(true);
     useClientAPI({
       class: 'fantasy_group',
       function: 'loadHome',
@@ -80,15 +81,42 @@ const Client = () => {
         season,
       },
     }).then((fantasyData: Data) => {
+      requesting.current = false;
       setLoaded(true);
+
+      if (!fantasyData || fantasyData.error) {
+        setData(null);
+        setLoadFailed(true);
+        return;
+      }
+
       setData(fantasyData);
     }).catch((err) => {
-      // nothing for now
+      console.log(err);
+      requesting.current = false;
+      setLoaded(true);
+      setLoadFailed(true);
     });
-  };
+  }, [organization_id, division_id, season, session_id]);
 
-  if (!request) {
+  // Fetching in the render body double-fetched and, worse, never refetched when the sport or the
+  // season changed - navigating from cfb to cbb kept the first sport's leagues on screen.
+  useEffect(() => {
+    setLoaded(false);
+    setData(null);
     loadHome();
+  }, [loadHome]);
+
+  if (loadFailed) {
+    return (
+      <Contents>
+        <div style = {{ maxWidth: 1200, margin: 'auto', textAlign: 'center' }}>
+          <Typography type = 'h5'>Could not load leagues</Typography>
+          <Typography type = 'body1'>Check your connection and try again.</Typography>
+          <Button title = 'Retry' value = 'retry' onClick = {() => loadHome()} />
+        </div>
+      </Contents>
+    );
   }
 
   if (!loaded) {
@@ -153,9 +181,6 @@ const Client = () => {
 
 
   return (
-    <Profiler id="Fantasy.Contents.Home.Client" onRender={(id, phase, actualDuration) => {
-      console.log(id, phase, actualDuration);
-    }}>
     <Contents>
       <div style = {{ maxWidth: 1200, margin: 'auto' }}>
         <CreateGroup />
@@ -166,7 +191,6 @@ const Client = () => {
         </Columns>
       </div>
     </Contents>
-    </Profiler>
   );
 };
 

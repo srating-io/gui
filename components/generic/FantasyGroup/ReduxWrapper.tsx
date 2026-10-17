@@ -59,6 +59,9 @@ export const handleLoad = (
   },
 ) => {
   dispatch(setDataKey({ key: 'isOwner', value: data.isOwner }));
+  // load() has always returned this and it was dropped on the floor, so the group's own flags -
+  // locked, started, drafted, finished - only ever came from the server render
+  dispatch(setDataKey({ key: 'fantasy_group', value: data.fantasy_group }));
   dispatch(setDataKey({ key: 'fantasy_group_users', value: data.fantasy_group_users }));
   dispatch(setDataKey({ key: 'fantasy_group_invites', value: data.fantasy_group_invites }));
   dispatch(setDataKey({ key: 'fantasy_group_comments', value: data.fantasy_group_comments }));

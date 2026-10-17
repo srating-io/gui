@@ -47,6 +47,10 @@ const DraftSettings = (
     return elements;
   };
 
+  // the dictionary may not have loaded yet, and either id can be null on a bracket group
+  const draft_type = fantasy_group.draft_type_terminology_id ? terminologies[fantasy_group.draft_type_terminology_id] : null;
+  const draft_scoring = fantasy_group.draft_scoring_terminology_id ? terminologies[fantasy_group.draft_scoring_terminology_id] : null;
+
   return (
     <>
     <Paper style={paperStyle}>
@@ -58,18 +62,18 @@ const DraftSettings = (
         <Columns numberOfColumns={2} breakPoint = {innerBreakPoint}>
           <Slab
             label='Draft style'
-            primary={fantasy_group.draft_type_terminology_id ? terminologies[fantasy_group.draft_type_terminology_id].name : 'Unknown'}
-            info={fantasy_group.draft_type_terminology_id ? terminologies[fantasy_group.draft_type_terminology_id].description : 'Unknown'}
+            primary={draft_type?.name || 'Unknown'}
+            info={draft_type?.description || 'Unknown'}
           />
           <Slab
             label='Scoring metric'
-            primary={fantasy_group.draft_scoring_terminology_id ? terminologies[fantasy_group.draft_scoring_terminology_id].name : 'Unknown'}
-            info={fantasy_group.draft_scoring_terminology_id ? terminologies[fantasy_group.draft_scoring_terminology_id].description : 'Unknown'}
+            primary={draft_scoring?.name || 'Unknown'}
+            info={draft_scoring?.description || 'Unknown'}
           />
           <Slab
             label='Draft start date & time'
             primary={fantasy_group.draft_start_datetime ? Dates.format(Dates.parse(fantasy_group.draft_start_datetime, true), 'M jS @ g:i a') : 'Unknown'}
-            info={'You will recieve an email and notification when it is your turn!'}
+            info={'You will receive an email and a notification before the draft starts!'}
           />
           {
             fantasy_group.draft_time_per_user_in_seconds ?

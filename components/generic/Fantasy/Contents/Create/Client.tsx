@@ -1,6 +1,6 @@
 'use client';
 
-import { Profiler, useState } from 'react';
+import { useState } from 'react';
 import { footerNavigationHeight } from '@/components/generic/FooterNavigation';
 import { headerBarHeight } from '@/components/generic/Header';
 import { getNavHeaderHeight } from '../../NavBar';
@@ -27,6 +27,7 @@ import {
 } from '@esmalley/react-material-ui';
 import HelperGeneral from '@/components/helpers/General';
 import { Fantasy } from '@srating-io/types';
+import { TERMINOLOGY_ID } from '@srating-io/common';
 // import InfoOutlineIcon from '@esmalley/react-material-icons/InfoOutline'; need to upgrade MUI for this icon... >.>
 
 
@@ -110,7 +111,7 @@ const Client = () => {
   // the inputs return strings, but internally they are formatted as a number, so just overwrite to allow string in a few of these columns
   type FantasyGroupForm = Omit<
     Fantasy.FantasyGroup,
-    'fantasy_group_id' | 'guid' | 'deleted' | 'locked' | 'entry_fee' | 'entries_per_user' | 'date_of_entry' | 'started' | 'notified_24_hours' | 'notified_15_mins' | 'drafted' | 'finished' | 'notified_finished'
+    'fantasy_group_id' | 'owner_user_id' | 'guid' | 'deleted' | 'locked' | 'entry_fee' | 'entries_per_user' | 'date_of_entry' | 'started' | 'notified_24_hours' | 'notified_15_mins' | 'drafted' | 'finished' | 'notified_finished' | 'draft_order_seed'
   > & {
     entry_fee: string | number | null;
     entries_per_user: string | number;
@@ -591,12 +592,16 @@ const Client = () => {
       return;
     }
 
+    // A copy, because formData starts out as the frozen initialFormData - assigning to it is a
+    // strict mode TypeError until something has called setFormData.
+    const payload = { ...formData };
+
     // manually convert the draft seconds here
     if (
-      formData.fantasy_group_type_terminology_id === '7ca1ccce-e033-11f0-bc34-529c3ffdbb93' &&
-      formData.draft_type_terminology_id !== '782f9c90-e11f-11f0-bc34-529c3ffdbb93'
+      payload.fantasy_group_type_terminology_id === TERMINOLOGY_ID.FANTASY_GROUP_TYPE.DRAFT &&
+      payload.draft_type_terminology_id !== TERMINOLOGY_ID.DRAFT_TYPE.FREE_FOR_ALL
     ) {
-      formData.draft_time_per_user_in_seconds = +(+draftMinutes * 60).toFixed(2);
+      payload.draft_time_per_user_in_seconds = +(+draftMinutes * 60).toFixed(2);
     }
 
 
@@ -606,10 +611,11 @@ const Client = () => {
     useClientAPI({
       class: 'fantasy_group',
       function: 'createGroup',
-      arguments: formData,
+      arguments: payload,
     }).then((response) => {
       if (response && response.error) {
         dispatch(setLoading(false));
+        setIsSaving(false);
         setErrorModalMessage(response.error);
         return;
       }
@@ -618,7 +624,9 @@ const Client = () => {
     }).catch((e) => {
       console.log(e);
       dispatch(setLoading(false));
-      setErrorModalMessage(e);
+      setIsSaving(false);
+      // a raw Error here renders as "Objects are not valid as a React child"
+      setErrorModalMessage(e instanceof Error ? e.message : 'Could not create the league, please try again.');
     });
   };
 
@@ -653,9 +661,6 @@ const Client = () => {
 
 
   return (
-    <Profiler id="Fantasy.Contents.Create.Client" onRender={(id, phase, actualDuration) => {
-      console.log(id, phase, actualDuration);
-    }}>
     <Contents>
       <Wizard
         steps={steps}
@@ -672,7 +677,6 @@ const Client = () => {
         }}
       />
     </Contents>
-    </Profiler>
   );
 };
 

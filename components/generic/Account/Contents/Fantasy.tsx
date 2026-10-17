@@ -28,11 +28,12 @@ const Fantasy = () => {
     const organization = organizations[fantasy_group.organization_id];
     return (
       <Tile
+        key = {fantasy_group.fantasy_group_id}
         icon = {<SportsEsportsIcon style = {{ fontSize: 24 }} />}
         primary = {fantasy_group.name}
-        secondary = {`${organization.name} ${fantasy_group.season} fantasy league`}
+        secondary = {`${organization?.name || ''} ${fantasy_group.season} fantasy league`.trim()}
         buttons = {[
-          <Button title = 'View' value = {fantasy_group.fantasy_group_id} ink onClick={handleTileClick} />,
+          <Button key = {fantasy_group.fantasy_group_id} title = 'View' value = {fantasy_group.fantasy_group_id} ink onClick={handleTileClick} />,
         ]}
       />
     );

@@ -18,7 +18,9 @@ const Client = ({ fantasy_entry_id }) => {
   const players = useAppSelector((state) => state.fantasyEntryReducer.players);
   const fantasy_entry_player_statistic_rankings = useAppSelector((state) => state.fantasyEntryReducer.fantasy_entry_player_statistic_rankings);
 
-  if (!fantasy_group.drafted) {
+  // `drafted` is only set by the final pick, so keying the empty state off it said "not started"
+  // for the whole draft. Once the group is locked the roster fills pick by pick, so show it.
+  if (!fantasy_group.locked && !fantasy_group.drafted) {
     return (
       <div style = {{ padding: 16, display: 'flex', justifyContent: 'center', alignItems: 'center', fontStyle: 'italic', color: theme.text.secondary }}>
         <span style = {{ display: 'flex', marginRight: 10 }}><SentimentVeryDissatisfiedIcon style = {{ fontSize: 24 }} /></span>

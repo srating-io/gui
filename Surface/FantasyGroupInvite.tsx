@@ -108,7 +108,10 @@ class FantasyGroupInvite extends Surface {
       !fantasy_group ||
       !code ||
       fantasy_group_invite.code !== code ||
-      Dates.format(fantasy_group_invite.expires, 'Y-m-d') < Dates.format(new Date(), 'Y-m-d')
+      // A missing expiry is expired, which is what fantasy_group_invite.join enforces. Left to
+      // Dates.format a null came back as today, so such an invite never expired here.
+      !fantasy_group_invite.expires ||
+      Dates.format(Dates.parse(fantasy_group_invite.expires, true), 'Y-m-d', true) < Dates.format(new Date(), 'Y-m-d', true)
     ) {
       return (
         <div style = {{

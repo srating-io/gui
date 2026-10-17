@@ -74,10 +74,16 @@ const Loader = ({ organization_id, division_id, season, view, career, career_act
 
     useClientAPI(dataArgs, { signal: controller.signal })
       .then((response) => {
-        let data = response;
-        if (data.error) {
-          data = {};
+        // Never cache a failure. The error object used to be cached and dispatched as if it were
+        // ranking data - `data` was blanked here and then thrown away in favor of `response` on
+        // every line below - so one transient failure left an empty player pool for an hour, on
+        // draft day.
+        if (response && response.error) {
+          dispatch(setDataKey({ key: 'data', value: {} }));
+          dispatch(setDataKey({ key: 'loadingView', value: false }));
+          return;
         }
+
         const store = getStore();
         const rankingData = Objector.deepClone(store.getState().cacheReducer.rankingData);
         delete rankingData[cachedDataKey];

@@ -33,7 +33,8 @@ const Entries = () => {
   };
 
   const rows = entries.map((row, index) => {
-    if (index > limit) {
+    // `>` rendered one row more than the limit
+    if (index >= limit) {
       return null;
     }
     let secondary = row.user_id;
@@ -64,11 +65,13 @@ const Entries = () => {
 
   const buttons: React.JSX.Element[] = [];
 
-  if (rows.length > limit) {
+  // counted from the source, not the truncated list
+  if (entries.length > limit) {
     buttons.push(
       <Button
+        key = 'view-all'
         value = 'view-all'
-        title = {`View all (${rows.length})`}
+        title = {`View all (${entries.length})`}
         ink
         onClick={() => setLimit(Infinity)}
       />,
@@ -76,6 +79,7 @@ const Entries = () => {
   } else if (limit === Infinity) {
     buttons.push(
       <Button
+        key = 'hide-extra'
         value = 'hide-extra'
         title = {'Show less'}
         ink

@@ -5,7 +5,7 @@ import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { Appearance, StripeElementsOptions } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import CheckoutForm from './CheckoutForm';
 import { setLoading } from '@/redux/features/loading-slice';
 import { useClientAPI } from '@/components/clientAPI';
@@ -18,19 +18,28 @@ const CreateEntry = (
   {
     open,
     closeHandler,
+    initialName = '',
   }:
   {
     open: boolean;
     closeHandler: (fantasy_entry_id: string | null) => void;
+    /** the name of an unpaid entry being resumed, which the api pays rather than duplicating */
+    initialName?: string;
   },
 ) => {
   const theme = useTheme();
 
   const dispatch = useAppDispatch();
-  const [entryName, setEntryName] = useState('');
+  const [entryName, setEntryName] = useState(initialName);
   const [sending, setSending] = useState(false);
   const [triggerValidation, setTriggerValidation] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+
+  // the modal stays mounted, so the name has to be re-seeded each time it opens
+  useEffect(() => {
+    setEntryName(initialName);
+    setErrorMessage('');
+  }, [open, initialName]);
 
   const fantasy_group = useAppSelector((state) => state.fantasyGroupReducer.fantasy_group);
   const fantasy_entrys = useAppSelector((state) => state.fantasyGroupReducer.fantasy_entrys);
@@ -124,9 +133,11 @@ const CreateEntry = (
       onClose={() => closeHandler(null)}
       paperStyle={{ maxWidth: 550 }}
     >
-      <Typography type = 'h5'>Create league entry</Typography>
+      <Typography type = 'h5'>{initialName ? 'Finish your entry payment' : 'Create league entry'}</Typography>
       <div>
         <TextInput
+          key = {`${open}-${initialName}`}
+          defaultValue = {initialName}
           inputHandler={inputHandler}
           label = 'Please add a name to your entry.'
           placeholder='Entry name'

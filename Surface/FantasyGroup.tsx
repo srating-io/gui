@@ -41,6 +41,21 @@ class FantasyGroup extends Surface {
       cache: revalidateSeconds,
     });
 
+    // This runs with the unrestricted server secret and no session, so everything it returns is
+    // readable by anyone holding the id - in the rendered html, in the flight payload and in the
+    // page title. Membership is only checked in the client load, so a private group gets stripped
+    // back to what the page needs to boot and the client fills the rest in for a member.
+    if (fantasy_group && +fantasy_group.private === 1) {
+      return {
+        fantasy_group: {
+          fantasy_group_id: fantasy_group.fantasy_group_id,
+          organization_id: fantasy_group.organization_id,
+          division_id: fantasy_group.division_id,
+          season: fantasy_group.season,
+          private: fantasy_group.private,
+        } as Fantasy.FantasyGroup,
+      };
+    }
 
     return { fantasy_group };
   }
@@ -53,6 +68,22 @@ class FantasyGroup extends Surface {
 
     const sportText = Organization.getSportText({ organization_id });
 
+    // a private group's name is redacted above, so say nothing rather than render "undefined"
+    if (!fantasy_group || !fantasy_group.name) {
+      return {
+        title: `Fantasy league for ${sportText}`,
+        description: `Fantasy league for ${sportText}`,
+        openGraph: {
+          title: 'Fantasy league',
+          description: `Fantasy league for ${sportText}`,
+        },
+        twitter: {
+          card: 'summary',
+          title: 'Fantasy league',
+          description: `Fantasy league for ${sportText}`,
+        },
+      };
+    }
 
     return {
       title: `${fantasy_group.name} fantasy group for ${sportText}`,

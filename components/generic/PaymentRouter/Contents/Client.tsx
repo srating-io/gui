@@ -11,6 +11,7 @@ import WarningIcon from '@esmalley/react-material-icons/Warning';
 import ErrorIcon from '@esmalley/react-material-icons/Error';
 import { PaymentIntent, SetupIntent } from '@stripe/stripe-js';
 import { useAppSelector } from '@/redux/hooks';
+import { useClientAPI } from '@/components/clientAPI';
 import { useNavigation } from '@/components/hooks/useNavigation';
 import { Button, CircularProgress, Paper, Typography, useTheme } from '@esmalley/react-material-ui';
 
@@ -27,6 +28,29 @@ const Client = () => {
   const [message, setMessage] = useState<string | null>(null);
   const [reference, setReference] = useState<string | null>(null);
   const [amount, setAmount] = useState(0);
+  const [fantasyGroupID, setFantasyGroupID] = useState<string | null>(null);
+
+  // The router row names the entry but not its league, and the league is where the entry can be
+  // paid. Only looked up when the payment actually needs retrying.
+  useEffect(() => {
+    if (status !== 'requires_payment_method' || payment_router.table !== 'fantasy_entry' || !payment_router.id) {
+      return;
+    }
+
+    useClientAPI({
+      class: 'fantasy_entry',
+      function: 'get',
+      arguments: {
+        fantasy_entry_id: payment_router.id,
+      },
+    }).then((fantasy_entry) => {
+      if (fantasy_entry && !fantasy_entry.error && fantasy_entry.fantasy_group_id) {
+        setFantasyGroupID(fantasy_entry.fantasy_group_id);
+      }
+    }).catch((error) => {
+      console.log(error);
+    });
+  }, [status, payment_router.table, payment_router.id]);
 
   const getStatusMessage = (status: string, isSetup: boolean) => {
     const messages: Record<string, string> = {
@@ -48,7 +72,12 @@ const Client = () => {
     const siSecret = params.get('setup_intent_client_secret');
 
     const handleResult = (intent: PaymentIntent | SetupIntent | undefined, isSetup = false) => {
+      // Anything that leaves `status` null spins forever, so every path below has to land on a
+      // status - a missing client secret, a rejected lookup and a lookup that returns no intent
+      // included.
       if (!intent) {
+        setStatus('error');
+        setMessage(getStatusMessage('default', isSetup));
         return;
       }
 
@@ -58,10 +87,22 @@ const Client = () => {
       setMessage(getStatusMessage(intent.status, isSetup));
     };
 
+    const handleFailure = (error: unknown, isSetup = false) => {
+      console.log(error);
+      setStatus('error');
+      setMessage(getStatusMessage('default', isSetup));
+    };
+
     if (piSecret) {
-      stripe.retrievePaymentIntent(piSecret).then(({ paymentIntent }) => handleResult(paymentIntent));
+      stripe.retrievePaymentIntent(piSecret)
+        .then(({ paymentIntent }) => handleResult(paymentIntent))
+        .catch((error) => handleFailure(error));
     } else if (siSecret) {
-      stripe.retrieveSetupIntent(siSecret).then(({ setupIntent }) => handleResult(setupIntent, true));
+      stripe.retrieveSetupIntent(siSecret)
+        .then(({ setupIntent }) => handleResult(setupIntent, true))
+        .catch((error) => handleFailure(error, true));
+    } else {
+      handleResult(undefined);
     }
   }, [stripe]); // Only runs when stripe instance is ready
 
@@ -84,6 +125,12 @@ const Client = () => {
 
   const getButton = () => {
     if (payment_router.table === 'fantasy_entry') {
+      // A failed payment used to offer only "View entry", which is not where you can pay. Send them
+      // back to the league, where the unpaid entry now carries a "Pay now" button.
+      if (status === 'requires_payment_method' && fantasyGroupID) {
+        return <Button ink onClick={() => { navigation.fantasy_group(`/fantasy_group/${fantasyGroupID}`); }} title = {'Try again'} value = 'retry-payment' />;
+      }
+
       return <Button ink onClick={() => { navigation.fantasy_entry(`/fantasy_entry/${payment_router.id}`); }} title = {'View entry'} value = 'view-entry' />;
     }
 

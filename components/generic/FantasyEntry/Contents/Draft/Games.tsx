@@ -45,14 +45,14 @@ const Games = ({ fantasy_entry_id }) => {
   // Sort and trim to get exactly three of each
   // Past games: Sort descending (most recent first)
   past.sort((a, b) => {
-    return (new Date(b.start_date).getTime() - new Date(a.start_date).getTime());
+    return (Dates.parse(b.start_date, true).getTime() - Dates.parse(a.start_date, true).getTime());
   });
 
   const last_three_games = past.slice(0, 3).reverse();
 
   // Future games: Sort ascending (soonest first)
   future.sort((a, b) => {
-    return (new Date(a.start_date).getTime() - new Date(b.start_date).getTime());
+    return (Dates.parse(a.start_date, true).getTime() - Dates.parse(b.start_date, true).getTime());
   });
 
   const next_three_games = future.slice(0, 5);
@@ -67,6 +67,10 @@ const Games = ({ fantasy_entry_id }) => {
     }
 
     const player = players[row.player_id];
+
+    if (!player) {
+      continue;
+    }
 
     team_id_x_player_id_x_name[row.team_id][row.player_id] = `${player.first_name} ${player.last_name}`;
   }
@@ -125,7 +129,7 @@ const Games = ({ fantasy_entry_id }) => {
     }
 
     return (
-      <div style = {{ display: 'flex', margin: '5px 0px', justifyContent: 'space-between' }}>
+      <div key = {game.game_id} style = {{ display: 'flex', margin: '5px 0px', justifyContent: 'space-between' }}>
         <div style = {{ display: 'flex' }}>
           <Paper elevation={2} style = {{
             display: 'flex', width: (width <= 475 ? 40 : 75), marginRight: 5, alignContent: 'center', justifyContent: 'center', alignItems: 'center', cursor: 'pointer',

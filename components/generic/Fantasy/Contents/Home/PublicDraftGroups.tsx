@@ -53,7 +53,8 @@ const PublicDraftGroups = (
   };
 
   const free_rows = free_fantasy_groups.map((row, index) => {
-    if (index > freeLimit) {
+    // `>` rendered one row more than the limit
+    if (index >= freeLimit) {
       return null;
     }
     return (
@@ -61,7 +62,7 @@ const PublicDraftGroups = (
         key = {row.fantasy_group_id}
         icon={<SportsEsportsIcon style = {{ color: theme.blue[500], fontSize: 24 }} />}
         primary={row.name}
-        secondary={`Free entry; Draft begins ${Dates.format(Dates.parse(row.draft_start_datetime), 'M jS @ g:i a')}`}
+        secondary={`Free entry; Draft begins ${Dates.format(Dates.parse(row.draft_start_datetime, true), 'M jS @ g:i a')}`}
         buttons = {[
           <Button key = {`join-${row.fantasy_group_id}`} title = 'Join' value = {row.fantasy_group_id} ink onClick={handleTileClick} />,
         ]}
@@ -71,12 +72,12 @@ const PublicDraftGroups = (
 
   const free_rows_buttons: React.JSX.Element[] = [];
 
-  if (free_rows.length > freeLimit) {
+  if (free_fantasy_groups.length > freeLimit) {
     free_rows_buttons.push(
       <Button
         key = {'view-all'}
         value = 'view-all'
-        title = {`View all (${free_rows.length})`}
+        title = {`View all (${free_fantasy_groups.length})`}
         ink
         onClick={() => setFreeLimit(Infinity)}
       />,
@@ -94,7 +95,9 @@ const PublicDraftGroups = (
   }
 
   const paid_rows = paid_fantasy_groups.map((row, index) => {
-    if (index > freeLimit) {
+    // was `index > freeLimit`: the paid list was cut by the free list's limit, so its own
+    // "View all" button toggled paidLimit and did nothing
+    if (index >= paidLimit) {
       return null;
     }
     const fantasy_entrys = fantasy_group_id_x_fantasy_entrys[row.fantasy_group_id] || {};
@@ -103,7 +106,7 @@ const PublicDraftGroups = (
         key = {row.fantasy_group_id}
         icon={<SportsEsportsIcon style = {{ color: theme.purple[500] }} />}
         primary={row.name}
-        secondary={`$${row.entry_fee} entry fee; ${Object.keys(fantasy_entrys).length} entries; Draft begins ${Dates.format(Dates.parse(row.draft_start_datetime), 'M jS @ g:i a')}`}
+        secondary={`$${row.entry_fee} entry fee; ${Object.keys(fantasy_entrys).length} entries; Draft begins ${Dates.format(Dates.parse(row.draft_start_datetime, true), 'M jS @ g:i a')}`}
         buttons = {[
           <Button key = {`join-${row.fantasy_group_id}`} title = 'Join' value = {row.fantasy_group_id} ink onClick={handleTileClick} />,
         ]}
@@ -113,11 +116,11 @@ const PublicDraftGroups = (
 
   const paid_rows_buttons: React.JSX.Element[] = [];
 
-  if (paid_rows.length > paidLimit) {
+  if (paid_fantasy_groups.length > paidLimit) {
     paid_rows_buttons.push(
       <Button
         value = 'view-all'
-        title = {`View all (${paid_rows.length})`}
+        title = {`View all (${paid_fantasy_groups.length})`}
         ink
         onClick={() => setPaidLimit(Infinity)}
       />,

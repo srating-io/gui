@@ -29,7 +29,9 @@ const Winner = () => {
   for (const fantasy_ranking_id in fantasy_rankings) {
     const row = fantasy_rankings[fantasy_ranking_id];
 
-    if (row.rank === 1) {
+    // Keep the first rank 1, not the last, so a tie resolves the same way on every render rather
+    // than on whatever order the payload arrived in.
+    if (row.rank === 1 && !winner_fantasy_ranking) {
       winner_fantasy_ranking = row;
     }
   }
@@ -43,9 +45,17 @@ const Winner = () => {
 
     const fantasy_ranking = winner_fantasy_ranking;
 
+    // A ranking row outlives the entry it points at - deleting an entry left this dereferencing
+    // undefined and taking the whole finished league page down.
     const fantasy_entry = fantasy_entrys[fantasy_ranking.fantasy_entry_id];
 
-    let name = fantasy_entry.user_id;
+    if (!fantasy_entry) {
+      return (
+        <Blank text = 'No winner determined yet' />
+      );
+    }
+
+    let name = fantasy_entry.name || fantasy_entry.user_id;
 
     if (fantasy_entry.user_id in user_id_x_fantasy_group_user) {
       name = user_id_x_fantasy_group_user[fantasy_entry.user_id].name || user_id_x_fantasy_group_user[fantasy_entry.user_id].email;

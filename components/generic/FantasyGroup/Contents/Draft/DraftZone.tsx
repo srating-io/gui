@@ -11,12 +11,16 @@ import TeamSearch from './TeamSearch';
 import { decorateHeaderRow, decorateRows } from '@/components/generic/Ranking/Contents/Client';
 import DraftZonePick from './DraftZonePick';
 import { Objector } from '@esmalley/ts-utils';
+import { TERMINOLOGY_ID } from '@srating-io/common';
 import { Columns, Inputs, LinearProgress, TextInput, Typography, useTheme, VirtualTable } from '@esmalley/react-material-ui';
 
 
 const DraftZone = () => {
   const theme = useTheme();
   const fantasy_group = useAppSelector((state) => state.fantasyGroupReducer.fantasy_group);
+  const fantasy_entrys = useAppSelector((state) => state.fantasyGroupReducer.fantasy_entrys);
+  const fantasy_entry_players = useAppSelector((state) => state.fantasyGroupReducer.fantasy_entry_players);
+  const user = useAppSelector((state) => state.userReducer.user);
   const loadingRankingData = useAppSelector((state) => state.rankingReducer.loadingView);
   const rankingData = useAppSelector((state) => state.cacheReducer.rankingData);
 
@@ -26,6 +30,26 @@ const DraftZone = () => {
 
 
   const cached_key = getCachedDataKey({ organization_id: fantasy_group.organization_id, division_id: fantasy_group.division_id, season: fantasy_group.season, view: 'player', career: 0, career_active: 0 });
+
+  // A free for all draft lets two entries hold the same player, so there only this user's own
+  // roster is off the board. Everywhere else a drafted player is gone for everyone.
+  const isFreeForAll = fantasy_group.draft_type_terminology_id === TERMINOLOGY_ID.DRAFT_TYPE.FREE_FOR_ALL;
+
+  const my_fantasy_entry_ids = new Set(
+    Object.values(fantasy_entrys)
+      .filter((row) => row.user_id === user.user_id)
+      .map((row) => row.fantasy_entry_id),
+  );
+
+  const drafted_player_team_season_ids = new Set<string>();
+
+  for (const fantasy_entry_player_id in fantasy_entry_players) {
+    const row = fantasy_entry_players[fantasy_entry_player_id];
+
+    if (!isFreeForAll || my_fantasy_entry_ids.has(row.fantasy_entry_id)) {
+      drafted_player_team_season_ids.add(row.player_team_season_id);
+    }
+  }
 
   const data: object = (
     rankingData &&
@@ -37,7 +61,21 @@ const DraftZone = () => {
   for (const id in data) {
     const row = data[id];
 
+    // the cache holds whatever the ranking load returned, so do not assume every value is a row
+    if (!row || typeof row !== 'object') {
+      continue;
+    }
+
     if (selectedTeamID && row.team_id !== selectedTeamID) {
+      continue;
+    }
+
+    // Built purely from the ranking data before, so a player already on someone's roster stayed
+    // in the list and the pick came back rejected with the clock running.
+    if (
+      row.player_team_season &&
+      drafted_player_team_season_ids.has(row.player_team_season.player_team_season_id)
+    ) {
       continue;
     }
 
@@ -54,14 +92,11 @@ const DraftZone = () => {
   }
 
   if (playerSearchValue) {
-    const regex = new RegExp(playerSearchValue, 'i');
+    // a plain substring match: this was a RegExp built from raw input, so typing "(" threw and
+    // blanked the whole draft zone
+    const search = playerSearchValue.toLowerCase();
     rows = rows.filter((row) => {
-      if ('name' in row && regex.test(row.name as string)) {
-        return true;
-      }
-
-
-      return false;
+      return 'name' in row && typeof row.name === 'string' && row.name.toLowerCase().includes(search);
     });
   }
 

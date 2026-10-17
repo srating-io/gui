@@ -9,7 +9,7 @@ import { useNavigation } from '../hooks/useNavigation';
 import { useClientAPI } from '../clientAPI';
 import { setDataKey } from '@/redux/features/user-slice';
 import Blank from './Blank';
-import { Dates } from '@esmalley/ts-utils';
+import { Dates, toast } from '@esmalley/ts-utils';
 import { Button, IconButton, Modal, Tile, Typography, useTheme } from '@esmalley/react-material-ui';
 
 
@@ -143,7 +143,7 @@ const Notifications = (
               () => {
                 if (
                   row.table in navigation &&
-                  ['fantasy_group'].includes(row.table)
+                  ['fantasy_group', 'fantasy_entry'].includes(row.table)
                 ) {
                   // todo programatically get the path somehow
                   navigation[row.table](`/${row.table}/${row.id}`);
@@ -153,7 +153,9 @@ const Notifications = (
                 ) {
                   navigation.user('/account?view=settings');
                 } else {
-                  console.log('todo set up notification');
+                  // nothing writes a notification for another table today, but a console.log is
+                  // not an answer for the reader if something starts to
+                  toast.info('There is nothing to open for this notification.');
                 }
                 closeHandler(e);
               },

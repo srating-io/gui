@@ -246,7 +246,7 @@ const Header = () => {
     {
       value: 'fantasy',
       selectable: true,
-      label: 'My fantasy legaues',
+      label: 'My fantasy leagues',
       onSelect: handleAccountFantasy,
       icon: <SportsEsportsIcon style = {{ fontSize: 20 }} />,
     },

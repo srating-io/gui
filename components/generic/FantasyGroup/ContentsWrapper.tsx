@@ -3,14 +3,14 @@
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { footerNavigationHeight } from '@/components/generic/FooterNavigation';
 import { headerBarHeight } from '@/components/generic/Header';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { InitialState, setDataKey } from '@/redux/features/fantasy_group-slice';
 import { getNavHeaderHeight } from './NavBar';
 import { getStore } from '@/app/StoreProvider';
-import { useClientAPI } from '@/components/clientAPI';
+import { isRequestFailure, useClientAPI } from '@/components/clientAPI';
 import { FantasyGroupLoadData, handleLoad } from './ReduxWrapper';
 import { Objector, socket, toast } from '@esmalley/ts-utils';
-import { LinearProgress, Typography, useTheme } from '@esmalley/react-material-ui';
+import { Button, LinearProgress, Typography, useTheme } from '@esmalley/react-material-ui';
 
 // TODO
 // pending invites does not update from broadcast when someone joins
@@ -44,13 +44,59 @@ const ContentsWrapper = (
   const fantasy_group = useAppSelector((state) => state.fantasyGroupReducer.fantasy_group);
   const loadingView = useAppSelector((state) => state.fantasyGroupReducer.loadingView);
 
-  const [request, setRequest] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [canView, setCanView] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
+
+  // A ref, not state. `load` used to read a `request` it had closed over, so the refresher and the
+  // reconnect path set it false and then returned early out of the stale copy they still held -
+  // the refresh silently did nothing.
+  const requesting = useRef(false);
 
   const paddingTop = getNavHeaderHeight();
 
   const heightToRemove = paddingTop + footerNavigationHeight + headerBarHeight + 120;
+
+  const load = useCallback(() => {
+    if (!fantasy_group.fantasy_group_id || requesting.current) {
+      return;
+    }
+    requesting.current = true;
+    setLoadFailed(false);
+
+    useClientAPI({
+      class: 'fantasy_group',
+      function: 'load',
+      arguments: {
+        fantasy_group_id: fantasy_group.fantasy_group_id,
+      },
+    }).then((fantasyData: FantasyGroupLoadData) => {
+      requesting.current = false;
+      setLoaded(true);
+
+      // a request that never reached the api says nothing about permission, so do not tell someone
+      // their own group is private because their wifi dropped
+      if (isRequestFailure(fantasyData)) {
+        setLoadFailed(true);
+        return;
+      }
+
+      if (!fantasyData || fantasyData.error) {
+        setCanView(false);
+        return;
+      }
+
+      handleLoad({
+        dispatch,
+        data: fantasyData,
+      });
+    }).catch((err) => {
+      console.log(err);
+      requesting.current = false;
+      setLoaded(true);
+      setLoadFailed(true);
+    });
+  }, [fantasy_group.fantasy_group_id, session_id, dispatch]);
 
   useEffect(() => {
     dispatch(setDataKey({ key: 'loadingView', value: false }));
@@ -130,7 +176,6 @@ const ContentsWrapper = (
 
     const refresher = () => {
       if (online && fantasy_group.fantasy_group_id) {
-        setRequest(false);
         load();
         socket.message({ type: 'subscribe', table: 'fantasy_group', id: fantasy_group.fantasy_group_id });
       }
@@ -155,44 +200,25 @@ const ContentsWrapper = (
       socket.removeEventListener('message', messageHandler);
       socket.removeEventListener('refresh', refresher);
     };
-  }, [session_id, fantasy_group.fantasy_group_id, online]);
+  }, [session_id, fantasy_group.fantasy_group_id, online, load]);
 
+  // Fetching in the render body double-fetched under React's double-invoked render, set state
+  // during render, and never refetched when the group or the session changed.
   useEffect(() => {
-    if (online && fantasy_group.fantasy_group_id) {
-      setRequest(false);
+    if (online) {
       load();
     }
-  }, [online]);
+  }, [online, load]);
 
 
-  const load = () => {
-    if (request) {
-      return;
-    }
-    setRequest(true);
-    useClientAPI({
-      class: 'fantasy_group',
-      function: 'load',
-      arguments: {
-        fantasy_group_id: fantasy_group.fantasy_group_id,
-      },
-    }).then((fantasyData: FantasyGroupLoadData) => {
-      setLoaded(true);
-      if (!fantasyData || fantasyData.error) {
-        setCanView(false);
-      } else {
-        handleLoad({
-          dispatch,
-          data: fantasyData,
-        });
-      }
-    }).catch((err) => {
-      // nothing for now
-    });
-  };
-
-  if (!request && fantasy_group.fantasy_group_id) {
-    load();
+  if (loadFailed) {
+    return (
+      <Contents>
+        <Typography style = {{ textAlign: 'center' }} type = 'h5'>Could not load this league</Typography>
+        <Typography style = {{ textAlign: 'center' }} type = 'body1'>Check your connection and try again.</Typography>
+        <Button title = 'Retry' value = 'retry' onClick = {() => load()} containerStyle = {{ textAlign: 'center' }} />
+      </Contents>
+    );
   }
 
   if (!canView) {

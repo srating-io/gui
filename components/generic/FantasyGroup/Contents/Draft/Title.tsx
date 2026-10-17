@@ -26,13 +26,15 @@ const Title = () => {
       icon: null,
     };
 
-    if (!targetDateString) {
-      return data;
-    }
-
+    // A finished draft is over whether or not a start date was ever recorded, so this has to come
+    // before the date check - otherwise it reads "TBD" after the last pick.
     if (fantasy_group.drafted) {
       data.title = 'Draft is over!';
       data.icon = <CheckIcon style = {{ color: theme.success.main, fontSize: 24 }} />;
+      return data;
+    }
+
+    if (!targetDateString) {
       return data;
     }
 
@@ -52,7 +54,7 @@ const Title = () => {
     data.title = `Draft begins: ${days}d ${hours}h ${minutes}m ${seconds}s`;
 
     return data;
-  }, [targetDateString]);
+  }, [targetDateString, fantasy_group.drafted]);
 
   // 3. Effect to update the countdown every second
   useEffect(() => {

@@ -1,6 +1,5 @@
 'use client';
 
-import { Profiler } from 'react';
 import { footerNavigationHeight } from '@/components/generic/FooterNavigation';
 import { headerBarHeight } from '@/components/generic/Header';
 import { useAppSelector } from '@/redux/hooks';
@@ -50,9 +49,6 @@ const Client = ({ fantasy_entry_id }) => {
   const fantasyHelper = new FantasyGroup({ fantasy_group });
 
   return (
-    <Profiler id="FantasyEntry.Contents.Home.Client" onRender={(id, phase, actualDuration) => {
-      console.log(id, phase, actualDuration);
-    }}>
     <Contents>
       {
         fantasyHelper.isDraft() ?
@@ -65,7 +61,6 @@ const Client = ({ fantasy_entry_id }) => {
           : ''
       }
     </Contents>
-    </Profiler>
   );
 };
 

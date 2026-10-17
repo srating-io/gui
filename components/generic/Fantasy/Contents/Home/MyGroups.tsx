@@ -46,7 +46,8 @@ const MyGroups = (
 
   const getRows = (rows: Fantasy.FantasyGroups) => {
     return Object.values(rows).map((row, index) => {
-      if (index > limit) {
+      // `>` rendered one row more than the limit
+      if (index >= limit) {
         return null;
       }
       let secondary = row.start_date ? `Starts ${Dates.format(Dates.parse(row.start_date, true), 'M jS g:i a')}` : 'Start date not set';
@@ -70,26 +71,28 @@ const MyGroups = (
     }).filter((r) => r !== null);
   };
 
-  const getSection = (rows_) => {
+  const getSection = (rows_, emptyText: string) => {
+    // counted from the source, not the truncated list - "View all (11)" for 50 leagues otherwise
+    const total = Object.keys(rows_).length;
     const rows = getRows(rows_);
 
     if (!rows || !rows.length) {
       return (
         <Blank
           icon = {<SentimentVeryDissatisfiedIcon style = {{ fontSize: 24 }} />}
-          text = 'Not in any leagues!'
+          text = {emptyText}
         />
       );
     }
 
     const buttons: React.JSX.Element[] = [];
 
-    if (rows.length > limit) {
+    if (total > limit) {
       buttons.push(
         <Button
           key = {'view-all'}
           value = 'view-all'
-          title = {`View all (${rows.length})`}
+          title = {`View all (${total})`}
           ink
           onClick={() => setLimit(Infinity)}
         />,
@@ -116,29 +119,40 @@ const MyGroups = (
 
 
   const getContents = () => {
+    // The sections used to share one "Not in any leagues!", so the Active heading said it even
+    // when there were upcoming ones right below.
+    if (!Object.keys(fantasy_groups).length) {
+      return (
+        <Blank
+          icon = {<SentimentVeryDissatisfiedIcon style = {{ fontSize: 24 }} />}
+          text = 'Not in any leagues!'
+        />
+      );
+    }
+
     const contents: React.JSX.Element[] = [];
 
     contents.push(
-      <div>
+      <div key = 'active'>
         <Typography type = 'subtitle1' style = {{ color: theme.text.secondary }}>Active leagues</Typography>
-        {getSection(active)}
+        {getSection(active, 'No active leagues right now')}
       </div>,
     );
 
     if (Object.keys(future).length) {
       contents.push(
-        <div>
+        <div key = 'future'>
           <Typography type = 'subtitle1' style = {{ color: theme.text.secondary }}>Upcoming leagues</Typography>
-          {getSection(future)}
+          {getSection(future, 'No upcoming leagues')}
         </div>,
       );
     }
 
     if (Object.keys(finished).length) {
       contents.push(
-        <div>
+        <div key = 'finished'>
           <Typography type = 'subtitle1' style = {{ color: theme.text.secondary }}>Finished leagues</Typography>
-          {getSection(finished)}
+          {getSection(finished, 'No finished leagues')}
         </div>,
       );
     }

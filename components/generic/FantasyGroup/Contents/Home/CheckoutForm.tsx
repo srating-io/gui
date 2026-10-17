@@ -23,17 +23,26 @@ const CheckoutForm = ({ entryName }) => {
   const dispatch = useAppDispatch();
   const [paymentError, setPaymentError] = useState<string | null>(null);
 
+  // `loading` is dispatched only after `elements.submit()` resolves, so two quick clicks both got
+  // past the button's disabled check and bought two entries. This closes before any await.
+  const [sending, setSending] = useState(false);
+
   const fantasy_group = useAppSelector((state) => state.fantasyGroupReducer.fantasy_group);
   const loading = useAppSelector((state) => state.loadingReducer.loading);
 
 
   const handleStripeError = (error) => {
     dispatch(setLoading(false));
+    setSending(false);
     setPaymentError(error.message);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (sending) {
+      return;
+    }
 
     if (!stripe || !elements) {
       // Stripe.js hasn't yet loaded.
@@ -46,6 +55,8 @@ const CheckoutForm = ({ entryName }) => {
       setPaymentError('Entry name is required.');
       return;
     }
+
+    setSending(true);
 
     // Trigger form validation and wallet collection
     const { error: submitError } = await elements.submit();
@@ -69,6 +80,7 @@ const CheckoutForm = ({ entryName }) => {
 
     if (!billingData || billingData.error) {
       dispatch(setLoading(false));
+      setSending(false);
       if (!billingData) {
         setPaymentError('Something went wrong, please try again later.');
       } else {
@@ -78,6 +90,21 @@ const CheckoutForm = ({ entryName }) => {
     }
 
     const { paymentIntent, payment_router, email } = billingData;
+
+    // Both are declared nullable and both are null if the payment intent could not be created.
+    // Dereferencing them threw out of this async handler, so `loading` was never cleared and the
+    // user sat on a dead form - with an entry already created server side.
+    if (
+      !paymentIntent ||
+      !paymentIntent.client_secret ||
+      !payment_router ||
+      !payment_router.payment_router_id
+    ) {
+      dispatch(setLoading(false));
+      setSending(false);
+      setPaymentError('Could not start the payment. Nothing has been charged - please try again.');
+      return;
+    }
 
     const clientSecret = paymentIntent.client_secret;
 
@@ -111,7 +138,9 @@ const CheckoutForm = ({ entryName }) => {
             },
           },
         },
-        return_url: (process.env.NEXT_PUBLIC_ENV === 'dev' ? `http://localhost:3000/${url}` : `https://srating.io/${url}`),
+        // the origin we are actually served from, so a staging host does not send the payer to
+        // production to land on an intent that host knows nothing about
+        return_url: `${window.location.origin}/${url}`,
       },
       // redirect: 'if_required',
     });
@@ -146,8 +175,8 @@ const CheckoutForm = ({ entryName }) => {
         onClick={handleSubmit}
         containerStyle={{ width: '100%' }}
         buttonStyle = {{ width: '100%', marginTop: '20px', textAlign: 'center', backgroundColor: theme.blue[700] }}
-        disabled={loading || !stripe || !elements}
-        title = {`Pay $${fantasy_group.entry_fee}`} value = 'pay'
+        disabled={sending || loading || !stripe || !elements}
+        title = {sending ? 'Processing...' : `Pay ${fantasy_group.entry_fee}`} value = 'pay'
       />
       {paymentError && <div id="payment-message" style = {{ color: theme.error.main }}>Error: {paymentError}</div>}
     </form>

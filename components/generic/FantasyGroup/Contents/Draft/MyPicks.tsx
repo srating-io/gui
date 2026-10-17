@@ -63,13 +63,14 @@ const MyPicks = () => {
       const player_name = player ? `${player.first_name} ${player.last_name}` : 'Unknown';
       return (
         <Tile
+          key = {row.fantasy_draft_order_id}
           primary = {player_name}
         />
       );
     });
 
     return (
-      <div>
+      <div key = {fantasy_entry_id}>
         <Typography type = 'body1' style = {{ color: theme.info.main }}>{fantasy_entry.name}</Typography>
         {tiles}
       </div>
@@ -95,10 +96,22 @@ const MyPicks = () => {
       return elements;
     }
 
+    // Having no picks is not the same as the draft not having started - most often it means this
+    // user has no entry in the league at all.
+    const has_own_entry = Object.values(fantasy_entrys).some((row) => row.user_id === user.user_id);
+
+    let message = 'Draft has not started yet!';
+
+    if (!has_own_entry) {
+      message = 'You do not have an entry in this league!';
+    } else if (fantasy_group.locked) {
+      message = 'No picks yet!';
+    }
+
     return (
       <div style = {{ padding: 16, display: 'flex', justifyContent: 'center', alignItems: 'center', fontStyle: 'italic', color: theme.text.secondary }}>
         <span style = {{ display: 'flex', marginRight: 10 }}><SentimentVeryDissatisfiedIcon style = {{ fontSize: 24 }} /></span>
-        <Typography type = 'body1' style = {{ color: theme.text.secondary }}>Draft has not started yet!</Typography>
+        <Typography type = 'body1' style = {{ color: theme.text.secondary }}>{message}</Typography>
       </div>
     );
   };

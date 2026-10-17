@@ -36,7 +36,7 @@ const GeneralDetails = (
           />
           <Slab
             label='Sport'
-            primary={`${Organization.getEmoji({ organization_id })} ${organizations[organization_id].code} ${fantasy_group.season}`}
+            primary={`${Organization.getEmoji({ organization_id })} ${organizations[organization_id]?.code || ''} ${fantasy_group.season}`}
           />
 
           <Slab

@@ -75,7 +75,7 @@ const DraftOrBracketCountdown = () => {
       list.push({
         label: 'League Begins',
         date: fantasy_group?.start_date,
-        isComplete: !!(fantasy_group?.start_date && Dates.parse(fantasy_group.start_date) < now),
+        isComplete: !!(fantasy_group?.start_date && Dates.parse(fantasy_group.start_date, true) < now),
         button: false,
       });
     } else {
@@ -83,7 +83,7 @@ const DraftOrBracketCountdown = () => {
       list.push({
         label: 'Tournament Start',
         date: fantasy_group?.start_date,
-        isComplete: !!(fantasy_group?.start_date && Dates.parse(fantasy_group.start_date) < now),
+        isComplete: !!(fantasy_group?.start_date && Dates.parse(fantasy_group.start_date, true) < now),
         button: false,
       });
     }

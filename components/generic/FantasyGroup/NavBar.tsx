@@ -10,6 +10,8 @@ import { useClientAPI } from '@/components/clientAPI';
 import LockIcon from '@esmalley/react-material-icons/Lock';
 import LogoutIcon from '@esmalley/react-material-icons/Logout';
 import DeleteIcon from '@esmalley/react-material-icons/Delete';
+import EditIcon from '@esmalley/react-material-icons/Edit';
+import EditGroup from './Contents/Home/EditGroup';
 import { FantasyGroupLoadData, handleLoad } from './ReduxWrapper';
 import FantasyGroupHelper from '@/components/helpers/FantasyGroup';
 import Organization from '@/components/helpers/Organization';
@@ -45,11 +47,13 @@ const NavBar = () => {
 
   const [anchor, setAnchor] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [modalData, setModalData] = useState<ModalData>({} as ModalData);
   const [isLoading, setIsLoading] = useState(false);
 
   const dispatch = useAppDispatch();
   const fantasy_group = useAppSelector((state) => state.fantasyGroupReducer.fantasy_group);
+  const fantasy_entrys = useAppSelector((state) => state.fantasyGroupReducer.fantasy_entrys);
   const isOwner = useAppSelector((state) => state.fantasyGroupReducer.isOwner);
   const organizations = useAppSelector((state) => state.dictionaryReducer.organization);
   const organization_id = useAppSelector((state) => state.organizationReducer.organization_id);
@@ -108,7 +112,15 @@ const NavBar = () => {
         setModalOpen(false);
       }
     }).catch((err) => {
-      // nothing for now
+      console.log(err);
+      setIsLoading(false);
+      dispatch(setLoading(false));
+      setModalData({
+        title: 'Something went wrong',
+        message: 'Please try again.',
+        button: 'Ok',
+        action: () => setModalOpen(false),
+      });
     });
   };
 
@@ -146,7 +158,15 @@ const NavBar = () => {
         setModalOpen(false);
       }
     }).catch((err) => {
-      // nothing for now
+      console.log(err);
+      setIsLoading(false);
+      dispatch(setLoading(false));
+      setModalData({
+        title: 'Something went wrong',
+        message: 'Please try again.',
+        button: 'Ok',
+        action: () => setModalOpen(false),
+      });
     });
   };
 
@@ -183,11 +203,39 @@ const NavBar = () => {
         naviation.fantasy(`/${path}/fantasy`, null, false);
       }
     }).catch((err) => {
-      // nothing for now
+      console.log(err);
+      setIsLoading(false);
+      dispatch(setLoading(false));
+      setModalData({
+        title: 'Something went wrong',
+        message: 'Please try again.',
+        button: 'Ok',
+        action: () => setModalOpen(false),
+      });
     });
   };
 
   const options: MenuOption[] = [];
+
+  // updateGroup refuses a league that has started, so only offer it while it can still be changed
+  if (
+    isOwner &&
+    !fantasy_group.locked &&
+    !fantasy_group.started &&
+    !fantasy_group.drafted &&
+    !fantasy_group.finished
+  ) {
+    options.push({
+      value: 'edit',
+      label: 'Edit league',
+      selectable: true,
+      onSelect: () => {
+        setEditOpen(true);
+        handleClose();
+      },
+      icon: <EditIcon style = {{ fontSize: 20 }} />,
+    });
+  }
 
   if (isOwner && !fantasy_group.locked && fantasyHelper.isDraft()) {
     options.push({
@@ -209,18 +257,32 @@ const NavBar = () => {
   }
 
   if (isOwner) {
+    // fantasy_group.remove refuses this server side; saying so up front beats a confirm dialog
+    // promising deletion followed by an error, and there is no refund flow behind it
+    const hasEntries = Object.keys(fantasy_entrys).length > 0;
+    const isPaidWithEntries = hasEntries && !!fantasy_group.entry_fee;
+
     options.push({
       value: 'del',
       label: 'Delete group',
       selectable: true,
       onSelect: () => {
         setModalOpen(true);
-        setModalData({
-          title: 'Delete group?',
-          message: 'Group and all related data will be deleted. This action can not be undone. Are you sure?',
-          button: 'Confirm',
-          action: handleDeleteGroup,
-        });
+        setModalData(
+          isPaidWithEntries ?
+            {
+              title: 'Can not delete this league',
+              message: 'People have entered a league with an entry fee, so it can not be deleted. Entry fees are not refundable through the site.',
+              button: 'Ok',
+              action: () => setModalOpen(false),
+            }
+            : {
+              title: 'Delete group?',
+              message: 'Group and all related data will be deleted. This action can not be undone. Are you sure?',
+              button: 'Confirm',
+              action: handleDeleteGroup,
+            },
+        );
         handleClose();
       },
       icon: <DeleteIcon style = {{ color: theme.error.main, fontSize: 20 }} />,
@@ -282,6 +344,7 @@ const NavBar = () => {
           <Button value = 'handleit' title = {modalData.button} onClick={modalData.action} />
         </div>
       </Modal>
+      <EditGroup open = {editOpen} closeHandler = {() => setEditOpen(false)} />
     </>
   );
 };

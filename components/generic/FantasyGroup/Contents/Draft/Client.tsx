@@ -1,6 +1,5 @@
 'use client';
 
-import { Profiler } from 'react';
 import { footerNavigationHeight } from '@/components/generic/FooterNavigation';
 import { headerBarHeight } from '@/components/generic/Header';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
@@ -114,13 +113,9 @@ const Client = ({ fantasy_group_id }) => {
 
 
   return (
-    <Profiler id="FantasyGroup.Contents.Draft.Client" onRender={(id, phase, actualDuration) => {
-      console.log(id, phase, actualDuration);
-    }}>
     <Contents>
       {getContents()}
     </Contents>
-    </Profiler>
   );
 };
 
