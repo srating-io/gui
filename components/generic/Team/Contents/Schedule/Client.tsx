@@ -155,7 +155,7 @@ const Client = ({ games, team_id }: {games: ScheduleResultsWithPrediction, team_
       let markColor: string | undefined;
       let outcome: 'good' | 'bad' | null = null;
       let detail = '';
-      const title = Dates.format(Dates.parse(game.start_datetime), 'n/j');
+      const title = Dates.format(Dates.parse(game.start_datetime, true), 'n/j');
 
       if (played) {
         const result = won ? 'W' : 'L';
