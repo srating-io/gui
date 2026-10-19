@@ -11,6 +11,9 @@ export type CFBWeek = {
 
 const MS_PER_DAY = 86400000;
 
+/** How far clear of the rest of the schedule the title game sits. Seven days in every season. */
+const NATTY_GAP_DAYS = 7;
+
 /**
  * This class helps simplify the college football week logic
  *
@@ -75,6 +78,28 @@ class Week {
   }
 
   /**
+   * Is this the title game?
+   *
+   * It has to be read off the date itself rather than taken as "the last one we have". A season in
+   * progress just stops wherever the schedule has been loaded to, so the last date is usually a
+   * regular game -- army navy, or whatever week is furthest along.
+   *
+   * What makes the title game identifiable is that it is in january and sits a clear week after
+   * everything before it. No bowl does both.
+   */
+  private static isNattyDate(date: string, previousDate: string | null): boolean {
+    if (date.slice(5, 7) !== '01') {
+      return false;
+    }
+
+    if (!previousDate) {
+      return false;
+    }
+
+    return Week.getDayDiff(previousDate, date) >= NATTY_GAP_DAYS;
+  }
+
+  /**
    * Group a season's game dates into labelled buckets
    *
    * The season's fall year comes from dates[0], which is in august or september. That is what makes
@@ -94,14 +119,25 @@ class Week {
     const laborDay = Week.getLaborDay(year);
     const champNumber = Week.getWeekNumber(Week.getFirstSaturdayOfDecember(year), laborDay);
 
+    // the saturday after championship weekend is army navy, which is not a bowl, so bowl season
+    // only opens the week after that
+    const bowlsNumber = champNumber + 2;
+
+    const lastDate = dates[dates.length - 1];
+    const natty = Week.isNattyDate(lastDate, dates.length > 1 ? dates[dates.length - 2] : null) ? lastDate : null;
+
     const numbered: { [week: number]: string[] } = {};
-    const postseason: string[] = [];
+    const bowls: string[] = [];
 
     for (let i = 0; i < dates.length; i++) {
+      if (dates[i] === natty) {
+        continue;
+      }
+
       const week = Week.getWeekNumber(dates[i], laborDay);
 
-      if (week > champNumber) {
-        postseason.push(dates[i]);
+      if (week >= bowlsNumber) {
+        bowls.push(dates[i]);
         continue;
       }
 
@@ -125,23 +161,12 @@ class Week {
       });
     }
 
-    // dates is ascending and the week number rises with it, so everything past championship week is
-    // a contiguous tail: the last of it is the title game, the rest are bowls with the playoff
-    // folded in
-    if (postseason.length > 1) {
-      weeks.push({
-        key: 'bowls',
-        label: 'Bowls',
-        dates: postseason.slice(0, postseason.length - 1),
-      });
+    if (bowls.length) {
+      weeks.push({ key: 'bowls', label: 'Bowls', dates: bowls });
     }
 
-    if (postseason.length) {
-      weeks.push({
-        key: 'natty',
-        label: 'Natty',
-        dates: [postseason[postseason.length - 1]],
-      });
+    if (natty) {
+      weeks.push({ key: 'natty', label: 'Natty', dates: [natty] });
     }
 
     return weeks;
