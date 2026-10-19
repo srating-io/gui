@@ -50,7 +50,7 @@ const DateBar = (
   const scrollRefDateBar = useRef<HTMLDivElement>(null);
   const scrollRefDate = useRef<HTMLDivElement>(null);
 
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
 
   const scrollRef = useScrollContext();
 
@@ -67,22 +67,14 @@ const DateBar = (
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [calAncor, setCalAncor] = useState(null);
 
-  const updateDate = (value: string | null, opt_extact: boolean) => {
+  const updateDate = (value: string) => {
     if (scrollRef && scrollRef.current) {
       scrollRef.current.scrollTop = 0;
     }
 
-    let newDate: string | null = null;
-
-    if (opt_extact && value !== null) {
-      newDate = value;
-    } else if (value !== null) {
-      newDate = dates[value];
-    }
-
-    if (newDate !== null && searchParams?.get('date') !== newDate) {
+    if (searchParams?.get('date') !== value) {
       const current = new URLSearchParams(Array.from(searchParams.entries()));
-      current.set('date', newDate);
+      current.set('date', value);
       const search = current.toString();
       const query = search ? `?${search}` : '';
 
@@ -147,7 +139,7 @@ const DateBar = (
         ref = {dateBarRef}
         key = {dates[i]}
         className = {Style.getStyleClassName(dateStyle)}
-        onClick={() => { updateDate(dates[i], true); }}
+        onClick={() => { updateDate(dates[i]); }}
       >
         <div style = {{ width: '100%' }}>{label}</div>
       </div>,
@@ -212,7 +204,7 @@ const DateBar = (
               return false;
             }}
             onChange = {(d: Date) => {
-              updateDate(Dates.format(d, 'Y-m-d'), true);
+              updateDate(Dates.format(d, 'Y-m-d'));
               toggleCalendar(null);
             }}
           />
