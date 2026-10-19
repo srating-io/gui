@@ -31,6 +31,7 @@ export default async function Page({ params, searchParams }: Props) {
   const season = searchParameters?.season;
   const division_id = searchParameters?.division_id;
   const date = searchParameters?.date;
+  const mode = searchParameters?.mode;
 
 
   const Surface = new Games({
@@ -41,6 +42,10 @@ export default async function Page({ params, searchParams }: Props) {
 
   if (date) {
     args.date = date;
+  }
+
+  if (mode) {
+    args.mode = mode;
   }
 
   if (division_id) {
