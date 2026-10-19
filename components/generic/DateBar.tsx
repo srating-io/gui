@@ -157,7 +157,7 @@ const DateBar = (
     // day labels are uniform, week labels are not: 'Champ Wk' does not fit a 60px box
     const widthStyle = fixedWidth ?
       { width: 60, minWidth: 60 } :
-      { width: 'auto', minWidth: 72, padding: '0px 8px' };
+      { width: 'auto', minWidth: 72, padding: '0px 8px', flexGrow: 1 };
 
     const pillStyle = {
       fontSize: '12px',
@@ -287,7 +287,17 @@ const DateBar = (
         {modeToggle}
         <IconButton onClick={scrollLeft} value = 'scroll-left' icon = {<KeyboardArrowLeftIcon style = {iconStyle} />} />
       </div>
-      <div ref = {scrollRefDateBar} style = {{ display: 'inline-flex', overflowX: 'scroll', overflowY: 'hidden', scrollbarWidth: 'none', height: '100%', textAlign: 'center', alignItems: 'center' }}>
+      <div ref = {scrollRefDateBar} style = {{
+        display: 'inline-flex',
+        flexGrow: 1,
+        minWidth: 0,
+        overflowX: 'scroll',
+        overflowY: 'hidden',
+        scrollbarWidth: 'none',
+        height: '100%',
+        textAlign: 'center',
+        alignItems: 'center',
+      }}>
         {dateContainers}
       </div>
       <div style = {{ display: 'inline-flex', paddingRight: 8 }}>
