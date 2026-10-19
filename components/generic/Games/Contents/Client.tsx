@@ -7,7 +7,8 @@ import Tile, { getTileBaseStyle } from '@/components/generic/Games/Tile';
 import { useScrollContext } from '@/contexts/scrollContext';
 import { getDateBarHeight } from '../../DateBar';
 import ConferenceChips from '../../ConferenceChips';
-import { Paper, Skeleton, Typography } from '@esmalley/react-material-ui';
+import { Divider, Paper, Skeleton, Typography, useTheme } from '@esmalley/react-material-ui';
+import { Dates } from '@esmalley/ts-utils';
 import { Game, General } from '@srating-io/types';
 
 const Contents = ({ children, childStyle = {} }) => {
@@ -78,6 +79,7 @@ const ClientSkeletonUnknown = () => {
 */
 
 const Client = ({ games }: { games: Game.getGamesResults; }) => {
+  const theme = useTheme();
   const skip_sort_game_ids = useAppSelector((state) => state.favoriteReducer.skip_sort_game_ids);
   const favorite_team_ids = useAppSelector((state) => state.favoriteReducer.team_ids);
   const favorite_game_ids = useAppSelector((state) => state.favoriteReducer.game_ids);
@@ -142,6 +144,7 @@ const Client = ({ games }: { games: Game.getGamesResults; }) => {
   };
 
   const gameContainers: React.JSX.Element[] = [];
+  const containersByDate: { [date: string]: React.JSX.Element[] } = {};
 
   const sorted_games = Object.values(games);
 
@@ -303,12 +306,49 @@ const Client = ({ games }: { games: Game.getGamesResults; }) => {
       continue;
     }
 
-    gameContainers.push(<Tile key={i} game={sortedGame} isLoadingWinPercentage = {!datesChecked[sortedGame.start_date]} />);
+    const tile = <Tile key={i} game={sortedGame} isLoadingWinPercentage = {!datesChecked[sortedGame.start_date]} />;
+
+    gameContainers.push(tile);
+
+    if (!(sortedGame.start_date in containersByDate)) {
+      containersByDate[sortedGame.start_date] = [];
+    }
+
+    containersByDate[sortedGame.start_date].push(tile);
   }
 
   if ((gamesFilter === 'top_25' || gamesFilter === 'top_50') && gameStatsLoading) {
     return (
       <ClientSkeleton games={games} />
+    );
+  }
+
+  // a week of games spans several days, so break them up. Derived from what survived the filters,
+  // not from a prop, so a week narrowed down to one day renders flat on its own.
+  const groupDates = Object.keys(containersByDate).sort();
+
+  if (groupDates.length > 1) {
+    const groupedContainers: React.JSX.Element[] = [];
+
+    for (let i = 0; i < groupDates.length; i++) {
+      const groupDate = groupDates[i];
+
+      groupedContainers.push(
+        <div key = {`heading_${groupDate}`} style = {{ width: '100%', flexBasis: '100%', padding: '10px 5px 2px 5px' }}>
+          <Typography type = 'subtitle1' style = {{ margin: 0, color: theme.text.secondary }}>
+            {Dates.format(Dates.parse(`${groupDate}T12:00:00Z`), 'D, M j')}
+          </Typography>
+          <Divider />
+        </div>,
+      );
+
+      groupedContainers.push(...containersByDate[groupDate]);
+    }
+
+    return (
+      <Contents>
+        {groupedContainers}
+      </Contents>
     );
   }
 
