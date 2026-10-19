@@ -77,7 +77,7 @@ const ClientSkeletonUnknown = () => {
 };
 */
 
-const Client = ({ games, date }: { games: Game.getGamesResults; date: string; }) => {
+const Client = ({ games }: { games: Game.getGamesResults; }) => {
   const skip_sort_game_ids = useAppSelector((state) => state.favoriteReducer.skip_sort_game_ids);
   const favorite_team_ids = useAppSelector((state) => state.favoriteReducer.team_ids);
   const favorite_game_ids = useAppSelector((state) => state.favoriteReducer.game_ids);
@@ -303,7 +303,7 @@ const Client = ({ games, date }: { games: Game.getGamesResults; date: string; })
       continue;
     }
 
-    gameContainers.push(<Tile key={i} game={sortedGame} isLoadingWinPercentage = {!datesChecked[date]} />);
+    gameContainers.push(<Tile key={i} game={sortedGame} isLoadingWinPercentage = {!datesChecked[sortedGame.start_date]} />);
   }
 
   if ((gamesFilter === 'top_25' || gamesFilter === 'top_50') && gameStatsLoading) {

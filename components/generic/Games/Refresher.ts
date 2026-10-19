@@ -12,7 +12,7 @@ import { getStore } from '@/app/StoreProvider';
 import { Objector } from '@esmalley/ts-utils';
 
 
-const Refresher = ({ date, games }) => {
+const Refresher = ({ dates, games }) => {
   const online = useAppSelector((state) => state.generalReducer.online);
   const refreshEnabled = useAppSelector((state) => state.gamesReducer.refreshEnabled);
   const refreshRate = useAppSelector((state) => state.gamesReducer.refreshRate);
@@ -21,7 +21,10 @@ const Refresher = ({ date, games }) => {
   const dispatch = useAppDispatch();
 
   const [loading, setLoading] = useState(false);
-  const [lastDate, setLastDate] = useState(null);
+  const [lastDatesKey, setLastDatesKey] = useState(null);
+
+  // dates is a fresh array identity every server render, so compare the joined string
+  const datesKey = dates.join(',');
 
   // get the data when coming back online
   useEffect(() => {
@@ -55,7 +58,7 @@ const Refresher = ({ date, games }) => {
       return;
     }
 
-    setLastDate(date);
+    setLastDatesKey(datesKey);
     setLoading(true);
     dispatch(setDataKey({ key: 'refreshLoading', value: true }));
 
@@ -65,14 +68,16 @@ const Refresher = ({ date, games }) => {
       arguments: {
         organization_id,
         division_id,
-        start_date: date,
+        start_date: dates,
       },
     }).then((response) => {
       if (response && !response.error) {
         failures = 0;
         const store = getStore();
         const dates_checked = Objector.deepClone(store.getState().gamesReducer.dates_checked);
-        dates_checked[date] = true;
+        for (let i = 0; i < dates.length; i++) {
+          dates_checked[dates[i]] = true;
+        }
         dispatch(setDataKey({ key: 'dates_checked', value: dates_checked }));
         dispatch(setDataKey({ key: 'scores', value: response }));
       }
@@ -94,7 +99,7 @@ const Refresher = ({ date, games }) => {
 
 
   useEffect(() => {
-    if (lastDate !== date) {
+    if (lastDatesKey !== datesKey) {
       getData();
     }
 

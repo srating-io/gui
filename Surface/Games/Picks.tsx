@@ -61,7 +61,7 @@ class Picks extends Games {
     const organization_id = this.getOrganizationID();
     const dates = await this.getDates({ season, organization_id, division_id });
     const selectedDate = date || Dates.getClosestDate(Dates.getTodayEST(), dates);
-    const games = await this.getGames({ date: selectedDate, organization_id, division_id });
+    const games = await this.getGames({ dates: [selectedDate], organization_id, division_id });
 
     return (
       <>

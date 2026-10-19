@@ -63,7 +63,7 @@ class Games extends Surface {
     return dates;
   }
 
-  async getGames({ date, organization_id, division_id }) {
+  async getGames({ dates, organization_id, division_id }) {
     const revalidateSeconds = 1200; // 60 * 20; // cache games for 20 mins
 
     const games: Game.getGamesResults = await useServerAPI({
@@ -72,7 +72,7 @@ class Games extends Surface {
       arguments: {
         organization_id,
         division_id,
-        start_date: date,
+        start_date: dates,
       },
       cache: revalidateSeconds,
     });
@@ -90,7 +90,8 @@ class Games extends Surface {
     const organization_id = this.getOrganizationID();
     const dates = await this.getDates({ season, organization_id, division_id });
     const selectedDate = date || Dates.getClosestDate(Dates.getTodayEST(), dates);
-    const games = await this.getGames({ date: selectedDate, organization_id, division_id });
+    const selectedDates = [selectedDate];
+    const games = await this.getGames({ dates: selectedDates, organization_id, division_id });
 
     return (
       <>
@@ -98,11 +99,11 @@ class Games extends Surface {
         <SubNavBar />
         <ContentsClientWrapper>
           <Suspense key={selectedDate} fallback = {<ContentsClientSkeleton games = {games} />}>
-            <ContentsServer games = {games} date = {selectedDate} organization_id = {organization_id} division_id = {division_id} season={season} />
+            <ContentsServer games = {games} dates = {selectedDates} organization_id = {organization_id} division_id = {division_id} season={season} />
           </Suspense>
         </ContentsClientWrapper>
         <FloatingButtons />
-        <Refresher date = {selectedDate} games = {games} />
+        <Refresher dates = {selectedDates} games = {games} />
       </>
     );
   }
