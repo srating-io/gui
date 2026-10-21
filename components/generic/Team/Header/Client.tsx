@@ -4,6 +4,7 @@ import { useTransition } from 'react';
 
 import FavoritePicker from '@/components/generic/FavoritePicker';
 import HelperTeam from '@/components/helpers/Team';
+import Url from '@/components/helpers/Url';
 import HelperGeneral from '@/components/helpers/General';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import OptionPicker from '@/components/generic/OptionPicker';
@@ -168,7 +169,7 @@ const Client = (
   });
 
   const getCoachHref = () => {
-    return `/${path}/coach/${coach?.coach_id}`/* +'?season='+season */;
+    return Url.coach({ sport: path, coach });
   };
 
   const handleCoach = (e) => {
@@ -177,7 +178,8 @@ const Client = (
   };
 
   const getConferenceHref = () => {
-    return `/${path}/conference/${team.conference_id}?season=${season}`;
+    const conference = team?.conference_id ? conferences?.[team.conference_id] : undefined;
+    return Url.conference({ sport: path, conference, slug: team.conference_id, season });
   };
 
   const handleConference = (e) => {

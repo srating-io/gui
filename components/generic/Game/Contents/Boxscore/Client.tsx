@@ -3,6 +3,7 @@
 import React, { Profiler, useState } from 'react';
 
 import HelperGame from '@/components/helpers/Game';
+import Url from '@/components/helpers/Url';
 import CompareStatistic, { CompareStatisticRow } from '@/components/generic/CompareStatistic';
 import { useAppSelector } from '@/redux/hooks';
 import { getNavHeaderHeight, getSubNavHeaderHeight } from '@/components/generic/Game/NavBar';
@@ -120,11 +121,15 @@ const Client = (
     player_id_x_player_statistic_ranking[row.player_id] = row;
   }
 
+  const getPlayerHref = (player_id: string) => {
+    return Url.player({ sport: path, player: players?.[player_id], slug: player_id });
+  };
+
   const handleClick = (player_id: string) => {
     if (!player_id) {
       throw new Error('Missing player_id');
     }
-    navigation.player(`/${path}/player/${player_id}`);
+    navigation.player(getPlayerHref(player_id));
   };
 
   const Game = new HelperGame({
@@ -872,6 +877,7 @@ const Client = (
           sessionStorageKey = {`${path}.GAME.BOXSCORE.${position}`}
           secondaryKey = 'secondary'
           handleRowClick={handleClick}
+          getRowHref={getPlayerHref}
           />
       </>
     );

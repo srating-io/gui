@@ -4,6 +4,7 @@ import React, { useTransition } from 'react';
 
 
 import HelperTeam from '@/components/helpers/Team';
+import Url from '@/components/helpers/Url';
 import { getBreakPoint } from '@/components/generic/Compare/Header/ClientWrapper';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import HighlightOffIcon from '@esmalley/react-material-icons/HighlightOff';
@@ -78,7 +79,7 @@ const Client = () => {
   };
 
   const getTeamHref = (team_id: string) => {
-    return `/${path}/team/${team_id}?season=${season}`;
+    return Url.team({ sport: path, team: teams?.[team_id], slug: team_id, season });
   };
 
   const handleTeamClick = (e, team_id: string) => {

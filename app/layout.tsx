@@ -20,6 +20,20 @@ import MutationHandler from '@/components/handlers/MutationHandler';
 import NewUpdateHandler from '@/components/handlers/NewUpdateHandler';
 import { useServerAPI } from '@/components/serverAPI';
 import { asMode, defaultMode, themeCookieKey } from '@/redux/features/theme-slice';
+import { getSiteUrl } from '@/components/helpers/Site';
+import type { Metadata } from 'next';
+
+
+/**
+ * The base every relative url in a page's metadata resolves against.
+ *
+ * Without it Next leaves `alternates.canonical` and the open graph urls relative, and a relative
+ * canonical is either resolved against the wrong host or ignored outright -- so the per-page
+ * canonicals that keep ?view= and ?season= from indexing as duplicates would do nothing.
+ */
+export const metadata: Metadata = {
+  metadataBase: new URL(getSiteUrl()),
+};
 
 
 

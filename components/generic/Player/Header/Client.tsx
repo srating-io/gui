@@ -3,6 +3,7 @@
 
 // import FavoritePicker from '@/components/generic/FavoritePicker';
 import Organization from '@/components/helpers/Organization';
+import Url from '@/components/helpers/Url';
 import HelperTeam from '@/components/helpers/Team';
 import HelperPlayer from '@/components/helpers/Player';
 import HelperGeneral from '@/components/helpers/General';
@@ -144,7 +145,7 @@ const Client = (
     if (!team || !team.team_id) {
       return '/';
     }
-    return `/${path}/team/${team.team_id}?season=${season}`;
+    return Url.team({ sport: path, team, season });
   };
 
   const handleTeamClick = (e) => {

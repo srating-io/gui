@@ -1,5 +1,7 @@
 'use client';
 
+import Url from '@/components/helpers/Url';
+
 import { useRef, useState } from 'react';
 import useDebounce from '@/components/hooks/useDebounce';
 import SearchIcon from '@esmalley/react-material-icons/Search';
@@ -108,11 +110,11 @@ const Search = (
       return;
     }
     if (option && option.coach_id) {
-      navigation.coach(`/${path}/coach/${option.coach_id}`, onRouter);
+      navigation.coach(Url.coach({ sport: path, coach: option }), onRouter);
     } else if (option && option.player_id) {
-      navigation.player(`/${path}/player/${option.player_id}`, onRouter);
+      navigation.player(Url.player({ sport: path, player: option }), onRouter);
     } else if (option && option.team_id) {
-      navigation.team(`/${path}/team/${option.team_id}`, onRouter);
+      navigation.team(Url.team({ sport: path, team: option }), onRouter);
     }
     setMenuOpen(false);
     setValue('');

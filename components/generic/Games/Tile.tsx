@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react';
 
 import HelperGame from '@/components/helpers/Game';
+import Url from '@/components/helpers/Url';
 
 import FavoriteIcon from '@esmalley/react-material-icons/Favorite';
 import AccountBalanceIcon from '@esmalley/react-material-icons/AccountBalance';
@@ -106,7 +107,7 @@ const Tile = ({ game, isLoadingWinPercentage }) => {
 
     dispatch(updateGameSort(null));
 
-    navigation.game(`/${path}/games/${game.game_id}`);
+    navigation.game(Url.game({ sport: path, game }));
   };
 
 

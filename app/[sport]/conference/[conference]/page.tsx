@@ -1,11 +1,11 @@
 'use server';
 
 import { Metadata, ResolvingMetadata } from 'next';
-import Team, { getDecorateTeam } from '../../../../Surface/Team';
+import Conference, { getDecorateConference } from '../../../../Surface/Conference';
 
 
 type Props = {
-  params: Promise<{ sport: string; team_id: string }>;
+  params: Promise<{ sport: string; conference: string }>;
   searchParams: Promise<{ [key: string]: string | undefined }>;
 };
 
@@ -16,39 +16,37 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const parameters = await params;
   const searchParameters = await searchParams;
-
-  const { team_id } = parameters;
+  const { conference } = parameters;
   const season = searchParameters?.season || undefined;
 
-  const Surface = new Team({
+  const Surface = new Conference({
     sport: parameters.sport,
   });
 
-  return Surface.getMetaData({ team_id, season });
+  return Surface.getMetaData({ conference, season });
 }
-
 
 export default async function Page({ params, searchParams }: Props) {
   const parameters = await params;
   const searchParameters = await searchParams;
-  const { team_id } = parameters;
 
-
-  const division_id = searchParameters?.division_id;
+  const { conference } = parameters;
   const season = searchParameters?.season;
-  const view = searchParameters?.view || 'schedule';
+  const view = searchParameters?.view || 'standings';
+  const subview = searchParameters?.subview;
 
-  const Surface = new Team({
+
+  const Surface = new Conference({
     sport: parameters.sport,
   });
 
-  const args: getDecorateTeam = {
-    team_id,
+  const args: getDecorateConference = {
+    conference,
     view,
   };
 
-  if (division_id) {
-    args.division_id = division_id;
+  if (subview) {
+    args.subview = subview;
   }
 
   if (season) {

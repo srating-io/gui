@@ -4,6 +4,7 @@
 
 import { useAppSelector } from '@/redux/hooks';
 import Organization from '@/components/helpers/Organization';
+import Url from '@/components/helpers/Url';
 import HelperGame from '@/components/helpers/Game';
 import { Profiler, useState } from 'react';
 import { footerNavigationHeight } from '@/components/generic/FooterNavigation';
@@ -158,18 +159,21 @@ const Client = ({ organization_id, gamelogs }) => {
   }
 
 
+  const getGameHref = (player_boxscore_id) => {
+    const row = player_boxscore_id in gamelogs ? gamelogs[player_boxscore_id] : null;
+    if (!row) {
+      return '';
+    }
+    return Url.game({ sport: path, game: row.game, slug: row.game_id });
+  };
+
   const handleClick = (player_boxscore_id) => {
     if (!player_boxscore_id) {
       console.warn('Missing player_boxscore_id');
       return;
     }
 
-    let game_id = null;
-    if (player_boxscore_id in gamelogs) {
-      game_id = gamelogs[player_boxscore_id].game_id;
-    }
-
-    navigation.game(`/${path}/games/${game_id}`);
+    navigation.game(getGameHref(player_boxscore_id));
   };
 
   type PartialPlayerBoxscore = Partial<Basketball.PlayerBoxscore | Football.PlayerBoxscore> & {
@@ -372,6 +376,7 @@ const Client = ({ organization_id, gamelogs }) => {
         sessionStorageKey = {`${path}.PLAYER.GAMELOG`}
         secondaryKey = 'secondary'
         handleRowClick={handleClick}
+        getRowHref={getGameHref}
         customSortComparator={getComparator}
         />
     </Contents>

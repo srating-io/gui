@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 
 import HelperTeam from '@/components/helpers/Team';
+import Url from '@/components/helpers/Url';
 import { useAppSelector } from '@/redux/hooks';
 import Organization from '@/components/helpers/Organization';
 import ButtonSwitch from '@/components/generic/ButtonSwitch';
@@ -143,8 +144,12 @@ const Client = ({ organization_id, division_id, conference_id, season, subView }
   };
 
 
+  const getTeamHref = (team_id: string) => {
+    return Url.team({ sport: path, team: teams?.[team_id], slug: team_id, season });
+  };
+
   const handleClick = (team_id: string) => {
-    navigation.team(`/${path}/team/${team_id}?season=${season}`);
+    navigation.team(getTeamHref(team_id));
   };
 
   const handleView = (value: string) => {
@@ -239,6 +244,7 @@ const Client = ({ organization_id, division_id, conference_id, season, subView }
         sessionStorageKey = {sessionStorageKey}
         getRankSpanMax={() => numberOfTeams }
         handleRowClick={handleClick}
+        getRowHref={getTeamHref}
         customSortComparator={getComparator}
       />
     </div>

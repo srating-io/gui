@@ -6,6 +6,7 @@ import CheckCircleIcon from '@esmalley/react-material-icons/CheckCircle';
 import CancelCircleIcon from '@esmalley/react-material-icons/Cancel';
 
 import HelperGame from '@/components/helpers/Game';
+import Url from '@/components/helpers/Url';
 import Organization from '@/components/helpers/Organization';
 import Odds from '@/components/helpers/Odds';
 import Scenario, { ScenarioPick, ScenarioSummary } from '@/components/helpers/Scenario';
@@ -141,7 +142,7 @@ const Calculator = ({ games, date }) => {
   const isToday = date === now;
 
   const handleGame = (game_id: string) => {
-    navigation.game(`/${path}/games/${game_id}`);
+    navigation.game(Url.game({ sport: path, game: games?.[game_id], slug: game_id }));
   };
 
   const handleSort = (id: string) => {

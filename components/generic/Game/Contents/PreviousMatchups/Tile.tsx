@@ -3,6 +3,7 @@
 
 
 import HelperGame from '@/components/helpers/Game';
+import Url from '@/components/helpers/Url';
 import { useAppSelector } from '@/redux/hooks';
 import Organization from '@/components/helpers/Organization';
 import { Dates } from '@esmalley/ts-utils';
@@ -55,7 +56,7 @@ const Tile = ({ game }) => {
   };
 
   const getHref = () => {
-    return `/${path}/games/${game.game_id}`;
+    return Url.game({ sport: path, game });
   };
 
   const handleClick = () => {

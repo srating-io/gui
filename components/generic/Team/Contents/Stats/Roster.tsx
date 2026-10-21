@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 
 import { useAppSelector } from '@/redux/hooks';
 import Organization from '@/components/helpers/Organization';
+import Url from '@/components/helpers/Url';
 import RankTable from '@/components/generic/RankTable';
 import TableColumns from '@/components/helpers/TableColumns';
 import SyncAltIcon from '@esmalley/react-material-icons/SyncAlt';
@@ -192,8 +193,12 @@ const Roster = ({ organization_id, rosterStats, player_team_seasons, season }) =
   }
 
 
+  const getPlayerHref = (player_id: string) => {
+    return Url.player({ sport: path, player: players?.[player_id], slug: player_id });
+  };
+
   const handleClick = (player_id: string) => {
-    navigation.player(`/${path}/player/${player_id}`);
+    navigation.player(getPlayerHref(player_id));
   };
 
   const handleView = (value: string) => {
@@ -297,6 +302,7 @@ const Roster = ({ organization_id, rosterStats, player_team_seasons, season }) =
           secondaryKey = 'secondary'
           useAlternateLabel = {true}
           handleRowClick={handleClick}
+          getRowHref={getPlayerHref}
         />;
     }
 

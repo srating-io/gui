@@ -5,6 +5,7 @@ import React, { useTransition } from 'react';
 
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import HelperGame from '@/components/helpers/Game';
+import Url from '@/components/helpers/Url';
 import Locked from '@/components/generic/Billing/Locked';
 import { useRouter } from 'next/navigation';
 import { setLoading } from '@/redux/features/loading-slice';
@@ -47,10 +48,10 @@ const TableView = ({ sorted_games, team_id }) => {
     },
   ];
 
-  const handleGameClick = (game_id) => {
+  const handleGameClick = (game) => {
     dispatch(setLoading(true));
     startTransition(() => {
-      router.push(`/cbb/games/${game_id}`);
+      router.push(Url.game({ organization_id: game.organization_id, game }));
     });
   };
 
@@ -119,7 +120,7 @@ const TableView = ({ sorted_games, team_id }) => {
       <Tr
         style = {Objector.extender({}, trStyle, { backgroundColor: tdColor })}
         key={game.game_id}
-        onClick={() => { handleGameClick(game.game_id); }}
+        onClick={() => { handleGameClick(game); }}
       >
         {tableCells}
       </Tr>,

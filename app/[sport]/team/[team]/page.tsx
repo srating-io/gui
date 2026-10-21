@@ -1,11 +1,11 @@
 'use server';
 
 import { Metadata, ResolvingMetadata } from 'next';
-import Player, { getDecoratePlayer } from '../../../../Surface/Player';
+import Team, { getDecorateTeam } from '../../../../Surface/Team';
 
 
 type Props = {
-  params: Promise<{ sport: string; player_id: string }>;
+  params: Promise<{ sport: string; team: string }>;
   searchParams: Promise<{ [key: string]: string | undefined }>;
 };
 
@@ -17,53 +17,42 @@ export async function generateMetadata(
   const parameters = await params;
   const searchParameters = await searchParams;
 
-  const { player_id } = parameters;
+  const { team } = parameters;
   const season = searchParameters?.season || undefined;
 
-  const Surface = new Player({
+  const Surface = new Team({
     sport: parameters.sport,
   });
 
-  return Surface.getMetaData({ player_id, season });
+  return Surface.getMetaData({ team, season });
 }
 
 
 export default async function Page({ params, searchParams }: Props) {
   const parameters = await params;
   const searchParameters = await searchParams;
-  const { player_id } = parameters;
+  const { team } = parameters;
+
 
   const division_id = searchParameters?.division_id;
-  const player_team_season_id = searchParameters?.player_team_season_id;
   const season = searchParameters?.season;
-  const view = searchParameters?.view || 'stats';
-  const subview = searchParameters?.subview;
-  const trendsSeasons = searchParameters?.trendsSeasons as string[] | undefined;
+  const view = searchParameters?.view || 'schedule';
 
-  const Surface = new Player({
+  const Surface = new Team({
     sport: parameters.sport,
   });
 
-  const args: getDecoratePlayer = {
-    player_id,
-    player_team_season_id,
+  const args: getDecorateTeam = {
+    team,
     view,
   };
-
-  if (subview) {
-    args.subview = subview as string;
-  }
-
-  if (season) {
-    args.season = +season;
-  }
 
   if (division_id) {
     args.division_id = division_id;
   }
 
-  if (trendsSeasons && trendsSeasons.length) {
-    args.trendsSeasons = trendsSeasons;
+  if (season) {
+    args.season = +season;
   }
 
   return Surface.getDecorate(args);

@@ -1,11 +1,11 @@
 'use server';
 
 import { Metadata, ResolvingMetadata } from 'next';
-import Conference, { getDecorateConference } from '../../../../Surface/Conference';
+import Game, { getDecorateGame } from '../../../../Surface/Game';
 
 
 type Props = {
-  params: Promise<{ sport: string; conference_id: string }>;
+  params: Promise<{ sport: string; game: string }>;
   searchParams: Promise<{ [key: string]: string | undefined }>;
 };
 
@@ -15,41 +15,45 @@ export async function generateMetadata(
   parent: ResolvingMetadata,
 ): Promise<Metadata> {
   const parameters = await params;
-  const { conference_id } = parameters;
+  const { game } = await params;
 
-  const Surface = new Conference({
+  const Surface = new Game({
     sport: parameters.sport,
   });
 
-  return Surface.getMetaData({ conference_id });
+  return Surface.getMetaData({ game });
 }
+
 
 export default async function Page({ params, searchParams }: Props) {
   const parameters = await params;
   const searchParameters = await searchParams;
 
-  const { conference_id } = parameters;
-  const season = searchParameters?.season;
-  const view = searchParameters?.view || 'standings';
+  const { game } = parameters;
+  const division_id = searchParameters?.division_id;
+  const view = searchParameters?.view;
   const subview = searchParameters?.subview;
 
-
-  const Surface = new Conference({
+  const Surface = new Game({
     sport: parameters.sport,
   });
 
-  const args: getDecorateConference = {
-    conference_id,
-    view,
+  const args: getDecorateGame = {
+    game,
   };
+
+  if (view) {
+    args.view = view;
+  }
 
   if (subview) {
     args.subview = subview;
   }
 
-  if (season) {
-    args.season = +season;
+  if (division_id) {
+    args.division_id = division_id;
   }
 
   return Surface.getDecorate(args);
 }
+

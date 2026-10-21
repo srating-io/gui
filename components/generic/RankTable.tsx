@@ -24,6 +24,7 @@ const RankTable = (
     getRankSpanMax,
     secondaryKey,
     handleRowClick,
+    getRowHref,
     customSortComparator,
     useAlternateLabel = false,
   }:
@@ -40,6 +41,7 @@ const RankTable = (
     getRankSpanMax?: (row: object) => number,
     secondaryKey?: string,
     handleRowClick?: (id: string) => void,
+    getRowHref?: (id: string) => string,
     customSortComparator?: (order: string, orderBy: string, direction?: string) => (a: unknown, b: unknown) => number,
     useAlternateLabel?: boolean;
   },
@@ -196,8 +198,19 @@ const RankTable = (
         secondarySpan = <RankSpan key = {i} rank = {row[`${displayColumns[i]}_rank`]} max = {getMax(row)} useOrdinal = {true} />;
       }
 
+      const isLabelColumn = (
+        displayColumns[i] === 'name' ||
+        displayColumns[i] === 'team_name' ||
+        displayColumns[i] === 'game_details'
+      );
+      const rowHref = isLabelColumn && getRowHref ? getRowHref(row[rowKey]) : '';
+      const cellContent = row[displayColumns[i]] || defaultEmpty;
+
       tableCells.push(
-        <Td key = {i} style = {cellStyle}>{row[displayColumns[i]] || defaultEmpty}{secondarySpan}</Td>,
+        <Td key = {i} style = {cellStyle}>
+          {rowHref ? <a href = {rowHref} onClick = {(e) => e.preventDefault()} style = {{ color: 'inherit', textDecoration: 'none' }}>{cellContent}</a> : cellContent}
+          {secondarySpan}
+        </Td>,
       );
     }
 

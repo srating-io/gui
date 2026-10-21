@@ -2,6 +2,7 @@
 
 // import FavoritePicker from '@/components/generic/FavoritePicker';
 import HelperTeam from '@/components/helpers/Team';
+import Url from '@/components/helpers/Url';
 import { useAppSelector } from '@/redux/hooks';
 import Organization from '@/components/helpers/Organization';
 import GeneralHelper from '@/components/helpers/General';
@@ -154,7 +155,7 @@ const Client = ({ organization_id, division_id, coach_statistic_rankings, season
       return '/';
     }
 
-    return `/${path}/team/${team.team_id}?season=${season}`;
+    return Url.team({ sport: path, team, season });
   };
 
   const handleTeamClick = (e) => {

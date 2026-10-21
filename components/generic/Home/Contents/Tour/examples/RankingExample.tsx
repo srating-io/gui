@@ -10,6 +10,7 @@ import ArrowForwardIcon from '@esmalley/react-material-icons/ArrowForward';
 import { useRouter } from 'next/navigation';
 import { setLoading as setLoadingDisplay } from '@/redux/features/loading-slice';
 import Organization from '@/components/helpers/Organization';
+import Url from '@/components/helpers/Url';
 import TableColumns from '@/components/helpers/TableColumns';
 import { createDecorateRows, decorateHeaderRow } from '@/components/generic/Ranking/Contents/Client';
 import { useNavigation } from '@/components/hooks/useNavigation';
@@ -68,7 +69,7 @@ const RankingExample = ({ heatMap = false, showCta = true }: { heatMap?: boolean
   };
 
   const handleTeam = (team_id) => {
-    navigation.team(`/cbb/team/${team_id}?season=${season}`);
+    navigation.team(Url.team({ organization_id, slug: team_id, season }));
   };
 
   const handlePath = (e, path) => {

@@ -1,6 +1,7 @@
 'use client';
 
 import Team from '@/components/helpers/Team';
+import Url from '@/components/helpers/Url';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { useMemo, useState, useEffect, useRef } from 'react';
 
@@ -623,7 +624,7 @@ const BracketSlot = (
         }}
         onClick={() => {
           if (canNavigateToGame) {
-            navigation.game(`/${path}/games/${fantasy_bracket_slot.game_id}`);
+            navigation.game(Url.game({ sport: path, slug: fantasy_bracket_slot.game_id }));
           }
         }}
         hover = {Boolean(canNavigateToGame)}
@@ -647,7 +648,7 @@ const BracketSlot = (
             <div>
               <IconButton icon = {<QueryStatsIcon style = {{ fontSize: 18 }} />} value = 'view-matchup' onClick = {() => {
                 if (fantasy_bracket_slot.game_id) {
-                  navigation.game(`/${path}/games/${fantasy_bracket_slot.game_id}`);
+                  navigation.game(Url.game({ sport: path, slug: fantasy_bracket_slot.game_id }));
                 } else if (fantasy_bracket_slot.picked_first_team_id && fantasy_bracket_slot.picked_second_team_id) {
                   navigation.compare(`/${path}/compare?home_team_id=${fantasy_bracket_slot.picked_first_team_id}&away_team_id=${fantasy_bracket_slot.picked_second_team_id}&view=team&neutral_site=true`);
                 } else if (fantasy_bracket_slot.actual_first_team_id && fantasy_bracket_slot.actual_second_team_id) {

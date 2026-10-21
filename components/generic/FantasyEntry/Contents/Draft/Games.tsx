@@ -3,6 +3,7 @@
 import { useAppSelector } from '@/redux/hooks';
 import Blank from '@/components/generic/Blank';
 import Organization from '@/components/helpers/Organization';
+import Url from '@/components/helpers/Url';
 import Team from '@/components/helpers/Team';
 import { Dates } from '@esmalley/ts-utils';
 import { useNavigation } from '@/components/hooks/useNavigation';
@@ -88,7 +89,7 @@ const Games = ({ fantasy_entry_id }) => {
     });
 
     const getGameHref = () => {
-      return `/${path}/games/${game.game_id}`;
+      return Url.game({ sport: path, game });
     };
 
     const handleGameClick = (e) => {
@@ -97,7 +98,7 @@ const Games = ({ fantasy_entry_id }) => {
     };
 
     const getTeamHref = (team_id) => {
-      return `/${path}/team/${team_id}?season=${game.season}`;
+      return Url.team({ sport: path, team: game.teams[team_id], season: game.season });
     };
 
     const handleTeamClick = (e, team_id) => {

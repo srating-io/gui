@@ -2,10 +2,14 @@
 
 'use server';
 
+import StructuredData from '@/components/generic/StructuredData';
+import HelperStructuredData from '@/components/helpers/StructuredData';
 import Surface from '../Surface';
 import { useServerAPI } from '@/components/serverAPI';
 
 import PlayerHelper from '@/components/helpers/Player';
+import HelperTeam from '@/components/helpers/Team';
+import Organization from '@/components/helpers/Organization';
 import { notFound } from 'next/navigation';
 import ReduxWrapper from '@/components/generic/Player/ReduxWrapper';
 
@@ -28,10 +32,15 @@ import { Suspense } from 'react';
 import { ClientSkeleton as HeaderClientSkeleton } from '@/components/generic/Player/Header/Client';
 import NavBar from '@/components/generic/Player/NavBar';
 import ContentsWrapper from '@/components/generic/Player/ContentsWrapper';
+import Slug from '@/components/helpers/Slug';
+import Url from '@/components/helpers/Url';
 import { General } from '@srating-io/types';
 
 export type getDecoratePlayer = {
-  player_id: string;
+  /**
+   * The player's slug, or their id on a legacy url.
+   */
+  player: string;
   player_team_season_id?: string;
   view: string;
   subview?: string | null;
@@ -47,33 +56,73 @@ class Player extends Surface {
 
 
   async getMetaData(
-    { player_id, season = this.getCurrentSeason() }:
-    { player_id: string; season: number | string | null | undefined },
+    { player, season }:
+    { player: string; season: number | string | null | undefined },
   ) {
-    const { player } = await this.getData({ player_id });
+    const row = await this.requireEntity<General.Player>('player', player);
 
-    const name = new PlayerHelper({ player }).getName();
+    const name = new PlayerHelper({ player: row }).getName();
+    const position = row && row.position ? `${row.position} ` : '';
+    const seasonText = season ? `${season} ` : '';
+
+    const description = `${name} ${position}${seasonText}game log, season and career stats, and rating trends.`;
+
+    const path = this.getEntityPath('player', Slug.forRow('player', row) || player);
 
     return {
       title: `sRating | ${name}`,
-      description: 'View player game log, stats, trends',
+      description,
+      alternates: {
+        // ?view=, ?subview= and ?season= are tabs over the same player, not separate pages
+        canonical: path ? Url.canonical(path) : undefined,
+      },
       openGraph: {
         title: `${name} stats`,
-        description: `${name} game log, stats, trends`,
+        description,
       },
       twitter: {
         card: 'summary',
         title: `${name} stats`,
-        description: `${name} game log, stats, trends`,
+        description,
       },
     };
   }
 
-  async getData({ player_id }) {
+  /**
+   * Person plus the trail back through the team the player is on.
+   */
+  getStructuredData(
+    { player, team }:
+    { player: General.Player; team: General.Team | null },
+  ) {
+    const sport = this.getSport() || '';
+    const sportText = Organization.getSportText({ organization_id: this.getOrganizationID() });
+    const name = new PlayerHelper({ player }).getName();
+    const path = this.getEntityPath('player', Slug.forRow('player', player) || player.player_id);
+    const teamName = team ? new HelperTeam({ team }).getName() : null;
+    const teamPath = team ? this.getEntityPath('team', Slug.forRow('team', team) || team.team_id) : null;
+
+    return HelperStructuredData.graph([
+      HelperStructuredData.person({
+        name,
+        path,
+        jobTitle: player.position || null,
+        team: teamName,
+        teamPath,
+      }),
+      HelperStructuredData.breadcrumbs([
+        { name: sportText, path: `/${sport}/ranking` },
+        ...(teamName && teamPath ? [{ name: teamName, path: teamPath }] : []),
+        { name, path },
+      ]),
+    ]);
+  }
+
+  async getData({ player: resolvedPlayer, player_id }: { player?: General.Player; player_id: string }) {
     const revalidateSeconds = 12 * 60 * 60; // 12 hours
     const organization_id = this.getOrganizationID();
 
-    const player: General.Player = await useServerAPI({
+    const player: General.Player = resolvedPlayer || await useServerAPI({
       class: 'player',
       function: 'get',
       arguments: {
@@ -106,12 +155,15 @@ class Player extends Surface {
 
 
   async getDecorate(
-    { player_id, player_team_season_id, view, season, division_id = this.getDivisionID(), trendsSeasons }:
+    { player: segment, player_team_season_id, view, season, division_id = this.getDivisionID(), trendsSeasons }:
     getDecoratePlayer,
   ) {
     const organization_id = this.getOrganizationID();
 
-    const data = await this.getData({ player_id });
+    const resolved = await this.requireEntity<General.Player>('player', segment);
+    const player_id = resolved.player_id;
+
+    const data = await this.getData({ player: resolved, player_id });
     const { player, player_team_seasons, teams } = data;
 
     let team: General.Team | null = null;
@@ -195,17 +247,20 @@ class Player extends Surface {
 
 
     return (
-      <ReduxWrapper player = {player} player_team_season = {player_team_season} player_team_seasons = {player_team_seasons} team = {team} teams = {teams} season = {+viewSeason} view = {view} >
-        <HeaderClientWrapper>
-          <Suspense fallback = {<HeaderClientSkeleton />}>
-            <HeaderServer organization_id={organization_id} division_id={division_id} player_id = {player_id} team_id={team.team_id} player_team_season_id = {player_team_season_id} season = {viewSeason} />
-          </Suspense>
-        </HeaderClientWrapper>
-        <NavBar />
-        <ContentsWrapper>
-          {getContent()}
-        </ContentsWrapper>
-      </ReduxWrapper>
+      <>
+        <StructuredData data = {this.getStructuredData({ player, team })} />
+        <ReduxWrapper player = {player} player_team_season = {player_team_season} player_team_seasons = {player_team_seasons} team = {team} teams = {teams} season = {+viewSeason} view = {view} >
+          <HeaderClientWrapper>
+            <Suspense fallback = {<HeaderClientSkeleton />}>
+              <HeaderServer organization_id={organization_id} division_id={division_id} player_id = {player_id} team_id={team.team_id} player_team_season_id = {player_team_season_id} season = {viewSeason} />
+            </Suspense>
+          </HeaderClientWrapper>
+          <NavBar />
+          <ContentsWrapper>
+            {getContent()}
+          </ContentsWrapper>
+        </ReduxWrapper>
+      </>
     );
   }
 }

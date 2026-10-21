@@ -19,7 +19,12 @@ import PredictionLoader from '@/components/generic/Conference/Contents/Standings
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import ContentsWrapper from '@/components/generic/Conference/ContentsWrapper';
+import StructuredData from '@/components/generic/StructuredData';
+import HelperStructuredData from '@/components/helpers/StructuredData';
 import Surface from '../Surface';
+import Organization from '@/components/helpers/Organization';
+import Slug from '@/components/helpers/Slug';
+import Url from '@/components/helpers/Url';
 import { Basketball, Football, General } from '@srating-io/types';
 
 
@@ -33,7 +38,10 @@ type Data = {
 }
 
 export type getDecorateConference = {
-  conference_id: string;
+  /**
+   * The conference's slug, or its id on a legacy url.
+   */
+  conference: string;
   view: string;
   season?: number;
   subview?: string;
@@ -46,24 +54,52 @@ class Conference extends Surface {
   // }
 
 
-  async getMetaData({ conference_id }) {
-    const conference = await this.getConference({ conference_id });
+  async getMetaData({ conference, season }: { conference: string; season?: number | string | null }) {
+    const row = await this.requireEntity<General.Conference>('conference', conference);
+    const currentSeason = this.getCurrentSeason();
+    const displaySeason = season || currentSeason;
+    const canonicalSeason = season && +season !== currentSeason ? season : undefined;
 
-    const { name } = conference;
+    const name = row ? row.name : 'Unknown';
+    const sportText = Organization.getSportText({ organization_id: this.getOrganizationID() });
+
+    const description = `${name} ${sportText} ${displaySeason} standings, team ratings and conference trends.`;
+
+    const path = this.getEntityPath('conference', Slug.forRow('conference', row) || conference);
 
     return {
       title: `sRating | ${name}`,
-      description: 'View conference history and statistics',
+      description,
+      alternates: {
+        canonical: path ? Url.canonical(path, canonicalSeason) : undefined,
+      },
       openGraph: {
         title: name,
-        description: `${name} history, statistics`,
+        description,
       },
       twitter: {
         card: 'summary',
         title: name,
-        description: `${name} history, statistics`,
+        description,
       },
     };
+  }
+
+  /**
+   * SportsOrganization -- a conference is an organization of teams, not a team.
+   */
+  getStructuredData({ conference }: { conference: General.Conference }) {
+    const sport = this.getSport() || '';
+    const sportText = Organization.getSportText({ organization_id: this.getOrganizationID() });
+    const path = this.getEntityPath('conference', Slug.forRow('conference', conference) || conference.conference_id);
+
+    return HelperStructuredData.graph([
+      HelperStructuredData.conference({ name: conference.name, sport: sportText, path }),
+      HelperStructuredData.breadcrumbs([
+        { name: sportText, path: `/${sport}/ranking` },
+        { name: conference.name, path },
+      ]),
+    ]);
   }
 
   async getConference({ conference_id }): Promise<General.Conference> {
@@ -79,10 +115,13 @@ class Conference extends Surface {
   }
 
 
-  async getData({ organization_id, season, conference_id }): Promise<Data> {
+  async getData(
+    { organization_id, season, conference: resolvedConference, conference_id }:
+    { organization_id: string; season: number | string; conference?: General.Conference; conference_id: string },
+  ): Promise<Data> {
     const revalidateSeconds = 43200; // 60 * 60 * 12; // cache for 12 hours
 
-    const conference = await this.getConference({ conference_id });
+    const conference = resolvedConference || await this.getConference({ conference_id });
 
     const team_season_conferences: General.TeamSeasonConferences = await useServerAPI({
       class: 'team_season_conference',
@@ -143,11 +182,15 @@ class Conference extends Surface {
 
 
   async getDecorate(
-    { conference_id, season = this.getCurrentSeason(), view, subview }:
+    { conference: segment, season = this.getCurrentSeason(), view, subview }:
     getDecorateConference,
   ) {
     const organization_id = this.getOrganizationID();
-    const data = await this.getData({ organization_id, conference_id, season });
+
+    const resolved = await this.requireEntity<General.Conference>('conference', segment);
+    const conference_id = resolved.conference_id;
+
+    const data = await this.getData({ organization_id, conference: resolved, conference_id, season });
     const { conference, division_id } = data;
 
     if (!conference || !conference.conference_id) {
@@ -176,17 +219,20 @@ class Conference extends Surface {
 
 
     return (
-      <ReduxWrapper team_season_conferences = {data.team_season_conferences} teams = {data.teams} statistic_rankings = {data.statistic_rankings} elos = {data.elos} view = {view} subview = {subview}>
-        <PredictionLoader organization_id={organization_id} conference_id={conference_id} season={season} />
-        <HeaderClientWrapper>
-          <HeaderServer organization_id={organization_id} division_id={division_id} conference_id = {conference_id} season = {season} />
-        </HeaderClientWrapper>
-        <NavBar />
-        {/* <SubNavBar view = {view} /> */}
-        <ContentsWrapper>
-          {getContent()}
-        </ContentsWrapper>
-      </ReduxWrapper>
+      <>
+        <StructuredData data = {this.getStructuredData({ conference: data.conference })} />
+        <ReduxWrapper team_season_conferences = {data.team_season_conferences} teams = {data.teams} statistic_rankings = {data.statistic_rankings} elos = {data.elos} view = {view} subview = {subview}>
+          <PredictionLoader organization_id={organization_id} conference_id={conference_id} season={season} />
+          <HeaderClientWrapper>
+            <HeaderServer organization_id={organization_id} division_id={division_id} conference_id = {conference_id} season = {season} />
+          </HeaderClientWrapper>
+          <NavBar />
+          {/* <SubNavBar view = {view} /> */}
+          <ContentsWrapper>
+            {getContent()}
+          </ContentsWrapper>
+        </ReduxWrapper>
+      </>
     );
   }
 }

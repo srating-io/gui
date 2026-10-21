@@ -9,6 +9,7 @@ import { useScrollContext } from '@/contexts/scrollContext';
 import TableView from './TableView';
 import { Color, Dates } from '@esmalley/ts-utils';
 import Organization from '@/components/helpers/Organization';
+import Url from '@/components/helpers/Url';
 import HelperGeneral from '@/components/helpers/General';
 import Locked from '@/components/generic/Billing/Locked';
 import { ChartSequenceStrip, SequenceCell } from '@/components/generic/Chart';
@@ -94,7 +95,7 @@ const Client = ({ games, team_id }: {games: ScheduleResultsWithPrediction, team_
   const sorted_games = Object.values(games || {}).sort((a, b) => (a.start_date < b.start_date ? -1 : 1));
 
   const getGameHref = (game: ScheduleGameWithPrediction) => {
-    return `/${Organization.getPath({ organizations, organization_id: game.organization_id })}/games/${game.game_id}`;
+    return Url.game({ sport: Organization.getPath({ organizations, organization_id: game.organization_id }), game });
   };
 
   /**

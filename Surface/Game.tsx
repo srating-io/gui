@@ -46,18 +46,65 @@ import ContentsWrapper from '@/components/generic/Game/ContentsWrapper';
 
 import Organization from '@/components/helpers/Organization';
 import HelperGame from '@/components/helpers/Game';
-import { Suspense } from 'react';
+import { cache, Suspense } from 'react';
 import { notFound } from 'next/navigation';
+import StructuredData from '@/components/generic/StructuredData';
+import HelperStructuredData from '@/components/helpers/StructuredData';
 import Surface from '../Surface';
+import Slug from '@/components/helpers/Slug';
+import Url from '@/components/helpers/Url';
 import { General, Game as GameAPI } from '@srating-io/types';
 
 
 export type getDecorateGame = {
-  game_id: string;
+  /**
+   * The game's slug, or its id on a legacy url.
+   */
+  game: string;
   division_id?: string;
   view?: string;
   subview?: string;
 };
+
+const getGameData = cache(async (organization_id: string, game_id: string) => {
+  const revalidateSeconds = 30;
+  const games: GameAPI.getGamesResults = await useServerAPI({
+    class: 'game',
+    function: 'getGames',
+    arguments: {
+      game_id,
+    },
+    cache: revalidateSeconds,
+  });
+
+  const game = games[game_id];
+
+  if (!game) {
+    notFound();
+  }
+
+  const coach_team_seasons: General.CoachTeamSeasons = await useServerAPI({
+    class: 'coach_team_season',
+    function: 'read',
+    arguments: {
+      organization_id,
+      team_id: [game.away_team_id, game.home_team_id],
+      season: game.season,
+    },
+    cache: 60 * 60 * 12,
+  });
+
+  const coaches: General.Coaches = await useServerAPI({
+    class: 'coach',
+    function: 'read',
+    arguments: {
+      coach_id: Object.values(coach_team_seasons).map((r) => r.coach_id),
+    },
+    cache: 60 * 60 * 12,
+  });
+
+  return { game, coach_team_seasons, coaches };
+});
 
 class Game extends Surface {
   // constructor() {
@@ -65,79 +112,90 @@ class Game extends Surface {
   // }
 
 
-  async getMetaData({ game_id }) {
-    // const organization_id = this.getOrganizationID();
+  async getMetaData({ game: segment }: { game: string }) {
+    const organization_id = this.getOrganizationID();
 
-    // const sportText = Organization.getSportText({ organization_id });
+    const row = await this.requireEntity<General.Game>('game', segment);
 
-    const { game } = await this.getData({ game_id });
+    // getGames returns the row joined to its teams, which is what the title needs; the resolve
+    // above only tells us which game_id the slug meant
+    const { game } = await this.getData({ game_id: row.game_id });
 
     const Game = new HelperGame({
       game,
     });
 
+    const matchup = `${Game.getTeamName('away')} vs ${Game.getTeamName('home')}`;
+    const sportText = Organization.getSportText({ organization_id });
+    const date = game && game.start_datetime ? Game.getStartDate('M jS, Y') : '';
+
+    const description = `${matchup}${date ? ` on ${date}` : ''}: ${sportText} projection, matchup breakdown, box score and trends.`;
+
+    const path = this.getEntityPath('game', Slug.forRow('game', row) || segment);
+
     return {
-      title: `sRating | ${Game.getTeamName('away')} vs ${Game.getTeamName('home')}`,
-      description: 'View predicted result, matchup, and trends',
+      title: `sRating | ${matchup}`,
+      description,
+      alternates: {
+        canonical: path ? Url.canonical(path) : undefined,
+      },
       openGraph: {
-        title: `${Game.getTeamName('away')} vs ${Game.getTeamName('home')}`,
-        description: 'View predicted result, matchup, and trends',
+        title: matchup,
+        description,
       },
       twitter: {
         card: 'summary',
-        title: `${Game.getTeamName('away')} vs ${Game.getTeamName('home')}`,
-        description: 'View predicted result, matchup, and trends',
+        title: matchup,
+        description,
       },
     };
   }
 
+  /**
+   * SportsEvent. The one schema here a search engine shows as a result card rather than a link, so
+   * the scores are only attached once the game is final.
+   */
+  getStructuredData({ game }: { game: GameAPI.GameWithOddsAndTeams }) {
+    const sport = this.getSport() || '';
+    const sportText = Organization.getSportText({ organization_id: this.getOrganizationID() });
+    const Helper = new HelperGame({ game });
+
+    const away = game.teams ? game.teams[game.away_team_id] : null;
+    const home = game.teams ? game.teams[game.home_team_id] : null;
+
+    const awayName = Helper.getTeamName('away');
+    const homeName = Helper.getTeamName('home');
+    const path = this.getEntityPath('game', Slug.forRow('game', game) || game.game_id);
+
+    return HelperStructuredData.graph([
+      HelperStructuredData.game({
+        game,
+        awayName,
+        homeName,
+        awayPath: away ? this.getEntityPath('team', Slug.forRow('team', away) || away.team_id) : null,
+        homePath: home ? this.getEntityPath('team', Slug.forRow('team', home) || home.team_id) : null,
+        sport: sportText,
+        path,
+      }),
+      HelperStructuredData.breadcrumbs([
+        { name: sportText, path: `/${sport}/games` },
+        { name: `${awayName} at ${homeName}`, path },
+      ]),
+    ]);
+  }
+
   async getData({ game_id }) {
-    const organization_id = this.getOrganizationID();
-
-    const revalidateSeconds = 30;
-    const games: GameAPI.getGamesResults = await useServerAPI({
-      class: 'game',
-      function: 'getGames',
-      arguments: {
-        game_id,
-      },
-      cache: revalidateSeconds,
-    });
-
-    const game = games[game_id];
-
-    if (!game) {
-      notFound();
-    }
-
-    const coach_team_seasons: General.CoachTeamSeasons = await useServerAPI({
-      class: 'coach_team_season',
-      function: 'read',
-      arguments: {
-        organization_id,
-        team_id: [game.away_team_id, game.home_team_id],
-        season: game.season,
-      },
-      cache: 60 * 60 * 12,
-    });
-
-    const coaches: General.Coaches = await useServerAPI({
-      class: 'coach',
-      function: 'read',
-      arguments: {
-        coach_id: Object.values(coach_team_seasons).map((r) => r.coach_id),
-      },
-      cache: 60 * 60 * 12,
-    });
-
-    return { game, coach_team_seasons, coaches };
+    return getGameData(this.getOrganizationID(), game_id);
   }
 
   async getDecorate(
-    { game_id, division_id = this.getDivisionID(), view, subview }:
+    { game: segment, division_id = this.getDivisionID(), view, subview }:
     getDecorateGame,
   ) {
     const organization_id = this.getOrganizationID();
+    const resolved = await this.requireEntity<General.Game>('game', segment);
+    const game_id = resolved.game_id;
+
     const { game, coach_team_seasons, coaches } = await this.getData({ game_id });
 
     if (!game || !game.game_id) {
@@ -234,21 +292,24 @@ class Game extends Surface {
     };
 
     return (
-      <ReduxWrapper game = {game} coach_team_seasons = {coach_team_seasons} coaches = {coaches} view = {currentView} subview = {currentSubView}>
-        <Suspense key = {`${game_id}_statsloader`} fallback = {<StatsLoaderSkeleton />}>
-          <StatsLoaderServer game_ids = {[game_id]} coach_ids = {Object.keys(coaches)} organization_id = {organization_id} division_id = {division_id} season = {season} />
-        </Suspense>
-        <HeaderClientWrapper game = {game} coaches = {coaches} coach_team_seasons = {coach_team_seasons}>
-          <Suspense key = {`${game_id}_headerloader`}>
-            <HeaderServer game_id = {game_id} />
+      <>
+        <StructuredData data = {this.getStructuredData({ game })} />
+        <ReduxWrapper game = {game} coach_team_seasons = {coach_team_seasons} coaches = {coaches} view = {currentView} subview = {currentSubView}>
+          <Suspense key = {`${game_id}_statsloader`} fallback = {<StatsLoaderSkeleton />}>
+            <StatsLoaderServer game_ids = {[game_id]} coach_ids = {Object.keys(coaches)} organization_id = {organization_id} division_id = {division_id} season = {season} />
           </Suspense>
-        </HeaderClientWrapper>
-        <NavBar />
-        <PredictionLoader key = {`${game_id}_predictionloader`} game_id = {game_id} />
-        <ContentsWrapper>
-          {getContent()}
-        </ContentsWrapper>
-      </ReduxWrapper>
+          <HeaderClientWrapper game = {game} coaches = {coaches} coach_team_seasons = {coach_team_seasons}>
+            <Suspense key = {`${game_id}_headerloader`}>
+              <HeaderServer game_id = {game_id} />
+            </Suspense>
+          </HeaderClientWrapper>
+          <NavBar />
+          <PredictionLoader key = {`${game_id}_predictionloader`} game_id = {game_id} />
+          <ContentsWrapper>
+            {getContent()}
+          </ContentsWrapper>
+        </ReduxWrapper>
+      </>
     );
   }
 }

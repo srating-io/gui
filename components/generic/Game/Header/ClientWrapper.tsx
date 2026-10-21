@@ -1,6 +1,7 @@
 'use client';
 
 import HelperGame from '@/components/helpers/Game';
+import Url from '@/components/helpers/Url';
 import HelperTeam from '@/components/helpers/Team';
 import { useAppSelector } from '@/redux/hooks';
 import BackButton from '@/components/generic/BackButton';
@@ -75,15 +76,15 @@ const ClientWrapper = (
   }
 
   const getTeamHref = (team_id: string) => {
-    return `/${path}/team/${team_id}?season=${game.season}`;
+    return Url.team({ sport: path, team: game.teams[team_id], season: game.season });
   };
 
   const getConferenceHref = (conference_id: string) => {
-    return `/${path}/conference/${conference_id}?season=${game.season}`;
+    return Url.conference({ sport: path, conference: conferences?.[conference_id], slug: conference_id, season: game.season });
   };
 
   const getCoachHref = (coach_id: string) => {
-    return `/${path}/coach/${coach_id}?season=${game.season}`;
+    return Url.coach({ sport: path, coach: coaches?.[coach_id], slug: coach_id, season: game.season });
   };
 
   const handleTeamClick = (team_id: string) => {

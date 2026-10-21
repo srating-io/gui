@@ -10,6 +10,7 @@ import { setDataKey } from '@/redux/features/ranking-slice';
 import RankSpan from '../../RankSpan';
 import { getRows } from '../DataHandler';
 import Organization from '@/components/helpers/Organization';
+import Url from '@/components/helpers/Url';
 // import { CBBRankingTable } from '@/types/cbb';
 import { getConferenceChips } from '../../ConferenceChips';
 import TableColumns from '@/components/helpers/TableColumns';
@@ -94,6 +95,7 @@ export type DecorateRowsOptions = {
    * excerpt as the bottom of the league.
    */
   max?: number;
+  getRowHref?: (row) => string;
 };
 
 /**
@@ -103,7 +105,7 @@ export type DecorateRowsOptions = {
  * anything the renderer needs to know beyond the row itself has to be closed over.
  */
 export const createDecorateRows = (
-  { heatMap = false, max: maxOverride }: DecorateRowsOptions = {},
+  { heatMap = false, max: maxOverride, getRowHref }: DecorateRowsOptions = {},
 ) => <T extends (Basketball.RankingTable | Football.RankingTable), >(
   {
     rows,
@@ -325,8 +327,13 @@ export const createDecorateRows = (
           );
         }
 
+        const rowHref = getRowHref ? getRowHref(row) : '';
+        const content = <>{classSpan}{row[displayColumns[i]]}{secondarySpan}</>;
+
         tableCells.push(
-          <Td key = {i} style = {cellStyle}>{classSpan}{row[displayColumns[i]]}{secondarySpan}</Td>,
+          <Td key = {i} style = {cellStyle}>
+            {rowHref ? <a href = {rowHref} onClick = {(e) => e.preventDefault()} style = {{ color: 'inherit', textDecoration: 'none' }}>{content}</a> : content}
+          </Td>,
         );
       } else {
         // if (headCell.id === 'rank') {
@@ -357,8 +364,13 @@ export const createDecorateRows = (
           }
         }
 
+        const rowHref = displayColumns[i] === 'name' && getRowHref ? getRowHref(row) : '';
+
         tableCells.push(
-          <Td key = {i} style = {cellStyle}>{text}{rankSpan}</Td>,
+          <Td key = {i} style = {cellStyle}>
+            {rowHref ? <a href = {rowHref} onClick = {(e) => e.preventDefault()} style = {{ color: 'inherit', textDecoration: 'none' }}>{text}</a> : text}
+            {rankSpan}
+          </Td>,
         );
       }
     }
@@ -656,9 +668,26 @@ const Client = ({ generated, organization_id, division_id, season, view }) => {
     return measures;
   }, [data, selectedConferences, organization_id, view]);
 
-  // rebuilt only when the heat toggle moves; VirtualTable re-renders every visible row when the
-  // renderer's identity changes, which is not something a hover or a resize should be paying for
-  const rowRenderer = useMemo(() => createDecorateRows({ heatMap }), [heatMap]);
+  // rebuilt only when the heat toggle or route context moves; VirtualTable re-renders every visible
+  // row when the renderer's identity changes
+  const rowRenderer = useMemo(() => createDecorateRows({
+    heatMap,
+    getRowHref: (row) => {
+      if (view === 'team' && 'team_id' in row) {
+        return Url.team({ sport: currentPath, slug: row.slug || row.team_id, season });
+      }
+      if ((view === 'player' || view === 'transfer') && 'player_id' in row) {
+        return Url.player({ sport: currentPath, slug: row.slug || row.player_id, season });
+      }
+      if (view === 'conference' && 'conference_id' in row) {
+        return Url.conference({ sport: currentPath, slug: row.slug || row.conference_id, season });
+      }
+      if (view === 'coach' && 'coach_id' in row) {
+        return Url.coach({ sport: currentPath, slug: row.slug || row.coach_id, season });
+      }
+      return '';
+    },
+  }), [heatMap, view, currentPath, season]);
 
   // both memos sit above this return, not below it: a hook that runs only on the renders where
   // the data has arrived changes the hook count between renders, which React treats as an error
@@ -685,33 +714,35 @@ const Client = ({ generated, organization_id, division_id, season, view }) => {
     dispatch(setDataKey({ key: 'orderBy', value: id }));
   };
 
-  const handleTeam = (team_id) => {
+  // each handler takes the row rather than the id: the row is what carries the slug, and a url
+  // built from the id would 308 on every click
+  const handleTeam = (row) => {
     if (tableRef && tableRef.current?.parentElement) {
       dispatch(setDataKey({ key: 'tableScrollTop', value: tableRef.current?.parentElement.scrollTop }));
     }
-    navigation.team(`/${currentPath}/team/${team_id}?season=${season}`);
+    navigation.team(Url.team({ sport: currentPath, slug: row.slug || row.team_id, season }));
   };
 
-  const handlePlayer = (player_id) => {
+  const handlePlayer = (row) => {
     if (tableRef && tableRef.current?.parentElement) {
       dispatch(setDataKey({ key: 'tableScrollTop', value: tableRef.current?.parentElement.scrollTop }));
     }
 
-    navigation.player(`/${currentPath}/player/${player_id}?season=${season}`);
+    navigation.player(Url.player({ sport: currentPath, slug: row.slug || row.player_id, season }));
   };
 
-  const handleConference = (conference_id) => {
+  const handleConference = (row) => {
     if (tableRef && tableRef.current?.parentElement) {
       dispatch(setDataKey({ key: 'tableScrollTop', value: tableRef.current?.parentElement.scrollTop }));
     }
-    navigation.conference(`/${currentPath}/conference/${conference_id}?season=${season}`);
+    navigation.conference(Url.conference({ sport: currentPath, slug: row.slug || row.conference_id, season }));
   };
 
-  const handleCoach = (coach_id) => {
+  const handleCoach = (row) => {
     if (tableRef && tableRef.current?.parentElement) {
       dispatch(setDataKey({ key: 'tableScrollTop', value: tableRef.current?.parentElement.scrollTop }));
     }
-    navigation.coach(`/${currentPath}/coach/${coach_id}?season=${season}`);
+    navigation.coach(Url.coach({ sport: currentPath, slug: row.slug || row.coach_id, season }));
   };
 
   const descendingComparator = (a, b, orderBy) => {
@@ -926,7 +957,12 @@ const Client = ({ generated, organization_id, division_id, season, view }) => {
           bottomLeft: 'Struggling both ends',
           bottomRight: 'Offence carries them',
         }}
-        onSelect = {(team_id) => { handleTeam(team_id); }}
+        onSelect = {(team_id) => {
+          const row = allRows.find((r) => 'team_id' in r && r.team_id === team_id);
+          if (row) {
+            handleTeam(row);
+          }
+        }}
         height = {chartHeight}
       />
     );
@@ -1057,25 +1093,25 @@ const Client = ({ generated, organization_id, division_id, season, view }) => {
               height={tableStyle.height}
               handleRowClick={(row) => {
                 if (view === 'team' && 'team_id' in row) {
-                  handleTeam(row.team_id);
+                  handleTeam(row);
                 }
                 if (
                   (view === 'player' || view === 'transfer') &&
                   'player_id' in row
                 ) {
-                  handlePlayer(row.player_id);
+                  handlePlayer(row);
                 }
                 if (
                   view === 'conference' &&
                   'conference_id' in row
                 ) {
-                  handleConference(row.conference_id);
+                  handleConference(row);
                 }
                 if (
                   view === 'coach' &&
                   'coach_id' in row
                 ) {
-                  handleCoach(row.coach_id);
+                  handleCoach(row);
                 }
               }}
               decorateRows={rowRenderer}

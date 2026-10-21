@@ -5,7 +5,7 @@ import Coach, { getDecorateCoach } from '../../../../Surface/Coach';
 
 
 type Props = {
-  params: Promise<{ sport: string; coach_id: string }>;
+  params: Promise<{ sport: string; coach: string }>;
   searchParams: Promise<{ [key: string]: string | undefined }>;
 };
 
@@ -15,21 +15,22 @@ export async function generateMetadata(
   parent: ResolvingMetadata,
 ): Promise<Metadata> {
   const parameters = await params;
-  // const searchParameters = await searchParams;
-  const { coach_id } = parameters;
+  const searchParameters = await searchParams;
+  const { coach } = parameters;
+  const season = searchParameters?.season || undefined;
 
   const Surface = new Coach({
     sport: parameters.sport,
   });
 
-  return Surface.getMetaData({ coach_id });
+  return Surface.getMetaData({ coach, season });
 }
 
 
 export default async function Page({ params, searchParams }: Props) {
   const parameters = await params;
   const searchParameters = await searchParams;
-  const { coach_id } = parameters;
+  const { coach } = parameters;
 
   const season = searchParameters?.season;
   const view = searchParameters.view || 'trends';
@@ -39,7 +40,7 @@ export default async function Page({ params, searchParams }: Props) {
   });
 
   const args: getDecorateCoach = {
-    coach_id,
+    coach,
     view,
   };
 

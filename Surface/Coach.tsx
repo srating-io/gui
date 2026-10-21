@@ -18,7 +18,12 @@ import NavBar from '@/components/generic/Coach/NavBar';
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import ContentsWrapper from '@/components/generic/Coach/ContentsWrapper';
+import StructuredData from '@/components/generic/StructuredData';
+import HelperStructuredData from '@/components/helpers/StructuredData';
 import Surface from '../Surface';
+import Organization from '@/components/helpers/Organization';
+import Slug from '@/components/helpers/Slug';
+import Url from '@/components/helpers/Url';
 import { Basketball, Football, General } from '@srating-io/types';
 
 type Data = {
@@ -30,7 +35,10 @@ type Data = {
 }
 
 export type getDecorateCoach = {
-  coach_id: string;
+  /**
+   * The coach's slug, or their id on a legacy url.
+   */
+  coach: string;
   view: string;
   season?: number;
 };
@@ -41,24 +49,53 @@ class Coach extends Surface {
   // }
 
 
-  async getMetaData({ coach_id }) {
-    const coach = await this.getCoach({ coach_id });
+  async getMetaData({ coach, season }: { coach: string; season?: number | string | null }) {
+    const row = await this.requireEntity<General.Coach>('coach', coach);
+    const currentSeason = this.getCurrentSeason();
+    const canonicalSeason = season && +season !== currentSeason ? season : undefined;
 
-    const name = `${coach.first_name} ${coach.last_name}`;
+    const name = row ? `${row.first_name} ${row.last_name}` : 'Unknown';
+    const sportText = Organization.getSportText({ organization_id: this.getOrganizationID() });
+
+    const description = `${name} ${sportText} coaching record by season, team history and rating trends.`;
+
+    const path = this.getEntityPath('coach', Slug.forRow('coach', row) || coach);
 
     return {
       title: `sRating | ${name}`,
-      description: 'View coach history and statistics',
+      description,
+      alternates: {
+        canonical: path ? Url.canonical(path, canonicalSeason) : undefined,
+      },
       openGraph: {
         title: name,
-        description: `${name} history, statistics`,
+        description,
       },
       twitter: {
         card: 'summary',
         title: name,
-        description: `${name} history, statistics`,
+        description,
       },
     };
+  }
+
+  /**
+   * Person, with the role spelled out -- a coach and a player are both schema.org Persons, and
+   * jobTitle is the only thing telling them apart.
+   */
+  getStructuredData({ coach }: { coach: General.Coach }) {
+    const sport = this.getSport() || '';
+    const sportText = Organization.getSportText({ organization_id: this.getOrganizationID() });
+    const name = `${coach.first_name} ${coach.last_name}`;
+    const path = this.getEntityPath('coach', Slug.forRow('coach', coach) || coach.coach_id);
+
+    return HelperStructuredData.graph([
+      HelperStructuredData.person({ name, path, jobTitle: 'Head Coach' }),
+      HelperStructuredData.breadcrumbs([
+        { name: sportText, path: `/${sport}/ranking` },
+        { name, path },
+      ]),
+    ]);
   }
 
   async getCoach({ coach_id }) {
@@ -74,10 +111,10 @@ class Coach extends Surface {
   }
 
 
-  async getData({ organization_id, coach_id, season }): Promise<Data> {
+  async getData({ organization_id, coach: resolvedCoach, coach_id, season }: { organization_id: string; coach?: General.Coach; coach_id: string; season: number | string }): Promise<Data> {
     const revalidateSeconds = 43200; // 60 * 60 * 12; // cache for 12 hours
 
-    const coach = await this.getCoach({ coach_id });
+    const coach = resolvedCoach || await this.getCoach({ coach_id });
 
     const coach_team_seasons: General.CoachTeamSeasons = await useServerAPI({
       class: 'coach_team_season',
@@ -128,12 +165,15 @@ class Coach extends Surface {
 
 
   async getDecorate(
-    { coach_id, season = this.getCurrentSeason(), view }:
+    { coach: segment, season = this.getCurrentSeason(), view }:
     getDecorateCoach,
   ) {
     const organization_id = this.getOrganizationID();
 
-    const data = await this.getData({ organization_id, coach_id, season });
+    const resolved = await this.requireEntity<General.Coach>('coach', segment);
+    const coach_id = resolved.coach_id;
+
+    const data = await this.getData({ organization_id, coach: resolved, coach_id, season });
     const { coach, division_id } = data;
 
     if (!coach || !coach.coach_id) {
@@ -162,17 +202,20 @@ class Coach extends Surface {
     };
 
     return (
-      <ReduxWrapper coach = {data.coach} coach_team_seasons = {data.coach_team_seasons} teams = {data.teams} statistic_rankings = {data.statistic_rankings} view = {view}>
-        <HeaderClientWrapper>
-          <Suspense fallback = {<HeaderClientSkeleon />}>
-            <HeaderServer organization_id={organization_id} division_id={division_id} coach_id = {coach_id} season = {season} />
-          </Suspense>
-        </HeaderClientWrapper>
-        <NavBar />
-        <ContentsWrapper>
-          {getContent()}
-        </ContentsWrapper>
-      </ReduxWrapper>
+      <>
+        <StructuredData data = {this.getStructuredData({ coach: data.coach })} />
+        <ReduxWrapper coach = {data.coach} coach_team_seasons = {data.coach_team_seasons} teams = {data.teams} statistic_rankings = {data.statistic_rankings} view = {view}>
+          <HeaderClientWrapper>
+            <Suspense fallback = {<HeaderClientSkeleon />}>
+              <HeaderServer organization_id={organization_id} division_id={division_id} coach_id = {coach_id} season = {season} />
+            </Suspense>
+          </HeaderClientWrapper>
+          <NavBar />
+          <ContentsWrapper>
+            {getContent()}
+          </ContentsWrapper>
+        </ReduxWrapper>
+      </>
     );
   }
 }

@@ -9,6 +9,7 @@ import { footerNavigationHeight } from '@/components/generic/FooterNavigation';
 import { headerBarHeight } from '@/components/generic/Header';
 import RankTable from '@/components/generic/RankTable';
 import HelperTeam from '@/components/helpers/Team';
+import Url from '@/components/helpers/Url';
 import Organization from '@/components/helpers/Organization';
 import TableColumns from '@/components/helpers/TableColumns';
 import ClassSpan from '@/components/generic/ClassSpan';
@@ -168,8 +169,12 @@ const Client = ({ player_statistic_rankings, players, player_team_seasons }) => 
     return TableColumns.getViewableColumns({ organization_id, view: 'compare', columnView, customColumns: [], positions: [position], career: false });
   };
 
+  const getPlayerHref = (player_id: string) => {
+    return Url.player({ sport: path, player: players?.[player_id], slug: player_id });
+  };
+
   const handleClick = (player_id: string) => {
-    navigation.player(`/${path}/player/${player_id}`);
+    navigation.player(getPlayerHref(player_id));
   };
 
 
@@ -271,6 +276,7 @@ const Client = ({ player_statistic_rankings, players, player_team_seasons }) => 
         sessionStorageKey = {sessionStorageKey}
         getRankSpanMax = {() => 5300} // todo update when implementing CFB compare tool
         handleRowClick={handleClick}
+        getRowHref={getPlayerHref}
       />
     );
   };

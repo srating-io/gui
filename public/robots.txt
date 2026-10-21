@@ -90,3 +90,5 @@ Disallow: /dashboard
 
 User-agent: *
 Disallow: /
+
+Sitemap: https://srating.io/sitemap.xml

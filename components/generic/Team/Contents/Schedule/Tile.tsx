@@ -5,6 +5,7 @@ import {
 } from 'react';
 
 import HelperGame from '@/components/helpers/Game';
+import Url from '@/components/helpers/Url';
 
 import Locked from '@/components/generic/Billing/Locked';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
@@ -96,7 +97,7 @@ const Tile = (
   };
 
   const getGameHref = () => {
-    return `/${path}/games/${game.game_id}`;
+    return Url.game({ sport: path, game });
   };
 
   const handleGameClick = (e) => {
@@ -112,7 +113,7 @@ const Tile = (
   };
 
   const getTeamHref = (team_id) => {
-    return `/${path}/team/${team_id}?season=${game.season}`;
+    return Url.team({ sport: path, team: game.teams[team_id], season: game.season });
   };
 
   const handleTeamClick = (e, team_id) => {

@@ -1,6 +1,7 @@
 'use client';
 
 import HelperGame from '@/components/helpers/Game';
+import Url from '@/components/helpers/Url';
 import Indicator from '@/components/generic/Indicator';
 import Pin from '@/components/generic/Pin';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
@@ -59,7 +60,7 @@ const Tile = ({ game }) => {
       dispatch(setDataKey({ key: 'scrollTop', value: scrollRef.current.scrollTop }));
     }
     dispatch(updateGameSort(null));
-    navigation.game(`/${path}/games/${game.game_id}`);
+    navigation.game(Url.game({ sport: path, game }));
   };
 
 

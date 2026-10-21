@@ -3,6 +3,7 @@
 import Blank from '@/components/generic/Blank';
 import RankTable from '@/components/generic/RankTable';
 import Organization from '@/components/helpers/Organization';
+import Url from '@/components/helpers/Url';
 import TableColumns from '@/components/helpers/TableColumns';
 import { useNavigation } from '@/components/hooks/useNavigation';
 import { useAppSelector } from '@/redux/hooks';
@@ -48,7 +49,7 @@ const Roster = (
   const defaultPlayerTableSort = 'fantasy_points';
 
   const handleClick = (player_id: string) => {
-    navigation.player(`/${path}/player/${player_id}`);
+    navigation.player(Url.player({ sport: path, slug: player_id }));
   };
 
 

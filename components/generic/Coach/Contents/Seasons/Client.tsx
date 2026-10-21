@@ -1,6 +1,7 @@
 'use client';
 
 import HelperTeam from '@/components/helpers/Team';
+import Url from '@/components/helpers/Url';
 import { useAppSelector } from '@/redux/hooks';
 import Organization from '@/components/helpers/Organization';
 import RankTable from '@/components/generic/RankTable';
@@ -95,9 +96,21 @@ const Client = ({ organization_id, division_id, coach_team_seasons, teams, stati
     },
   };
 
-  const handleClick = (coach_team_season_id: string) => {
+  const getTeamHref = (coach_team_season_id: string) => {
     const coach_team_season = coach_team_seasons[coach_team_season_id];
-    navigation.team(`/${path}/team/${coach_team_season.team_id}?season=${coach_team_season.season}`);
+    if (!coach_team_season) {
+      return '';
+    }
+    return Url.team({
+      sport: path,
+      team: teams?.[coach_team_season.team_id],
+      slug: coach_team_season.team_id,
+      season: coach_team_season.season,
+    });
+  };
+
+  const handleClick = (coach_team_season_id: string) => {
+    navigation.team(getTeamHref(coach_team_season_id));
   };
 
   const getRankSpanMax = (row) => {
@@ -118,6 +131,7 @@ const Client = ({ organization_id, division_id, coach_team_seasons, teams, stati
         sessionStorageKey = {sessionStorageKey}
         getRankSpanMax={getRankSpanMax}
         handleRowClick={handleClick}
+        getRowHref={getTeamHref}
       />
     </div>
   );
