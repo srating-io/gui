@@ -7,41 +7,25 @@ import { useAppDispatch } from '@/redux/hooks';
 import { useEffect } from 'react';
 import { getStore } from '@/app/StoreProvider';
 import { Objector } from '@esmalley/ts-utils';
+import { buildRankingArguments } from '@/components/generic/Ranking/shared';
 
 export const getCachedDataKey = ({ organization_id, division_id, season, view, career, career_active }) => {
   return `${organization_id}${division_id}${season}${view}${career}${career_active}_ranking_data`;
 };
 
-const Loader = ({ organization_id, division_id, season, view, career, career_active }) => {
+const Loader = ({ organization_id, division_id, season, view, career, career_active, grant }) => {
   const dispatch = useAppDispatch();
 
   useEffect(() => {
     const controller = new AbortController();
 
-    const seconds = 60 * 60; // cache for 1 hours
-    let fxn = 'getTeamRanking';
-    if (view === 'player') {
-      fxn = 'getPlayerRanking';
-    } else if (view === 'transfer') {
-      fxn = 'getTransferRanking';
-    } else if (view === 'conference') {
-      fxn = 'getConferenceRanking';
-    } else if (view === 'coach') {
-      fxn = 'getCoachRanking';
-    }
-
+    // The api server decides the ttl, from the grant the server component signed. Passing a
+    // number here would do nothing -- a browser cannot be trusted with one.
     const dataArgs = {
       class: 'ranking',
       function: 'load',
-      arguments: {
-        organization_id,
-        division_id,
-        season,
-        fxn,
-        career,
-        career_active,
-      },
-      cache: seconds,
+      arguments: buildRankingArguments({ organization_id, division_id, season, view, career, career_active }),
+      grant,
     };
 
     const store = getStore();
@@ -102,7 +86,7 @@ const Loader = ({ organization_id, division_id, season, view, career, career_act
     return () => {
       controller.abort();
     };
-  }, [view, season, organization_id, division_id, career, career_active, dispatch]);
+  }, [view, season, organization_id, division_id, career, career_active, grant, dispatch]);
 
   return null;
 };

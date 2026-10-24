@@ -6,6 +6,8 @@ import Organization from '@/components/helpers/Organization';
 import ContentsWrapper from '@/components/generic/FantasyGroup/ContentsWrapper';
 import NavBar from '@/components/generic/FantasyGroup/NavBar';
 import { useServerAPI } from '@/components/serverAPI';
+import { buildRankingArguments } from '@/components/generic/Ranking/shared';
+import { mintCacheGrant } from '@/components/cacheGrant.server';
 
 import HomeClientWrapper from '@/components/generic/FantasyGroup/Contents/Home/ClientWrapper';
 import { Client as HomeClient } from '@/components/generic/FantasyGroup/Contents/Home/Client';
@@ -116,9 +118,26 @@ class FantasyGroup extends Surface {
 
     const getContents = () => {
       if (view === 'draft') {
+        // The draft board's player ranking is loaded in the browser, so its ttl is signed here
+        // rather than sent from there. Same call as the ranking page, so the same grant shape.
+        const rankingGrant = mintCacheGrant({
+          class: 'ranking',
+          function: 'load',
+          arguments: buildRankingArguments({
+            organization_id: fantasy_group.organization_id,
+            division_id: fantasy_group.division_id,
+            season: fantasy_group.season,
+            view: 'player',
+            career: 0,
+            career_active: 0,
+          }),
+          cache: 60 * 60,
+          public: true,
+        });
+
         return (
           <DraftClientWrapper>
-            <DraftClient fantasy_group_id={fantasy_group_id} />
+            <DraftClient fantasy_group_id={fantasy_group_id} rankingGrant={rankingGrant} />
           </DraftClientWrapper>
         );
       }

@@ -8,6 +8,8 @@ import { Client, ClientSkeleton as ContentsClientSkeleton } from '@/components/g
 import Base from '@/components/generic/Ranking/Base';
 import Organization from '@/components/helpers/Organization';
 import Loader from '@/components/generic/Ranking/Contents/Loader';
+import { buildRankingArguments } from '@/components/generic/Ranking/shared';
+import { mintCacheGrant } from '@/components/cacheGrant.server';
 import Surface from '../Surface';
 
 export type getDecorateRanking ={
@@ -75,6 +77,20 @@ class Ranking extends Surface {
 
     const generated = new Date().getTime();
 
+    // Loader runs in the browser, which cannot be trusted with a cache ttl, so the ttl is
+    // decided and signed here. `public` because ranking:load takes no session and resolves
+    // through cache:handle on a class with no subscription gated columns, so a logged in and a
+    // logged out visitor can share one entry.
+    const rankingArguments = buildRankingArguments({ organization_id, division_id, season, view, career, career_active });
+
+    const rankingGrant = mintCacheGrant({
+      class: 'ranking',
+      function: 'load',
+      arguments: rankingArguments,
+      cache: 60 * 60,
+      public: true,
+    });
+
     return (
       <>
         <Base organization_id = {organization_id} division_id = {division_id} season = {season} view = {view}>
@@ -86,6 +102,7 @@ class Ranking extends Surface {
             view = {view}
             career = {career}
             career_active = {career_active}
+            grant = {rankingGrant}
           />
           <ContentsClientWrapper>
             <Client generated = {generated} organization_id = {organization_id} division_id = {division_id} season = {season} view = {view} />

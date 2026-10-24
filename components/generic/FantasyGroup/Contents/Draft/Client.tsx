@@ -46,7 +46,7 @@ const ClientSkeleton = () => {
   );
 };
 
-const Client = ({ fantasy_group_id }) => {
+const Client = ({ fantasy_group_id, rankingGrant }) => {
   const theme = useTheme();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
@@ -75,7 +75,7 @@ const Client = ({ fantasy_group_id }) => {
         {
           fantasy_group &&
           fantasy_group.fantasy_group_id ?
-          <Loader organization_id={fantasy_group.organization_id} division_id={fantasy_group.division_id} season = {fantasy_group.season} view = 'player' career={0} career_active={0} />
+          <Loader organization_id={fantasy_group.organization_id} division_id={fantasy_group.division_id} season = {fantasy_group.season} view = 'player' career={0} career_active={0} grant={rankingGrant} />
             : ''
         }
         {
