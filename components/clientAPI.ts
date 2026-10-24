@@ -23,7 +23,13 @@ export interface ClientAPIRequest {
   class: string;
   function: string;
   arguments: unknown;
-  cache?: number;
+  /**
+   * A grant minted by a server component, forwarded untouched. This replaced a `cache` number:
+   * the api server will not take a ttl from the browser, because the console can send anything
+   * this can. A server component decides the ttl and signs it instead -- see
+   * components/cacheGrant.server.ts. Omitted means the read is not cached.
+   */
+  grant?: string;
 }
 
 interface ApiResponse {
@@ -154,12 +160,21 @@ export async function useClientAPI(args: ClientAPIRequest, optional_fetch_args: 
     headers['X-KRYPTOS-ID'] = kryptos;
   }
 
+  if (args.grant) {
+    headers['X-CACHE-GRANT'] = args.grant;
+  }
+
+  // the grant travels as a header, so it has no business in the body as well
+  const body: Record<string, unknown> = { ...args };
+
+  delete body.grant;
+
   // dont use Objector.extender here... things like AbortSignal need to keep their object reference
   const fetchArgs: RequestInit = {
     ...optional_fetch_args,
     method: 'POST',
     headers,
-    body: JSON.stringify(args),
+    body: JSON.stringify(body),
   };
 
   let fetchRequest = await executeFetch(url, fetchArgs, args, false);

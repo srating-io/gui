@@ -33,6 +33,9 @@ Prerequisites: typescript, nodejs, npm.
     SERVER_HOST=localhost
     SERVER_PORT=3500
     SERVER_SECRET=my_unrestricted_api_key
+    # must match cache_grant_key in srating.io-servers/configuration.ts. without it no
+    # client side read is cached, which is quiet rather than fatal. never NEXT_PUBLIC_
+    CACHE_GRANT_KEY=base64_32_bytes_from_openssl_rand_base64_32
     SERVER_ENVIRONMENT=development
 
     NEXT_PUBLIC_CLIENT_PROTOCAL=http
