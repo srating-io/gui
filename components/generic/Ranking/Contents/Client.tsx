@@ -585,6 +585,7 @@ const Client = ({ generated, organization_id, division_id, season, view }) => {
   const tableFullscreen = useAppSelector((state) => state.rankingReducer.tableFullscreen);
   const chartView = useAppSelector((state) => state.rankingReducer.chartView);
   const chart = useAppSelector((state) => state.rankingReducer.chart);
+  const searchValue = useAppSelector((state) => state.rankingReducer.searchValue);
   const distributionColumn = useAppSelector((state) => state.rankingReducer.distributionColumn);
   const heatMap = useAppSelector((state) => state.rankingReducer.heatMap);
   const positions = useAppSelector((state) => state.displayReducer.positions);
@@ -1061,9 +1062,20 @@ const Client = ({ generated, organization_id, division_id, season, view }) => {
     }
 
     // one row left after the search is the reader pointing at a team, so that is the one to mark
-    const marker = (rows.length === 1 && typeof rows[0][column] === 'number') ?
+    let marker = (rows.length === 1 && typeof rows[0][column] === 'number') ?
       { value: rows[0][column], label: rows[0].name } :
       null;
+
+    if (
+      !marker &&
+      searchValue &&
+      Array.isArray(filteredRows) &&
+      rows.length &&
+      typeof rows[0][column] === 'number'
+    ) {
+      // just pick the first row
+      marker = { value: rows[0][column], label: rows[0].name };
+    }
 
     const label = (headCells[column] && headCells[column].getLabel()) || column;
 
