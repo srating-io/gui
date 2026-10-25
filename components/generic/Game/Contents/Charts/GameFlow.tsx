@@ -65,10 +65,14 @@ const GameFlow = (
     0.5 :
     (probabilityMax - 50) / (probabilityMax - probabilityMin);
 
+
+  // todo, this needs to be implemented with my data, then pay gated
+  const enabled = false;
+
   return (
     <div>
       {
-        hasProbability ?
+        hasProbability && enabled ?
           <div>
             <Typography type = 'body1' style = {{ textAlign: 'left', padding: '0px 10px' }}>Win probability</Typography>
             <div style = {{ height: 190, padding: '0px 5px' }}>
