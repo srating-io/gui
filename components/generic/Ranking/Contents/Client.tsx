@@ -1104,7 +1104,7 @@ const Client = ({ generated, organization_id, division_id, season, view }) => {
 
     return (
       <>
-        <div style = {{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
+        <div style = {{ display: 'flex', justifyContent: 'left', marginBottom: 10 }}>
           <DistributionPicker
             organization_id = {organization_id}
             selected = {column}
