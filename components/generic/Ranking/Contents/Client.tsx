@@ -9,6 +9,7 @@ import CheckIcon from '@esmalley/react-material-icons/Check';
 import { setDataKey } from '@/redux/features/ranking-slice';
 import RankSpan from '../../RankSpan';
 import { getRows } from '../DataHandler';
+import DistributionPicker, { getDistributionColumns } from './DistributionPicker';
 import Organization from '@/components/helpers/Organization';
 import Url from '@/components/helpers/Url';
 // import { CBBRankingTable } from '@/types/cbb';
@@ -525,6 +526,20 @@ export const decorateHeaderRow = (
   );
 };
 
+/**
+ * Whether a column has a distribution worth drawing, matching what ChartHistogram will accept.
+ *
+ * The menu greys out the columns that fail this rather than letting a reader pick one and get an
+ * empty box back, so the two have to read the same rule.
+ */
+const canChartDistribution = (values: number[]): boolean => {
+  if (values.length < 8) {
+    return false;
+  }
+
+  return Math.max(...values) > Math.min(...values);
+};
+
 const getRowKey = ({ view }) => {
   let rowKey = 'team_id';
   if (view === 'player' || view === 'transfer') {
@@ -570,6 +585,7 @@ const Client = ({ generated, organization_id, division_id, season, view }) => {
   const tableFullscreen = useAppSelector((state) => state.rankingReducer.tableFullscreen);
   const chartView = useAppSelector((state) => state.rankingReducer.chartView);
   const chart = useAppSelector((state) => state.rankingReducer.chart);
+  const distributionColumn = useAppSelector((state) => state.rankingReducer.distributionColumn);
   const heatMap = useAppSelector((state) => state.rankingReducer.heatMap);
   const positions = useAppSelector((state) => state.displayReducer.positions);
   // not used directly - it is one of the two things the row contents below are built from, and so
@@ -705,6 +721,41 @@ const Client = ({ generated, organization_id, division_id, season, view }) => {
     }
 
     return measures;
+  }, [data, selectedConferences, organization_id, view]);
+
+  /**
+   * The columns the distribution menu has to grey out, for this league as it stands today.
+   *
+   * A column the sport carries in the abstract can still be empty or flat for the teams on screen,
+   * and ChartHistogram answers that by rendering nothing. Working it out up front lets the menu say
+   * so before the reader spends a click on it.
+   *
+   * Held across renders for the same reason the square above is: this component reads the window
+   * width, so dragging the window edge would otherwise re-walk every column per frame.
+   */
+  const unusableDistributionColumns: Set<string> = useMemo(() => {
+    if (view !== 'team') {
+      return new Set();
+    }
+
+    const unusable = new Set<string>();
+    const columns = getDistributionColumns({ organization_id });
+
+    for (const key in columns) {
+      const values: number[] = [];
+
+      for (const row of allRows) {
+        if (typeof row[key] === 'number' && Number.isFinite(row[key])) {
+          values.push(row[key]);
+        }
+      }
+
+      if (!canChartDistribution(values)) {
+        unusable.add(key);
+      }
+    }
+
+    return unusable;
   }, [data, selectedConferences, organization_id, view]);
 
   // rebuilt only when the heat toggle or route context moves; VirtualTable re-renders every visible
@@ -981,25 +1032,16 @@ const Client = ({ generated, organization_id, division_id, season, view }) => {
   };
 
   /**
-   * The league's spread on whichever column is currently sorted, with the searched team marked.
+   * The league's spread on the picked column, with the searched team marked.
    *
    * The scatter above answers where a team sits against two measures. This answers the question
-   * the table never does - whether the number it is sorted by is one where the league bunches up
-   * or spreads out, and so whether being twentieth on it means much at all.
+   * the table never does - whether the number in front of the reader is one where the league
+   * bunches up or spreads out, and so whether being twentieth on it means much at all.
    *
    * Built from `allRows` rather than `rows`, because the point is the whole league: filtering to
    * one team and drawing that team's distribution would be a chart of a single bar.
    */
-  const getDistribution = () => {
-    const { xKey } = getScatterAxes();
-
-    // A rank column is a permutation of 1..N, so its histogram is flat by construction - one team
-    // per bar, telling the reader only how many teams there are. Since rank is also the default
-    // sort, following `orderBy` blindly would show that flat bar to most readers most of the time.
-    const isRank = !orderBy || orderBy === 'rank' || orderBy.endsWith('_rank');
-
-    const column = (!isRank && allRows.length && typeof allRows[0][orderBy] === 'number') ? orderBy : xKey;
-
+  const getDistribution = (column: string) => {
     const values: number[] = [];
 
     const value_x_ids = new Map<number, Array<typeof rowKey>>();
@@ -1062,16 +1104,30 @@ const Client = ({ generated, organization_id, division_id, season, view }) => {
 
     return (
       <>
-        <ChartHistogram
-          values = {values}
-          marker = {marker}
-          xLabel = {label}
-          noun = 'teams'
-          markerHint = 'search a team to mark it'
-          onClickBar={onClick}
-          selectedIndex = {selectedDistribution && selectedDistribution.column === column ? selectedDistribution.index : null}
-        />
-        {getDistributionSelection(column, label)}
+        <div style = {{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
+          <DistributionPicker
+            organization_id = {organization_id}
+            selected = {column}
+            selectedLabel = {label}
+            unusable = {unusableDistributionColumns}
+          />
+        </div>
+        {
+          canChartDistribution(values) ?
+            <>
+              <ChartHistogram
+                values = {values}
+                marker = {marker}
+                xLabel = {label}
+                noun = 'teams'
+                markerHint = 'search a team to mark it'
+                onClickBar={onClick}
+                selectedIndex = {selectedDistribution && selectedDistribution.column === column ? selectedDistribution.index : null}
+              />
+              {getDistributionSelection(column, label)}
+            </> :
+            <Typography type = 'body1' style = {{ textAlign: 'center', marginTop: 20 }}>Not enough spread on {label} to chart</Typography>
+        }
       </>
     );
   };
@@ -1175,6 +1231,32 @@ const Client = ({ generated, organization_id, division_id, season, view }) => {
    */
   const selectedChart = chartTabs.some((tab) => tab.value === chart) ? chart : defaultChart;
 
+  /**
+   * Which measure the spread is drawn on.
+   *
+   * The reader's pick wins, and only while this sport charts it - a stale or hand-edited
+   * `?distributionColumn=` naming another sport's stat falls through rather than emptying the chart,
+   * the same way `selectedChart` guards `?chart=`.
+   *
+   * Without a pick it is the sorted column, which keeps "sorted by X, see X's spread" working. A
+   * rank column is a permutation of 1..N, so its histogram is flat by construction - one team per
+   * bar, telling the reader only how many teams there are - and since rank is also the default sort,
+   * following `orderBy` blindly would show that flat bar to most readers most of the time.
+   */
+  const getSelectedDistributionColumn = (): string => {
+    if (distributionColumn && distributionColumn in getDistributionColumns({ organization_id })) {
+      return distributionColumn;
+    }
+
+    const isRank = !orderBy || orderBy === 'rank' || orderBy.endsWith('_rank');
+
+    if (!isRank && allRows.length && typeof allRows[0][orderBy] === 'number') {
+      return orderBy;
+    }
+
+    return getScatterAxes().xKey;
+  };
+
   const handleChart = (e, value) => {
     if (value !== selectedChart) {
       dispatch(setDataKey({ key: 'chart', value }));
@@ -1201,7 +1283,7 @@ const Client = ({ generated, organization_id, division_id, season, view }) => {
 
   const getSelectedChart = () => {
     if (selectedChart === 'distribution') {
-      return getDistribution();
+      return getDistribution(getSelectedDistributionColumn());
     }
 
     if (selectedChart === 'correlation') {

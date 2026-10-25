@@ -36,10 +36,11 @@ const ViewSwitch = ({ view }: { view: string }) => {
 
     dispatch(setDataKey({ key: 'chartView', value: wantsChart }));
 
-    // the chart tabs only exist inside chart view, so the url stops naming one on the way back to
-    // the table rather than carrying a dead param around the rest of the site
+    // the chart tabs and the distribution's column picker only exist inside chart view, so the url
+    // stops naming them on the way back to the table rather than carrying dead params around the site
     if (!wantsChart) {
       dispatch(setDataKey({ key: 'chart', value: null }));
+      dispatch(setDataKey({ key: 'distributionColumn', value: null }));
     }
   };
 

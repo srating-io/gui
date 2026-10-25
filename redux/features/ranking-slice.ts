@@ -22,6 +22,11 @@ export type InitialState = {
    * the url for the chart a reader lands on, and is what leaving chart view resets it to.
    */
   chart: string | null,
+  /**
+   * Which column the league distribution chart spreads. Null means follow the sorted column, which
+   * is what the chart did before there was anything to pick.
+   */
+  distributionColumn: string | null,
   /** Tints each ranked cell by where it falls in the league, so a column can be read at a glance. */
   heatMap: boolean,
   lastUpdated: string | null,
@@ -54,6 +59,7 @@ stateController.set_url_param_type_x_keys({
     'orderBy',
     'columnView',
     'chart',
+    'distributionColumn',
   ],
   number: [
     'career',
@@ -87,6 +93,7 @@ stateController.setInitialState({
   tableFullscreen: false,
   chartView: false,
   chart: null,
+  distributionColumn: null,
   heatMap: false,
   lastUpdated: null,
   columnView: 'composite',
