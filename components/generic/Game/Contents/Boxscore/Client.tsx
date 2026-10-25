@@ -152,10 +152,10 @@ const Client = (
         {
           name: 'Passing',
           keys: [
-            'passing_attempts',
             'passing_completions',
-            'passing_yards',
+            'passing_attempts',
             'passing_completion_percentage',
+            'passing_yards',
             'passing_yards_per_attempt',
             'passing_yards_per_completion',
             'passing_touchdowns',
