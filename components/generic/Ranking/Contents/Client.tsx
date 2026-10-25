@@ -16,13 +16,12 @@ import { getConferenceChips } from '../../ConferenceChips';
 import TableColumns from '@/components/helpers/TableColumns';
 import ClassSpan from '../../ClassSpan';
 import { ChartCorrelationMatrix, ChartHistogram, ChartScatter, CorrelationMeasure, ScatterPoint } from '@/components/generic/Chart';
-import { Arithmetic, Color, Objector } from '@esmalley/ts-utils';
+import { Arithmetic, Arrayifier, Color, Objector, Style } from '@esmalley/ts-utils';
 import { useNavigation } from '@/components/hooks/useNavigation';
 import {
-  CustomDecorateHeaderRow, CustomDecorateRows, defaultSortOrderType, LinearProgress, Tab, Td, Th, Tooltip, Tr, Typography, useTheme, useWindowDimensions, VirtualTable,
+  CustomDecorateHeaderRow, CustomDecorateRows, defaultSortOrderType, LinearProgress, Paper, Tab, Td, Th, Tooltip, Tr, Typography, useTheme, useWindowDimensions, VirtualTable,
 } from '@esmalley/react-material-ui';
 import { Basketball, Football } from '@srating-io/types';
-import { maxWidth } from '../../Picks/Tile';
 
 
 
@@ -67,7 +66,7 @@ const ClientSkeleton = () => {
  * is worth the width when there is width to spend.
  */
 const chartTabs = [
-  { value: 'scatter', title: 'Offence vs defence', short: 'Scatter' },
+  { value: 'scatter', title: 'Offense vs defense', short: 'Scatter' },
   { value: 'distribution', title: 'League distribution', short: 'Spread' },
   // the matrix heads itself "What goes with what", so the tab says the shorter thing rather than
   // printing the same phrase twice, one line apart
@@ -526,9 +525,40 @@ export const decorateHeaderRow = (
   );
 };
 
+const getRowKey = ({ view }) => {
+  let rowKey = 'team_id';
+  if (view === 'player' || view === 'transfer') {
+    if (Organization.isNBA()) {
+      rowKey = 'player_statistic_ranking_id';
+    } else {
+      rowKey = 'player_id';
+    }
+  } else if (view === 'conference') {
+    rowKey = 'conference_id';
+  } else if (view === 'coach') {
+    rowKey = 'coach_id';
+  }
+
+  // the keys should prob be the below, but the above helps me find bugs in data...
+
+  // let rowKey = 'statistic_ranking_id';
+  // if (view === 'player' || view === 'transfer') {
+  //   rowKey = 'player_statistic_ranking_id';
+  // } else if (view === 'conference') {
+  //   rowKey = 'conference_statistic_ranking_id';
+  // } else if (view === 'coach') {
+  //   rowKey = 'coach_statistic_ranking_id';
+  // }
+
+  return rowKey;
+};
+
 const Client = ({ generated, organization_id, division_id, season, view }) => {
   const navigation = useNavigation();
   const { height, width } = useWindowDimensions();
+  const theme = useTheme();
+
+  const rowKey = getRowKey({ view });
 
 
   const dispatch = useAppDispatch();
@@ -558,6 +588,15 @@ const Client = ({ generated, organization_id, division_id, season, view }) => {
   const currentPath = Organization.getPath({ organizations, organization_id });
   const [tableHorizontalScroll, setTableHorizontalScroll] = useState(0);
   const tableRef: React.RefObject<HTMLTableElement | null> = useRef(null);
+
+  /**
+   * The bar of the distribution the reader has opened, if any.
+   *
+   * Ids rather than rows, because the rows are a fresh array on every render. The column and the
+   * bar they were read off travel with them, so re-sorting the table cannot leave one measure's
+   * bucket printed under another measure's heading.
+   */
+  const [selectedDistribution, setSelectedDistribution] = useState<{ column: string; index: number; ids: Array<typeof rowKey> } | null>(null);
 
 
   useEffect(() => {
@@ -852,33 +891,6 @@ const Client = ({ generated, organization_id, division_id, season, view }) => {
   const chartHeight = height < 450 ? 250 : availableHeight;
 
 
-
-
-  let rowKey = 'team_id';
-  if (view === 'player' || view === 'transfer') {
-    if (Organization.isNBA()) {
-      rowKey = 'player_statistic_ranking_id';
-    } else {
-      rowKey = 'player_id';
-    }
-  } else if (view === 'conference') {
-    rowKey = 'conference_id';
-  } else if (view === 'coach') {
-    rowKey = 'coach_id';
-  }
-
-  // the keys should prob be the below, but the above helps me find bugs in data...
-
-  // let rowKey = 'statistic_ranking_id';
-  // if (view === 'player' || view === 'transfer') {
-  //   rowKey = 'player_statistic_ranking_id';
-  // } else if (view === 'conference') {
-  //   rowKey = 'conference_statistic_ranking_id';
-  // } else if (view === 'coach') {
-  //   rowKey = 'coach_statistic_ranking_id';
-  // }
-
-
   /**
    * The two measures the scatter plots, per sport.
    *
@@ -952,10 +964,10 @@ const Client = ({ generated, organization_id, division_id, season, view }) => {
         yLabel = {yLabel}
         yLowerIsBetter = {true}
         quadrantLabels = {{
-          topLeft: 'Defence carries them',
+          topLeft: 'Defense carries them',
           topRight: 'Strong both ends',
           bottomLeft: 'Struggling both ends',
-          bottomRight: 'Offence carries them',
+          bottomRight: 'Offense carries them',
         }}
         onSelect = {(team_id) => {
           const row = allRows.find((r) => 'team_id' in r && r.team_id === team_id);
@@ -990,9 +1002,19 @@ const Client = ({ generated, organization_id, division_id, season, view }) => {
 
     const values: number[] = [];
 
+    const value_x_ids = new Map<number, Array<typeof rowKey>>();
+
     for (const row of allRows) {
       if (typeof row[column] === 'number' && Number.isFinite(row[column])) {
-        values.push(row[column]);
+        const value = row[column];
+        values.push(value);
+
+        let ids = value_x_ids.get(value);
+        if (!ids) {
+          ids = [];
+          value_x_ids.set(value, ids);
+        }
+        ids.push(row[rowKey]);
       }
     }
 
@@ -1003,14 +1025,143 @@ const Client = ({ generated, organization_id, division_id, season, view }) => {
 
     const label = (headCells[column] && headCells[column].getLabel()) || column;
 
+
+    const onClick = (data: unknown, index: number) => {
+      // recharts types the clicked bar as unknown here; what it hands over is the bucket the chart
+      // was built from, values and all
+      const payloadValues = (data as { payload?: { values?: number[] } } | null)?.payload?.values;
+
+      if (!Array.isArray(payloadValues) || payloadValues.length === 0) {
+        setSelectedDistribution(null);
+        return;
+      }
+
+      // clicking the open bar closes it, so the panel is not something the reader cannot put away
+      if (
+        selectedDistribution &&
+        selectedDistribution.column === column &&
+        selectedDistribution.index === index
+      ) {
+        setSelectedDistribution(null);
+        return;
+      }
+
+      const selectedSet = new Set<typeof rowKey>();
+
+      for (let i = 0; i < payloadValues.length; i++) {
+        const ids = value_x_ids.get(payloadValues[i]);
+        if (ids) {
+          for (let j = 0; j < ids.length; j++) {
+            selectedSet.add(ids[j]);
+          }
+        }
+      }
+
+      setSelectedDistribution({ column, index, ids: Array.from(selectedSet) });
+    };
+
     return (
-      <ChartHistogram
-        values = {values}
-        marker = {marker}
-        xLabel = {label}
-        noun = 'teams'
-        markerHint = 'search a team to mark it'
-      />
+      <>
+        <ChartHistogram
+          values = {values}
+          marker = {marker}
+          xLabel = {label}
+          noun = 'teams'
+          markerHint = 'search a team to mark it'
+          onClickBar={onClick}
+          selectedIndex = {selectedDistribution && selectedDistribution.column === column ? selectedDistribution.index : null}
+        />
+        {getDistributionSelection(column, label)}
+      </>
+    );
+  };
+
+  /**
+   * The teams standing in the bar the reader clicked.
+   *
+   * The chart says twelve teams sit between 115 and 117, which is the shape of the league but not
+   * an answer about anyone in it. These are the names behind that bar, ordered on the measure it
+   * was drawn from and each one a link to the team, so the shape leads somewhere.
+   */
+  const getDistributionSelection = (column: string, label: string) => {
+    if (!selectedDistribution || selectedDistribution.column !== column) {
+      return null;
+    }
+
+    const selected = new Set(selectedDistribution.ids);
+    const selectedRows = allRows.filter((row) => selected.has(row[rowKey]));
+
+    if (!selectedRows.length) {
+      return null;
+    }
+
+    const rankColumn = `${column}_rank`;
+
+    // ordered on the measure the bar was read off, not on whatever the table is sorted by: the
+    // rank column when the row carries one, and the raw value - best end first - when it does not
+    const ordered = selectedRows.some((row) => typeof row[rankColumn] === 'number') ?
+      Arrayifier.sortBy(selectedRows, (row) => row[rankColumn], 'asc') :
+      Arrayifier.sortBy(
+        selectedRows,
+        (row) => row[column],
+        (headCells[column] && headCells[column].sort) === 'higher' ? 'desc' : 'asc',
+      );
+
+    const bucketValues = ordered.map((row) => row[column] as number);
+    const low = Math.min(...bucketValues);
+    const high = Math.max(...bucketValues);
+
+    const pillStyle = {
+      display: 'inline-flex',
+      alignItems: 'center',
+      margin: '4px',
+      padding: '3px 8px',
+      borderRadius: '14px',
+      fontSize: width <= 425 ? '12px' : '13px',
+      whiteSpace: 'nowrap',
+      color: 'inherit',
+      textDecoration: 'none',
+      cursor: 'pointer',
+      backgroundColor: theme.mode === 'light' ? theme.grey[200] : theme.grey[800],
+      '&:hover': {
+        backgroundColor: theme.mode === 'light' ? theme.info.light : theme.info.dark,
+      },
+    };
+
+    const pillClassName = Style.getStyleClassName(pillStyle);
+
+    return (
+      <Paper
+        title = {`${label} ${low === high ? low : `${low} to ${high}`} · ${ordered.length} ${ordered.length === 1 ? 'team' : 'teams'}`}
+        style = {{ padding: '0px 10px 10px 10px', marginTop: 10 }}
+        elevation={0}
+      >
+        {/* a bar in the middle of the league can hold a hundred teams, so the names scroll rather
+            than pushing the chart they belong to off the screen */}
+        <div style = {{ display: 'flex', flexWrap: 'wrap', maxHeight: 150, overflowY: 'auto' }}>
+          {ordered.map((row) => {
+            return (
+              <a
+                key = {row[rowKey]}
+                className = {pillClassName}
+                href = {Url.team({ sport: currentPath, slug: row.slug || row[rowKey], season })}
+                onClick = {(e) => {
+                  e.preventDefault();
+                  handleTeam(row);
+                }}
+              >
+                {
+                  typeof row[rankColumn] === 'number' ?
+                    <RankSpan rank = {row[rankColumn]} max = {'max' in row ? row.max : allRows.length} useOrdinal = {true} /> :
+                    null
+                }
+                {row.name}
+                <span style = {{ color: theme.text.secondary, marginLeft: 5 }}>{row[column]}</span>
+              </a>
+            );
+          })}
+        </div>
+      </Paper>
     );
   };
 

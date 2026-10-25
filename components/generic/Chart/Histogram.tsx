@@ -1,7 +1,7 @@
 'use client';
 
 import {
-  Bar, BarChart, CartesianGrid, Label, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis,
+  Bar, BarChart, CartesianGrid, Cell, Label, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts';
 
 import ChartTooltip from './ChartTooltip';
@@ -29,6 +29,8 @@ const ChartHistogram = (
     height = 260,
     noun = 'values',
     markerHint,
+    onClickBar,
+    selectedIndex = null,
   }:
   {
     values: number[];
@@ -41,6 +43,9 @@ const ChartHistogram = (
     noun?: string;
     /** How the reader would place their own mark on this, read only while there is no marker. */
     markerHint?: string;
+    onClickBar?: (data: unknown, index: number, event: React.MouseEvent) => void;
+    /** Which bar the reader has opened, so the chart can say which one is being read. */
+    selectedIndex?: number | null;
   },
 ) => {
   const theme = useTheme();
@@ -72,18 +77,27 @@ const ChartHistogram = (
     decimals = 1;
   }
 
-  const buckets = Array.from({ length: bins }, (unused, index) => ({
+  type Bucket = {
+    label: string;
+    from: number;
+    count: number;
+    values: number[];
+  }
+
+  const buckets: Bucket[] = Array.from({ length: bins }, (unused, index) => ({
     // the label is the bucket's own floor, so the axis reads as a number line rather than as
     // twenty four opaque category names
     label: (low + (index * width)).toFixed(decimals),
     from: low + (index * width),
     count: 0,
+    values: [],
   }));
 
   for (const value of usable) {
     // the top value belongs in the last bucket rather than in a twenty fifth of its own
     const index = Math.min(Math.floor((value - low) / width), bins - 1);
     buckets[index].count++;
+    buckets[index].values.push(value);
   }
 
   const getBucketLabel = (value: number) => {
@@ -140,7 +154,21 @@ const ChartHistogram = (
                 />
                 : null
             }
-            <Bar dataKey = 'count' fill = {palette.series(0)} fillOpacity = {0.75} isAnimationActive = {false} />
+            <Bar dataKey = 'count' fill = {palette.series(0)} fillOpacity = {0.75} isAnimationActive = {false} cursor = {onClickBar ? 'pointer' : undefined} onClick={onClickBar}>
+              {
+                // one bar picked out leaves the rest as context: they hold the shape of the league
+                // in the muted hue, and the only colored bar is the one being read underneath
+                selectedIndex === null ?
+                  null :
+                  buckets.map((bucket, index) => (
+                    <Cell
+                      key = {bucket.label}
+                      fill = {index === selectedIndex ? palette.series(0) : palette.muted}
+                      fillOpacity = {index === selectedIndex ? 1 : 0.75}
+                    />
+                  ))
+              }
+            </Bar>
           </BarChart>
         </ResponsiveContainer>
       </div>
