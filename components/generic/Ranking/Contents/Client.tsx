@@ -1068,7 +1068,10 @@ const Client = ({ generated, organization_id, division_id, season, view }) => {
     const label = (headCells[column] && headCells[column].getLabel()) || column;
 
 
-    const onClick = (data: unknown, index: number) => {
+    /**
+     * This can be used just on a <Bar /> element, but that is no longer set and superceded by the <BarChart /> on click
+     */
+    const onClick = (data: unknown, index: number, event?: React.MouseEvent) => {
       // recharts types the clicked bar as unknown here; what it hands over is the bucket the chart
       // was built from, values and all
       const payloadValues = (data as { payload?: { values?: number[] } } | null)?.payload?.values;
@@ -1102,6 +1105,28 @@ const Client = ({ generated, organization_id, division_id, season, view }) => {
       setSelectedDistribution({ column, index, ids: Array.from(selectedSet) });
     };
 
+    type ChartClickState = {
+      activeTooltipIndex?: number | string;
+      activePayload?: unknown[];
+    };
+
+    const handleChartClick = (chartState: unknown, event: React.MouseEvent) => {
+      const cState = chartState as ChartClickState | null;
+
+      if (!cState) {
+        return;
+      }
+
+      const rowIndex = Number(cState.activeTooltipIndex);
+      const activePayload = cState.activePayload?.[0];
+
+      if (!activePayload || rowIndex < 0) {
+        return;
+      }
+
+      onClick(activePayload, rowIndex);
+    };
+
     return (
       <>
         <div style = {{ display: 'flex', justifyContent: 'left', marginBottom: 10 }}>
@@ -1121,7 +1146,7 @@ const Client = ({ generated, organization_id, division_id, season, view }) => {
                 xLabel = {label}
                 noun = 'teams'
                 markerHint = 'search a team to mark it'
-                onClickBar={onClick}
+                onClickChart={handleChartClick}
                 selectedIndex = {selectedDistribution && selectedDistribution.column === column ? selectedDistribution.index : null}
               />
               {getDistributionSelection(column, label)}

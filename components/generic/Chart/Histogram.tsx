@@ -29,6 +29,7 @@ const ChartHistogram = (
     height = 260,
     noun = 'values',
     markerHint,
+    onClickChart,
     onClickBar,
     selectedIndex = null,
   }:
@@ -43,6 +44,7 @@ const ChartHistogram = (
     noun?: string;
     /** How the reader would place their own mark on this, read only while there is no marker. */
     markerHint?: string;
+    onClickChart?: (data: unknown, event: React.MouseEvent) => void;
     onClickBar?: (data: unknown, index: number, event: React.MouseEvent) => void;
     /** Which bar the reader has opened, so the chart can say which one is being read. */
     selectedIndex?: number | null;
@@ -122,7 +124,7 @@ const ChartHistogram = (
     <div>
       <div style = {{ height, padding: '0px 5px' }}>
         <ResponsiveContainer width = '100%' height = '100%'>
-          <BarChart data = {buckets} margin = {{ top: 16, right: 12, bottom: 4, left: 0 }}>
+          <BarChart data = {buckets} margin = {{ top: 16, right: 12, bottom: 4, left: 0 }} onClick={onClickChart} style = {{ cursor: onClickChart ? 'pointer' : 'initial' }} >
             <CartesianGrid stroke = {palette.grid} vertical = {false} />
             <XAxis dataKey = 'label' minTickGap = {16} tickLine = {false} axisLine = {false} type = 'category'>
               <Label value = {xLabel} position = 'insideBottom' offset = {-2} style = {{ textAnchor: 'middle', fill: theme.info.main, fontSize: 13 }} />
