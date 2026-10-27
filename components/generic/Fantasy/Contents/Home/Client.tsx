@@ -6,7 +6,8 @@ import { headerBarHeight } from '@/components/generic/Header';
 import { getNavHeaderHeight } from '../../NavBar';
 import { useClientAPI } from '@/components/clientAPI';
 import MyGroups from './MyGroups';
-import { useAppSelector } from '@/redux/hooks';
+import { useAppDispatch, useAppSelector } from '@/redux/hooks';
+import { setDataKey } from '@/redux/features/fantasy-slice';
 import PublicBracketsGroups from './PublicBracketsGroups';
 import PublicDraftGroups from './PublicDraftGroups';
 import CreateGroup from './CreateGroup';
@@ -15,6 +16,7 @@ import { Fantasy } from '@srating-io/types';
 
 
 interface Data {
+  seasons?: number[];
   fantasy_groups: Fantasy.FantasyGroups;
   fantasy_group_users?: Fantasy.FantasyGroupUsers;
   fantasy_entrys?: Fantasy.FantasyEntrys;
@@ -56,8 +58,13 @@ const ClientSkeleton = () => {
 const Client = () => {
   const organization_id = useAppSelector((state) => state.organizationReducer.organization_id);
   const division_id = useAppSelector((state) => state.organizationReducer.division_id);
-  const season = useAppSelector((state) => state.organizationReducer.season);
+  const current_season = useAppSelector((state) => state.organizationReducer.season);
+  const selected_season = useAppSelector((state) => state.fantasyReducer.season);
   const session_id = useAppSelector((state) => state.userReducer.session_id);
+  const dispatch = useAppDispatch();
+
+  // the picker only holds a season once it has been changed, so fall back to the sport current one
+  const season = selected_season ?? current_season;
 
   const [loaded, setLoaded] = useState(false);
   const [data, setData] = useState<Data | null>(null);
@@ -91,13 +98,18 @@ const Client = () => {
       }
 
       setData(fantasyData);
+
+      // drives the season picker in the NavBar, which has no loadHome of its own
+      if (fantasyData.seasons) {
+        dispatch(setDataKey({ key: 'seasons', value: fantasyData.seasons }));
+      }
     }).catch((err) => {
       console.log(err);
       requesting.current = false;
       setLoaded(true);
       setLoadFailed(true);
     });
-  }, [organization_id, division_id, season, session_id]);
+  }, [organization_id, division_id, season, session_id, dispatch]);
 
   // Fetching in the render body double-fetched and, worse, never refetched when the sport or the
   // season changed - navigating from cfb to cbb kept the first sport's leagues on screen.

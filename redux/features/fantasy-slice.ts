@@ -4,6 +4,10 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export type InitialState = {
   view: string;
+  // null means the sport current season, which is what the Surface resolved for the first render
+  season: number | null;
+  // only the seasons that have a league, straight from loadHome
+  seasons: number[];
   loadingView: boolean,
 };
 
@@ -22,7 +26,9 @@ stateController.set_url_param_type_x_keys({
   string: [
     'view',
   ],
-  number: [],
+  number: [
+    'season',
+  ],
   array: [
   ],
   boolean: [
@@ -31,10 +37,13 @@ stateController.set_url_param_type_x_keys({
 
 stateController.set_key_x_is_push_state({
   view: true,
+  season: true,
 });
 
 stateController.setInitialState({
   view: 'home',
+  season: null,
+  seasons: [],
   loadingView: true,
 });
 

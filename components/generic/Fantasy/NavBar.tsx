@@ -1,6 +1,7 @@
 'use client';
 
 import BackButton from '../BackButton';
+import SeasonPicker from './SeasonPicker';
 import { useAppSelector } from '@/redux/hooks';
 import { Typography, useTheme } from '@esmalley/react-material-ui';
 import { Objector, Style } from '@esmalley/ts-utils';
@@ -49,7 +50,7 @@ const NavBar = () => {
       <div className={Style.getStyleClassName(divStyle)}>
         <div style = {{ display: 'flex' }}>{show_back ? <BackButton /> : ''}</div>
         <div>{getHeaderText() ? <Typography type = 'h6'>{getHeaderText()}</Typography> : ''}</div>
-        <div></div>
+        <div>{view === 'home' ? <SeasonPicker /> : ''}</div>
       </div>
     </>
   );
