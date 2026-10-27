@@ -314,8 +314,7 @@ const PrePicks = () => {
       <Typography type = 'h6'>Pre-draft selections</Typography>
       <Paper style = {{ padding: 16, marginBottom: 20 }}>
         <Typography type = 'body1'>
-          If your clock runs out, the highest player here who is still available is taken for you. Line up more than
-          your roster has spots, because other entries will take some of them before your turn comes around.
+          If you are not here for the live draft, you can select a list of players that we will auto-select for you on your turn (if they are still available).
         </Typography>
         {
           my_fantasy_entrys.length > 1 ?

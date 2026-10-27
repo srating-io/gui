@@ -134,6 +134,7 @@ const EditGroup = (
           defaultValue={fantasy_group.name || ''}
           onChange={(val) => setName(val as string)}
           triggerValidation={triggerValidation}
+          transformPlaceholder={false}
         />
 
         <Columns numberOfColumns={2}>
@@ -150,6 +151,7 @@ const EditGroup = (
             defaultValue={`${fantasy_group.entries_per_user || 1}`}
             onChange={(val) => setEntriesPerUser(val as string)}
             triggerValidation={triggerValidation}
+            transformPlaceholder={false}
           />
           {
             fantasy_group.cap ?
@@ -166,6 +168,7 @@ const EditGroup = (
                 defaultValue={fantasy_group.entries ? `${fantasy_group.entries}` : ''}
                 onChange={(val) => setEntries(val as string)}
                 triggerValidation={triggerValidation}
+                transformPlaceholder={false}
               />
               : <div />
           }
@@ -184,6 +187,7 @@ const EditGroup = (
                   value={startDate ? Dates.format(Dates.parse(startDate, true), 'Y-m-d H:i:s') : undefined}
                   onChange={(val) => setStartDate(val ? Dates.format(Dates.parse(val as string), 'Y-m-d H:i:s', true) : null)}
                   triggerValidation={triggerValidation}
+                  transformPlaceholder={false}
                 />
                 <DateInput
                   inputHandler={inputHandler}
@@ -194,6 +198,7 @@ const EditGroup = (
                   value={endDate ? Dates.format(Dates.parse(endDate, true), 'Y-m-d H:i:s') : undefined}
                   onChange={(val) => setEndDate(val ? Dates.format(Dates.parse(val as string), 'Y-m-d H:i:s', true) : null)}
                   triggerValidation={triggerValidation}
+                  transformPlaceholder={false}
                 />
               </Columns>
 
@@ -206,6 +211,7 @@ const EditGroup = (
                   value={draftStart ? Dates.format(Dates.parse(draftStart, true), 'Y-m-d H:i:s') : undefined}
                   onChange={(val) => setDraftStart(val ? Dates.format(Dates.parse(val as string), 'Y-m-d H:i:s', true) : null)}
                   triggerValidation={triggerValidation}
+                  transformPlaceholder={false}
                 />
                 <TextInput
                   key = {`draft-minutes-${open}`}
@@ -217,6 +223,7 @@ const EditGroup = (
                   defaultValue={draftMinutes}
                   onChange={(val) => setDraftMinutes(val as string)}
                   triggerValidation={triggerValidation}
+                  transformPlaceholder={false}
                 />
               </Columns>
             </>
