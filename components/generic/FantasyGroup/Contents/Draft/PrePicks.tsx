@@ -73,10 +73,14 @@ const PrePicks = () => {
       .map((row) => row.player_team_season_id);
   }, [fantasy_entry_pre_picks, selected_fantasy_entry_id]);
 
-  // seed the editable copy from what is stored, and reseed when the entry changes
+  const saved_key = saved.join(',');
+
+  // Reseed the editable copy only when the stored list really changed, or the entry did. The group
+  // load re-dispatches this key on every refresh, so keying this on the array identity threw away
+  // whatever was half arranged at the time.
   useEffect(() => {
     setList(saved);
-  }, [saved]);
+  }, [saved_key]);
 
   const drafted_player_team_season_ids = getDraftedPlayerTeamSeasonIds({
     fantasy_group,
