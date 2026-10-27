@@ -118,15 +118,15 @@ const PrePicks = () => {
   };
 
   const handleAdd = (row) => {
+    // the id is a column on the ranking row; the nested player_team_season object is not sent
     if (
       !row ||
-      !row.player_team_season ||
-      !row.player_team_season.player_team_season_id
+      !row.player_team_season_id
     ) {
       return;
     }
 
-    const { player_team_season_id } = row.player_team_season;
+    const { player_team_season_id } = row;
 
     // the group load only carries lookups for drafted and stored players, so remember this one
     if (row.name) {

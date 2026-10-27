@@ -104,10 +104,10 @@ const DraftZonePick = ({ selectedRow, onPick }) => {
       return;
     }
 
+    // the id is a column on the ranking row; the nested player_team_season object is not sent
     if (
       !selectedRow ||
-      !selectedRow.player_team_season ||
-      !selectedRow.player_team_season.player_team_season_id
+      !selectedRow.player_team_season_id
     ) {
       setErrorMessage('Pick a player first.');
       return;
@@ -134,7 +134,7 @@ const DraftZonePick = ({ selectedRow, onPick }) => {
       function: 'pick',
       arguments: {
         fantasy_draft_order_id: live_fantasy_draft_order.fantasy_draft_order_id,
-        player_team_season_id: selectedRow.player_team_season.player_team_season_id,
+        player_team_season_id: selectedRow.player_team_season_id,
       },
     })
       .then((data) => {

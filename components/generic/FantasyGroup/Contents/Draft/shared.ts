@@ -101,10 +101,11 @@ export const getAvailablePlayerRows = (
     }
 
     // Built purely from the ranking data before, so a player already on someone's roster stayed
-    // in the list and the pick came back rejected with the clock running.
+    // in the list and the pick came back rejected with the clock running. Keyed on the row's own
+    // player_team_season_id column -- the nested object this used to read is no longer returned.
     if (
-      row.player_team_season &&
-      excluded_player_team_season_ids.has(row.player_team_season.player_team_season_id)
+      row.player_team_season_id &&
+      excluded_player_team_season_ids.has(row.player_team_season_id)
     ) {
       continue;
     }
