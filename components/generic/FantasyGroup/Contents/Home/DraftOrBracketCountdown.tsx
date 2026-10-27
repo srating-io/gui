@@ -12,6 +12,7 @@ const DraftOrBracketCountdown = () => {
   const navigation = useNavigation();
   const fantasy_group = useAppSelector((state) => state.fantasyGroupReducer.fantasy_group);
   const fantasy_entrys = useAppSelector((state) => state.fantasyGroupReducer.fantasy_entrys);
+  const fantasy_entry_pre_picks = useAppSelector((state) => state.fantasyGroupReducer.fantasy_entry_pre_picks);
   const user = useAppSelector((state) => state.userReducer.user);
   const fantasyHelper = new FantasyGroup({ fantasy_group });
 
@@ -24,6 +25,9 @@ const DraftOrBracketCountdown = () => {
       break;
     }
   }
+
+  // the api only ever returns this users own, so anything here belongs to them
+  const hasPrePicks = Object.keys(fantasy_entry_pre_picks).length > 0;
 
   const [now, setNow] = useState(new Date());
 
@@ -64,14 +68,23 @@ const DraftOrBracketCountdown = () => {
         isComplete: hasEntry,
         button: false,
       });
-      // Step 2: The Draft
+      // Step 2: the safety net for missing the draft live
+      if (hasEntry && !fantasy_group?.drafted) {
+        list.push({
+          label: 'Line up pre-draft picks',
+          date: fantasy_group?.draft_start_datetime,
+          isComplete: hasPrePicks,
+          button: <Button value='pre-draft-picks' title='Set Pre-Draft Picks' onClick={() => handleView('draft', 'pre_picks')} />,
+        });
+      }
+      // Step 3: The Draft
       list.push({
         label: 'Draft Starts',
         date: fantasy_group?.draft_start_datetime,
         isComplete: !!(fantasy_group?.drafted),
         button: <Button value='view-draft' title='Enter Draft Room' onClick={() => handleView('draft')} />,
       });
-      // Step 3: Season Start
+      // Step 4: Season Start
       list.push({
         label: 'League Begins',
         date: fantasy_group?.start_date,
@@ -88,10 +101,10 @@ const DraftOrBracketCountdown = () => {
       });
     }
     return list;
-  }, [fantasy_group, now, fantasyHelper]);
+  }, [fantasy_group, now, fantasyHelper, hasEntry, hasPrePicks]);
 
-  const handleView = (view: string) => {
-    navigation.fantasyGroupView({ view });
+  const handleView = (view: string, subview?: string) => {
+    navigation.fantasyGroupView(subview ? { view, subview } : { view });
   };
 
   return (

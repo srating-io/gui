@@ -8,6 +8,7 @@ import DraftBoard from './DraftBoard';
 import DraftZone from './DraftZone';
 import Loader from '@/components/generic/Ranking/Contents/Loader';
 import MyPicks from './MyPicks';
+import PrePicks from './PrePicks';
 import { useNavigation } from '@/components/hooks/useNavigation';
 import { setDataKey } from '@/redux/features/fantasy_group-slice';
 import { Button, Columns, LinearProgress, Tab, useTheme, useWindowDimensions } from '@esmalley/react-material-ui';
@@ -54,6 +55,26 @@ const Client = ({ fantasy_group_id, rankingGrant }) => {
   const subview = useAppSelector((state) => state.fantasyGroupReducer.subview);
   const { width } = useWindowDimensions();
 
+  const isPrePicks = subview === 'pre_picks';
+
+  const getTopTabs = () => {
+    return (
+      <div style = {{ textAlign: 'center' }}>
+        <Tab key = {'draft'} title = {'Draft'} value = {'draft'} selected = {!isPrePicks} onClick={() => isPrePicks && dispatch(setDataKey({ key: 'subview', value: width <= 475 ? 'draft_zone' : 'draft_board' }))}/>
+        <Tab key = {'pre-picks'} title = {'Pre-draft picks'} value = {'pre_picks'} selected = {isPrePicks} onClick={() => dispatch(setDataKey({ key: 'subview', value: 'pre_picks' }))}/>
+      </div>
+    );
+  };
+
+  const getPrePicks = () => {
+    return (
+      <>
+        <Title />
+        <PrePicks />
+      </>
+    );
+  };
+
   const getContents = () => {
     if (fantasy_group.drafted) {
       return (
@@ -78,6 +99,15 @@ const Client = ({ fantasy_group_id, rankingGrant }) => {
           <Loader organization_id={fantasy_group.organization_id} division_id={fantasy_group.division_id} season = {fantasy_group.season} view = 'player' career={0} career_active={0} grant={rankingGrant} />
             : ''
         }
+        {getTopTabs()}
+        {isPrePicks ? getPrePicks() : getDraftLayout()}
+      </>
+    );
+  };
+
+  const getDraftLayout = () => {
+    return (
+      <>
         {
           width <= 475 ?
             <>

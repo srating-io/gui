@@ -1,6 +1,6 @@
 import { Objector } from '@esmalley/ts-utils';
 import { TERMINOLOGY_ID } from '@srating-io/common';
-import { Fantasy } from '@srating-io/types';
+import { Fantasy, General } from '@srating-io/types';
 import { getCachedDataKey } from '@/components/generic/Ranking/Contents/Loader';
 
 /**
@@ -131,4 +131,27 @@ export const getAvailablePlayerRows = (
   }
 
   return rows;
+};
+
+/**
+ * A player's display name, from the lookup dicts the group load returns.
+ */
+export const getPlayerName = (
+  player_team_season_id: string,
+  player_team_seasons: General.PlayerTeamSeasons,
+  players: General.Players,
+): string => {
+  const player_team_season = player_team_seasons[player_team_season_id];
+
+  if (!player_team_season) {
+    return 'Unknown player';
+  }
+
+  const player = players[player_team_season.player_id];
+
+  if (!player) {
+    return 'Unknown player';
+  }
+
+  return `${player.first_name} ${player.last_name}`;
 };

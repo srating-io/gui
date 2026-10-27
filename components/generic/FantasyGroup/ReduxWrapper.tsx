@@ -18,6 +18,7 @@ export interface FantasyGroupLoadData {
   fantasy_entrys: Fantasy.FantasyEntrys;
   fantasy_draft_orders: Fantasy.FantasyDraftOrders;
   fantasy_entry_players: Fantasy.FantasyEntryPlayers;
+  fantasy_entry_pre_picks: Fantasy.FantasyEntryPrePicks;
   player_team_seasons: General.PlayerTeamSeasons;
   players: General.Players;
   fantasy_rankings: Fantasy.FantasyRankings;
@@ -68,6 +69,7 @@ export const handleLoad = (
   dispatch(setDataKey({ key: 'fantasy_entrys', value: data.fantasy_entrys }));
   dispatch(setDataKey({ key: 'fantasy_draft_orders', value: data.fantasy_draft_orders }));
   dispatch(setDataKey({ key: 'fantasy_entry_players', value: data.fantasy_entry_players }));
+  dispatch(setDataKey({ key: 'fantasy_entry_pre_picks', value: data.fantasy_entry_pre_picks }));
   dispatch(setDataKey({ key: 'player_team_seasons', value: data.player_team_seasons }));
   dispatch(setDataKey({ key: 'players', value: data.players }));
   dispatch(setDataKey({ key: 'fantasy_rankings', value: data.fantasy_rankings }));

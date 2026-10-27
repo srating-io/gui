@@ -16,6 +16,8 @@ export type InitialState = {
   fantasy_entrys: Fantasy.FantasyEntrys;
   fantasy_draft_orders: Fantasy.FantasyDraftOrders;
   fantasy_entry_players: Fantasy.FantasyEntryPlayers;
+  // only ever this users own entries, the api does not return anyone elses
+  fantasy_entry_pre_picks: Fantasy.FantasyEntryPrePicks;
   player_team_seasons: General.PlayerTeamSeasons;
   players: General.Players;
   fantasy_rankings: Fantasy.FantasyRankings;
@@ -64,6 +66,7 @@ stateController.setInitialState({
   fantasy_entrys: {} as Fantasy.FantasyEntrys,
   fantasy_draft_orders: {} as Fantasy.FantasyDraftOrders,
   fantasy_entry_players: {} as Fantasy.FantasyEntryPlayers,
+  fantasy_entry_pre_picks: {} as Fantasy.FantasyEntryPrePicks,
   player_team_seasons: {} as General.PlayerTeamSeasons,
   players: {} as General.Players,
   fantasy_rankings: {} as Fantasy.FantasyRankings,
