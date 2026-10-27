@@ -54,21 +54,20 @@ export const getDraftedPlayerTeamSeasonIds = (
 
 /**
  * The ranking rows for players still available, flattened for the table.
+ *
+ * Deep clones the whole cached payload, so build it once per pool and narrow it with
+ * filterPlayerRows below rather than calling this again per keystroke.
  */
 export const getAvailablePlayerRows = (
   {
     rankingData,
     fantasy_group,
     excluded_player_team_season_ids,
-    team_id,
-    search,
   }:
   {
     rankingData: object | null;
     fantasy_group: Fantasy.FantasyGroup;
     excluded_player_team_season_ids: Set<string>;
-    team_id?: string | null;
-    search?: string;
   },
 ): object[] => {
   const cached_key = getCachedDataKey({
@@ -86,17 +85,13 @@ export const getAvailablePlayerRows = (
     rankingData[cached_key].data
   ) ? Objector.deepClone(rankingData[cached_key].data) : {};
 
-  let rows: object[] = [];
+  const rows: object[] = [];
 
   for (const id in data) {
     const row = data[id];
 
     // the cache holds whatever the ranking load returned, so do not assume every value is a row
     if (!row || typeof row !== 'object') {
-      continue;
-    }
-
-    if (team_id && row.team_id !== team_id) {
       continue;
     }
 
@@ -122,16 +117,109 @@ export const getAvailablePlayerRows = (
     rows.push(row);
   }
 
+  return rows;
+};
+
+/**
+ * The team and name filters the table inputs drive.
+ *
+ * Split out from the pool so the draft zone can hold one flattened copy and still answer which
+ * player the pre-draft list points at, which the filtered view cannot be asked.
+ */
+export const filterPlayerRows = (
+  {
+    rows,
+    team_id,
+    search,
+  }:
+  {
+    rows: object[];
+    team_id?: string | null;
+    search?: string;
+  },
+): object[] => {
+  let filtered = rows;
+
+  if (team_id) {
+    filtered = filtered.filter((row) => 'team_id' in row && row.team_id === team_id);
+  }
+
   if (search) {
     // a plain substring match: this was a RegExp built from raw input, so typing "(" threw and
     // blanked the whole draft zone
     const value = search.toLowerCase();
-    rows = rows.filter((row) => {
+    filtered = filtered.filter((row) => {
       return 'name' in row && typeof row.name === 'string' && row.name.toLowerCase().includes(value);
     });
   }
 
-  return rows;
+  return filtered;
+};
+
+/**
+ * Per entry the user owns, the player its pre-draft list points at right now.
+ *
+ * Matched against the available pool rather than the stored list alone, so a name a rival already
+ * took is skipped here exactly as the scraper skips it, and a player missing from the rankings
+ * entirely does not stall the list.
+ */
+export const getNextAvailablePrePickRows = (
+  {
+    rows,
+    fantasy_entry_pre_picks,
+    fantasy_entrys,
+    user_id,
+  }:
+  {
+    rows: object[];
+    fantasy_entry_pre_picks: Fantasy.FantasyEntryPrePicks;
+    fantasy_entrys: Fantasy.FantasyEntrys;
+    user_id: string | null | undefined;
+  },
+): Record<string, object> => {
+  if (!user_id) {
+    return {};
+  }
+
+  const player_team_season_id_x_row: Record<string, object> = {};
+
+  for (const row of rows) {
+    if ('player_team_season_id' in row && typeof row.player_team_season_id === 'string') {
+      player_team_season_id_x_row[row.player_team_season_id] = row;
+    }
+  }
+
+  const fantasy_entry_id_x_pre_picks: Record<string, Fantasy.FantasyEntryPrePick[]> = {};
+
+  for (const fantasy_entry_pre_pick_id in fantasy_entry_pre_picks) {
+    const row = fantasy_entry_pre_picks[fantasy_entry_pre_pick_id];
+    const fantasy_entry = fantasy_entrys[row.fantasy_entry_id];
+
+    if (!fantasy_entry || fantasy_entry.user_id !== user_id) {
+      continue;
+    }
+
+    if (!(row.fantasy_entry_id in fantasy_entry_id_x_pre_picks)) {
+      fantasy_entry_id_x_pre_picks[row.fantasy_entry_id] = [];
+    }
+
+    fantasy_entry_id_x_pre_picks[row.fantasy_entry_id].push(row);
+  }
+
+  const fantasy_entry_id_x_row: Record<string, object> = {};
+
+  for (const fantasy_entry_id in fantasy_entry_id_x_pre_picks) {
+    const ordered = fantasy_entry_id_x_pre_picks[fantasy_entry_id].sort((a, b) => a.ordinal - b.ordinal);
+
+    for (const pre_pick of ordered) {
+      if (pre_pick.player_team_season_id in player_team_season_id_x_row) {
+        fantasy_entry_id_x_row[fantasy_entry_id] = player_team_season_id_x_row[pre_pick.player_team_season_id];
+        break;
+      }
+    }
+  }
+
+  return fantasy_entry_id_x_row;
 };
 
 /**

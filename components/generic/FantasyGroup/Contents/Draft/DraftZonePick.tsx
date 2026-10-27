@@ -3,7 +3,7 @@
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 
 import EmojiPeopleIcon from '@esmalley/react-material-icons/EmojiPeople';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import FantasyGroup from '@/components/helpers/FantasyGroup';
 import { setLoading } from '@/redux/features/loading-slice';
 import { useClientAPI } from '@/components/clientAPI';
@@ -13,7 +13,7 @@ import { Dates, toast } from '@esmalley/ts-utils';
 import { Button, Paper, Tile, Typography, useTheme } from '@esmalley/react-material-ui';
 
 
-const DraftZonePick = ({ selectedRow, onPick }) => {
+const DraftZonePick = ({ selectedRow, onPick, fantasy_entry_id_x_pre_pick_row, onSelect }) => {
   const theme = useTheme();
   const dispatch = useAppDispatch();
   const fantasy_group = useAppSelector((state) => state.fantasyGroupReducer.fantasy_group);
@@ -58,6 +58,45 @@ const DraftZonePick = ({ selectedRow, onPick }) => {
     const row = fantasy_group_users[fantasy_group_user_id];
     user_id_x_fantasy_group_user[row.user_id] = row;
   }
+
+  // what the pre-draft list points at for whoever is on the clock; the load only carries this
+  // user's own lists, so another entry's turn resolves to nothing
+  const pre_pick_row = (
+    current_fantasy_draft_order &&
+    current_fantasy_draft_order.fantasy_entry_id &&
+    fantasy_entry_id_x_pre_pick_row &&
+    fantasy_entry_id_x_pre_pick_row[current_fantasy_draft_order.fantasy_entry_id]
+  ) || null;
+
+  const isPrePicked = (
+    pre_pick_row &&
+    selectedRow &&
+    selectedRow.player_team_season_id === pre_pick_row.player_team_season_id
+  );
+
+  const prefilledRef = useRef<string | null>(null);
+
+  /**
+   * Arrive at your turn with the card already holding the top name off your pre-draft list, so
+   * honoring it is one click instead of finding the player again with the clock running.
+   *
+   * Once per slot only: a click in the table has to win, and this re-runs every time a broadcast
+   * changes the pool.
+   */
+  useEffect(() => {
+    if (!isMyPick || !isOpen || !current_fantasy_draft_order || !pre_pick_row) {
+      return;
+    }
+
+    const { fantasy_draft_order_id } = current_fantasy_draft_order;
+
+    if (!fantasy_draft_order_id || prefilledRef.current === fantasy_draft_order_id) {
+      return;
+    }
+
+    prefilledRef.current = fantasy_draft_order_id;
+    onSelect(pre_pick_row);
+  }, [isMyPick, isOpen, current_fantasy_draft_order?.fantasy_draft_order_id, pre_pick_row]);
 
   useEffect(() => {
     setErrorMessage('');
@@ -191,6 +230,13 @@ const DraftZonePick = ({ selectedRow, onPick }) => {
             primary = {selectedRow ? selectedRow.name : 'No selection yet'}
             secondary= {selectedRow ? selectedRow.team_name : 'Select a player from the table below'}
           />
+          {
+            isPrePicked ?
+              <Typography type = 'caption' style = {{ color: theme.text.secondary }}>
+                From your pre-draft selections. Choose anyone in the table to change it.
+              </Typography>
+              : ''
+          }
         </div>
         <div style = {{ textAlign: 'center' }}>
           <Button

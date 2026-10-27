@@ -20,7 +20,7 @@ import TableColumns from '@/components/helpers/TableColumns';
 import { decorateHeaderRow, decorateRows } from '@/components/generic/Ranking/Contents/Client';
 import OptionPicker from '@/components/generic/OptionPicker';
 import TeamSearch from './TeamSearch';
-import { getAvailablePlayerRows, getDraftedPlayerTeamSeasonIds, getPlayerName } from './shared';
+import { filterPlayerRows, getAvailablePlayerRows, getDraftedPlayerTeamSeasonIds, getPlayerName } from './shared';
 
 
 type SetPrePicksResponse = {
@@ -95,10 +95,12 @@ const PrePicks = () => {
     excluded.add(player_team_season_id);
   }
 
-  const rows = getAvailablePlayerRows({
-    rankingData,
-    fantasy_group,
-    excluded_player_team_season_ids: excluded,
+  const rows = filterPlayerRows({
+    rows: getAvailablePlayerRows({
+      rankingData,
+      fantasy_group,
+      excluded_player_team_season_ids: excluded,
+    }),
     team_id: selectedTeamID,
     search: playerSearchValue,
   });
