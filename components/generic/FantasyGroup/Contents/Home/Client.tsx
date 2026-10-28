@@ -61,13 +61,13 @@ const Client = () => {
   return (
     <Contents>
       {fantasy_group.finished ? <Winner /> : ''}
+      <div style = {{ marginBottom: 20 }}>
+        <HowItWorks />
+      </div>
       <Columns numberOfColumns={2} style = {{ marginBottom: 20 }}>
         <MyEntries />
         {started ? <Ranking /> : <DraftOrBracketCountdown />}
       </Columns>
-      <div style = {{ marginBottom: 20 }}>
-        <HowItWorks />
-      </div>
       {fantasyHelper.isDraft() && started ? <div style = {{ marginBottom: 20 }}><Rosters /></div> : ''}
       <div style = {{ marginBottom: 20 }}>
         <LeagueManagement />
