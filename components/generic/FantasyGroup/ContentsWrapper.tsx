@@ -33,8 +33,8 @@ const Contents = ({ children }): React.JSX.Element => {
 };
 
 const ContentsWrapper = (
-  { children }:
-  { children: React.JSX.Element },
+  { children, fantasy_group_id }:
+  { children: React.JSX.Element; fantasy_group_id: string },
 ) => {
   const theme = useTheme();
   const dispatch = useAppDispatch();
@@ -51,27 +51,37 @@ const ContentsWrapper = (
   // A ref, not state. `load` used to read a `request` it had closed over, so the refresher and the
   // reconnect path set it false and then returned early out of the stale copy they still held -
   // the refresh silently did nothing.
-  const requesting = useRef(false);
+  //
+  // It holds the id in flight rather than a boolean, so a load for a different league supersedes
+  // one already running instead of being dropped by the guard.
+  const requesting = useRef<string | null>(null);
 
   const paddingTop = getNavHeaderHeight();
 
   const heightToRemove = paddingTop + footerNavigationHeight + headerBarHeight + 120;
 
+  // the id comes from the route, not the slice - on a back navigation the slice can still hold the
+  // league that was open before, and loading that one is how its data ended up under this url
   const load = useCallback(() => {
-    if (!fantasy_group.fantasy_group_id || requesting.current) {
+    if (!fantasy_group_id || requesting.current === fantasy_group_id) {
       return;
     }
-    requesting.current = true;
+    requesting.current = fantasy_group_id;
     setLoadFailed(false);
 
     useClientAPI({
       class: 'fantasy_group',
       function: 'load',
       arguments: {
-        fantasy_group_id: fantasy_group.fantasy_group_id,
+        fantasy_group_id,
       },
     }).then((fantasyData: FantasyGroupLoadData) => {
-      requesting.current = false;
+      // a reply for a league that has since been navigated away from must not be written
+      if (requesting.current !== fantasy_group_id) {
+        return;
+      }
+
+      requesting.current = null;
       setLoaded(true);
 
       // a request that never reached the api says nothing about permission, so do not tell someone
@@ -92,11 +102,16 @@ const ContentsWrapper = (
       });
     }).catch((err) => {
       console.log(err);
-      requesting.current = false;
+
+      if (requesting.current !== fantasy_group_id) {
+        return;
+      }
+
+      requesting.current = null;
       setLoaded(true);
       setLoadFailed(true);
     });
-  }, [fantasy_group.fantasy_group_id, session_id, dispatch]);
+  }, [fantasy_group_id, session_id, dispatch]);
 
   useEffect(() => {
     dispatch(setDataKey({ key: 'loadingView', value: false }));
@@ -175,9 +190,9 @@ const ContentsWrapper = (
     };
 
     const refresher = () => {
-      if (online && fantasy_group.fantasy_group_id) {
+      if (online && fantasy_group_id) {
         load();
-        socket.message({ type: 'subscribe', table: 'fantasy_group', id: fantasy_group.fantasy_group_id });
+        socket.message({ type: 'subscribe', table: 'fantasy_group', id: fantasy_group_id });
       }
     };
 
@@ -189,18 +204,18 @@ const ContentsWrapper = (
       socket.connect(session_id);
     }
 
-    if (fantasy_group.fantasy_group_id) {
-      socket.message({ type: 'subscribe', table: 'fantasy_group', id: fantasy_group.fantasy_group_id });
+    if (fantasy_group_id) {
+      socket.message({ type: 'subscribe', table: 'fantasy_group', id: fantasy_group_id });
     }
 
     return () => {
-      if (fantasy_group.fantasy_group_id) {
-        socket.message({ type: 'unsubscribe', table: 'fantasy_group', id: fantasy_group.fantasy_group_id });
+      if (fantasy_group_id) {
+        socket.message({ type: 'unsubscribe', table: 'fantasy_group', id: fantasy_group_id });
       }
       socket.removeEventListener('message', messageHandler);
       socket.removeEventListener('refresh', refresher);
     };
-  }, [session_id, fantasy_group.fantasy_group_id, online, load]);
+  }, [session_id, fantasy_group_id, online, load]);
 
   // Fetching in the render body double-fetched under React's double-invoked render, set state
   // during render, and never refetched when the group or the session changed.
@@ -229,10 +244,14 @@ const ContentsWrapper = (
     );
   }
 
+  // the slice is shared across leagues, so hold the spinner until it actually holds this one,
+  // rather than painting one league's header over another league's members
+  const isThisGroup = fantasy_group.fantasy_group_id === fantasy_group_id;
+
   return (
     <Contents>
       {
-      loadingView || !loaded ?
+      loadingView || !loaded || !isThisGroup ?
         <div style = {{
           display: 'flex',
           flexDirection: 'column',

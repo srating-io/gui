@@ -153,7 +153,7 @@ class FantasyGroup extends Surface {
     return (
       <ReduxWrapper fantasy_group = {fantasy_group}>
         <NavBar />
-        <ContentsWrapper>
+        <ContentsWrapper fantasy_group_id = {fantasy_group_id}>
           {getContents()}
         </ContentsWrapper>
       </ReduxWrapper>

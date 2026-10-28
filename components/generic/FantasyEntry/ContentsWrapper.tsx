@@ -26,8 +26,8 @@ const Contents = ({ children }): React.JSX.Element => {
 };
 
 const ContentsWrapper = (
-  { children }:
-  { children: React.JSX.Element },
+  { children, fantasy_entry_id }:
+  { children: React.JSX.Element; fantasy_entry_id: string },
 ) => {
   const theme = useTheme();
   const dispatch = useAppDispatch();
@@ -41,8 +41,9 @@ const ContentsWrapper = (
   const [canView, setCanView] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
 
-  // a ref rather than state, so a retry is not blocked by the copy of `request` the caller closed over
-  const requesting = useRef(false);
+  // a ref rather than state, so a retry is not blocked by the copy of `request` the caller closed over.
+  // It holds the id in flight, so a load for a different entry supersedes one already running.
+  const requesting = useRef<string | null>(null);
 
   const paddingTop = getNavHeaderHeight();
 
@@ -53,21 +54,28 @@ const ContentsWrapper = (
   }, [children]);
 
 
+  // the id comes from the route, not the slice - on a back navigation the slice can still hold the
+  // entry that was open before, and loading that one is how its data ended up under this url
   const load = useCallback(() => {
-    if (!fantasy_entry.fantasy_entry_id || requesting.current) {
+    if (!fantasy_entry_id || requesting.current === fantasy_entry_id) {
       return;
     }
-    requesting.current = true;
+    requesting.current = fantasy_entry_id;
     setLoadFailed(false);
 
     useClientAPI({
       class: 'fantasy_entry',
       function: 'load',
       arguments: {
-        fantasy_entry_id: fantasy_entry.fantasy_entry_id,
+        fantasy_entry_id,
       },
     }).then((data: FantasyEntryLoadData) => {
-      requesting.current = false;
+      // a reply for an entry that has since been navigated away from must not be written
+      if (requesting.current !== fantasy_entry_id) {
+        return;
+      }
+
+      requesting.current = null;
       setLoaded(true);
 
       // a request that never reached the api says nothing about permission
@@ -87,11 +95,16 @@ const ContentsWrapper = (
       });
     }).catch((err) => {
       console.log(err);
-      requesting.current = false;
+
+      if (requesting.current !== fantasy_entry_id) {
+        return;
+      }
+
+      requesting.current = null;
       setLoaded(true);
       setLoadFailed(true);
     });
-  }, [fantasy_entry.fantasy_entry_id, session_id, dispatch]);
+  }, [fantasy_entry_id, session_id, dispatch]);
 
   // in the render body this double-fetched and never refetched on a session change
   useEffect(() => {
@@ -157,10 +170,13 @@ const ContentsWrapper = (
     );
   }
 
+  // the slice is shared across entries, so hold the spinner until it actually holds this one
+  const isThisEntry = fantasy_entry.fantasy_entry_id === fantasy_entry_id;
+
   return (
     <Contents>
       {
-      loadingView || !loaded ?
+      loadingView || !loaded || !isThisEntry ?
         <div style = {{
           display: 'flex',
           flexDirection: 'column',
