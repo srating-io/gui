@@ -24,6 +24,9 @@ export type InitialState = {
   fantasy_entry_player_statistic_rankings: {
     [fantasy_entry_player_statistic_ranking_id: string]: Fantasy.FantasyEntryPlayerStatisticRanking & Basketball.PlayerStatisticRanking
   };
+  // the create entry modal: null is closed, '' is a new entry, a name resumes that entry's checkout.
+  // shared because the checklist and the how it works card both open it, and only MyEntries mounts it
+  joining_entry_name: string | null;
   loadingView: boolean;
 };
 
@@ -73,6 +76,7 @@ stateController.setInitialState({
   fantasy_entry_player_statistic_rankings: {} as {
     [fantasy_entry_player_statistic_ranking_id: string]: Fantasy.FantasyEntryPlayerStatisticRanking & Basketball.PlayerStatisticRanking
   },
+  joining_entry_name: null,
   loadingView: true,
 });
 

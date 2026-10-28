@@ -2,10 +2,10 @@
 
 /* eslint-disable no-nested-ternary */
 
-import { useAppSelector } from '@/redux/hooks';
+import { useAppDispatch, useAppSelector } from '@/redux/hooks';
+import { setDataKey } from '@/redux/features/fantasy_group-slice';
 import SentimentVeryDissatisfiedIcon from '@esmalley/react-material-icons/SentimentVeryDissatisfied';
 import AddIcon from '@esmalley/react-material-icons/Add';
-import { useState } from 'react';
 import CreateEntry from './CreateEntry';
 import StadiumIcon from '@esmalley/react-material-icons/Stadium';
 import FantasyGroup from '@/components/helpers/FantasyGroup';
@@ -16,14 +16,16 @@ import { Fantasy } from '@srating-io/types';
 const MyEntries = () => {
   const theme = useTheme();
   const navigation = useNavigation();
+  const dispatch = useAppDispatch();
   const fantasy_group = useAppSelector((state) => state.fantasyGroupReducer.fantasy_group);
   const fantasy_entrys = useAppSelector((state) => state.fantasyGroupReducer.fantasy_entrys);
   const user = useAppSelector((state) => state.userReducer.user);
 
   const fantasyHelper = new FantasyGroup({ fantasy_group });
 
-  const [joining, setJoining] = useState(false);
-  const [resumeName, setResumeName] = useState('');
+  // shared, so the checklist and the how it works card can open this modal without a second mount
+  const joining_entry_name = useAppSelector((state) => state.fantasyGroupReducer.joining_entry_name);
+  const joining = joining_entry_name !== null;
 
   const my_fantasy_entrys: Fantasy.FantasyEntry[] = [];
 
@@ -78,8 +80,7 @@ const MyEntries = () => {
       return;
     }
 
-    setResumeName('');
-    setJoining(true);
+    dispatch(setDataKey({ key: 'joining_entry_name', value: '' }));
   };
 
   const handlePay = (e, fantasy_entry_id) => {
@@ -87,8 +88,7 @@ const MyEntries = () => {
       return;
     }
 
-    setResumeName(fantasy_entrys[fantasy_entry_id]?.name || '');
-    setJoining(true);
+    dispatch(setDataKey({ key: 'joining_entry_name', value: fantasy_entrys[fantasy_entry_id]?.name || '' }));
   };
 
   const paperButtons: React.JSX.Element[] = [];
@@ -128,10 +128,9 @@ const MyEntries = () => {
     <div>
       <CreateEntry
         open = {joining}
-        initialName = {resumeName}
+        initialName = {joining_entry_name || ''}
         closeHandler = {(fantasy_entry_id) => {
-          setJoining(false);
-          setResumeName('');
+          dispatch(setDataKey({ key: 'joining_entry_name', value: null }));
 
           if (fantasyHelper.isNCAABracket() && fantasy_entry_id) {
             handleTileClick(null, fantasy_entry_id);
