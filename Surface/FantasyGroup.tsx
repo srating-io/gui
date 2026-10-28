@@ -120,7 +120,11 @@ class FantasyGroup extends Surface {
       if (view === 'draft') {
         // The draft board's player ranking is loaded in the browser, so its ttl is signed here
         // rather than sent from there. Same call as the ranking page, so the same grant shape.
-        const rankingGrant = mintCacheGrant({
+        //
+        // One per stat view the table can show, because the hash covers the arguments and a
+        // browser cannot re-sign them. Both come off buildRankingArguments rather than a literal,
+        // or the hashes drift and the read quietly stops caching.
+        const mintRankingGrant = (career: number, career_active: number) => mintCacheGrant({
           class: 'ranking',
           function: 'load',
           arguments: buildRankingArguments({
@@ -128,8 +132,8 @@ class FantasyGroup extends Surface {
             division_id: fantasy_group.division_id,
             season: fantasy_group.season,
             view: 'player',
-            career: 0,
-            career_active: 0,
+            career,
+            career_active,
           }),
           cache: 60 * 60,
           public: true,
@@ -137,7 +141,11 @@ class FantasyGroup extends Surface {
 
         return (
           <DraftClientWrapper>
-            <DraftClient fantasy_group_id={fantasy_group_id} rankingGrant={rankingGrant} />
+            <DraftClient
+              fantasy_group_id={fantasy_group_id}
+              rankingGrant={mintRankingGrant(0, 0)}
+              rankingCareerActiveGrant={mintRankingGrant(0, 1)}
+            />
           </DraftClientWrapper>
         );
       }

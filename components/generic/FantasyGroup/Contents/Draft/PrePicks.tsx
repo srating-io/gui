@@ -20,7 +20,16 @@ import TableColumns from '@/components/helpers/TableColumns';
 import { decorateHeaderRow, decorateRows } from '@/components/generic/Ranking/Contents/Client';
 import OptionPicker from '@/components/generic/OptionPicker';
 import TeamSearch from './TeamSearch';
-import { filterPlayerRows, getAvailablePlayerRows, getDraftedPlayerTeamSeasonIds, getPlayerName } from './shared';
+import StatViewSwitch from './StatViewSwitch';
+import {
+  applyCareerActiveStats,
+  filterPlayerRows,
+  getAvailablePlayerRows,
+  getCareerActiveRowsByPlayerID,
+  getDraftDisplayColumns,
+  getDraftedPlayerTeamSeasonIds,
+  getPlayerName,
+} from './shared';
 
 
 type SetPrePicksResponse = {
@@ -49,8 +58,11 @@ const PrePicks = () => {
   const player_team_seasons = useAppSelector((state) => state.fantasyGroupReducer.player_team_seasons);
   const players = useAppSelector((state) => state.fantasyGroupReducer.players);
   const user = useAppSelector((state) => state.userReducer.user);
+  const draft_stat_view = useAppSelector((state) => state.fantasyGroupReducer.draft_stat_view);
   const loadingRankingData = useAppSelector((state) => state.rankingReducer.loadingView);
   const rankingData = useAppSelector((state) => state.cacheReducer.rankingData);
+
+  const isCareerActive = draft_stat_view === 'career_active';
 
   const my_fantasy_entrys = useMemo(() => {
     return Object.values(fantasy_entrys).filter((row) => user && row.user_id === user.user_id);
@@ -95,18 +107,42 @@ const PrePicks = () => {
     excluded.add(player_team_season_id);
   }
 
-  const rows = filterPlayerRows({
-    rows: getAvailablePlayerRows({
+  // the set itself is new every render, so the pool is keyed on its contents instead
+  const excluded_key = [...excluded].sort().join(',');
+
+  // Built once per pool rather than once per keystroke: getAvailablePlayerRows deep clones the
+  // whole cached payload, and filterPlayerRows below is what narrows it.
+  const seasonPool = useMemo(() => {
+    return getAvailablePlayerRows({
       rankingData,
       fantasy_group,
       excluded_player_team_season_ids: excluded,
-    }),
-    team_id: selectedTeamID,
-    search: playerSearchValue,
-  });
+    });
+  }, [rankingData, fantasy_group, excluded_key]);
 
-  const columns = TableColumns.getColumns({ organization_id: fantasy_group.organization_id, view: 'player' });
-  const displayColumns = TableColumns.getViewableColumns({ organization_id: fantasy_group.organization_id, view: 'player', columnView: 'composite', customColumns: [], positions: [], career: false });
+  // Career stats laid over the season rows, never in place of them -- a career row carries no
+  // player_team_season_id, which is the whole of what a pre-pick stores.
+  const pool = useMemo(() => {
+    if (!isCareerActive) {
+      return seasonPool;
+    }
+
+    return applyCareerActiveStats({
+      rows: seasonPool,
+      player_id_x_career_row: getCareerActiveRowsByPlayerID({ rankingData, fantasy_group }),
+    });
+  }, [seasonPool, isCareerActive, rankingData, fantasy_group]);
+
+  const rows = useMemo(() => {
+    return filterPlayerRows({
+      rows: pool,
+      team_id: selectedTeamID,
+      search: playerSearchValue,
+    });
+  }, [pool, selectedTeamID, playerSearchValue]);
+
+  const columns = TableColumns.getColumns({ organization_id: fantasy_group.organization_id, view: 'player', career: isCareerActive });
+  const displayColumns = getDraftDisplayColumns({ organization_id: fantasy_group.organization_id, career: isCareerActive });
 
   const inputHandler = new Inputs();
 
@@ -279,6 +315,7 @@ const PrePicks = () => {
 
     return (
       <div>
+        <StatViewSwitch rows = {seasonPool} />
         <Columns breakPoint={320}>
           <TeamSearch
             inputHandler={inputHandler}
@@ -305,7 +342,8 @@ const PrePicks = () => {
           decorateHeaderRow={decorateHeaderRow}
           defaultSortOrder = 'asc'
           defaultSortOrderBy = {'rank'}
-          sessionStorageKey = {`${fantasy_group.organization_id}.FANTASY.PRE_PICKS`}
+          // keyed per stat view, so a sort saved on a column only one of them has does not carry over
+          sessionStorageKey = {`${fantasy_group.organization_id}.FANTASY.PRE_PICKS.${draft_stat_view}`}
         />
       </div>
     );

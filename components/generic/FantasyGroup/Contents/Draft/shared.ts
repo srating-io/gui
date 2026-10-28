@@ -2,6 +2,7 @@ import { Objector } from '@esmalley/ts-utils';
 import { TERMINOLOGY_ID } from '@srating-io/common';
 import { Fantasy, General } from '@srating-io/types';
 import { getCachedDataKey } from '@/components/generic/Ranking/Contents/Loader';
+import TableColumns from '@/components/helpers/TableColumns';
 
 /**
  * The player pool the draft zone and the pre-draft list both work from.
@@ -121,6 +122,142 @@ export const getAvailablePlayerRows = (
 };
 
 /**
+ * The columns that describe who a player is rather than how they have played.
+ *
+ * Carried over from the season row when career stats are laid on top, because a career row has a
+ * null team_id and a null player_team_season_id (schema.sql, player_statistic_ranking) and the
+ * api drops team_name and the attached player_team_season with them. Without this the team filter
+ * matches nothing and a pick cannot be submitted at all.
+ */
+const IDENTITY_COLUMNS = [
+  'player_statistic_ranking_id',
+  'player_id',
+  'player_team_season_id',
+  'player_team_season',
+  'player',
+  'team_id',
+  'team_name',
+  'team_slug',
+  'conference_id',
+  'slug',
+  'name',
+  'number',
+  'position',
+  'height',
+  'weight',
+  'class_year',
+];
+
+/**
+ * The active career ranking rows, keyed by player.
+ *
+ * Its own cache entry, loaded alongside the season one -- see the two Loaders in Draft/Client.
+ */
+export const getCareerActiveRowsByPlayerID = (
+  {
+    rankingData,
+    fantasy_group,
+  }:
+  {
+    rankingData: object | null;
+    fantasy_group: Fantasy.FantasyGroup;
+  },
+): Record<string, object> => {
+  const cached_key = getCachedDataKey({
+    organization_id: fantasy_group.organization_id,
+    division_id: fantasy_group.division_id,
+    season: fantasy_group.season,
+    view: 'player',
+    career: 0,
+    career_active: 1,
+  });
+
+  const data: object = (
+    rankingData &&
+    cached_key in rankingData &&
+    rankingData[cached_key].data
+  ) || {};
+
+  const player_id_x_row: Record<string, object> = {};
+
+  for (const id in data) {
+    const row = data[id];
+
+    // the cache holds whatever the ranking load returned, so do not assume every value is a row
+    if (!row || typeof row !== 'object' || !row.player_id) {
+      continue;
+    }
+
+    player_id_x_row[row.player_id] = row;
+  }
+
+  return player_id_x_row;
+};
+
+/**
+ * The pool with career stats in place of season stats, matched on player.
+ *
+ * The season row stays the row -- only the numbers change. Shallow copies the career row rather
+ * than cloning it: everything kept off it is a scalar stat, and every nested value is overwritten
+ * by the season row's already-cloned one below.
+ */
+export const applyCareerActiveStats = (
+  {
+    rows,
+    player_id_x_career_row,
+  }:
+  {
+    rows: object[];
+    player_id_x_career_row: Record<string, object>;
+  },
+): object[] => {
+  // A blank of the same shape, for the players below that have no career row.
+  //
+  // Every column has to be present and null rather than simply absent: the cell renderer tests
+  // `!== null` to choose between the value and a dash, so an undefined column prints the string
+  // "undefined". A null also sorts to the bottom instead of the top, which is where a player with
+  // no career to show belongs.
+  const blank: object = {};
+  const [template] = Object.values(player_id_x_career_row);
+
+  for (const column in (template || {})) {
+    blank[column] = null;
+  }
+
+  return rows.map((row) => {
+    const player_id = 'player_id' in row ? (row.player_id as string) : '';
+
+    // A rookie with no games anywhere has no career row at all -- the career writer drops players
+    // with zero games. They stay in the pool because they are still draftable, but with the stats
+    // blank rather than their season numbers sitting under a career heading.
+    const career_row = (player_id && player_id in player_id_x_career_row) ? player_id_x_career_row[player_id] : null;
+
+    const next: object = { ...(career_row || blank) };
+
+    for (const column of IDENTITY_COLUMNS) {
+      if (column in row) {
+        next[column] = row[column];
+      } else {
+        delete next[column];
+      }
+    }
+
+    return next;
+  });
+};
+
+/**
+ * Has nothing been played yet?
+ *
+ * The preseason ranking run still writes a row per player, it just leaves every stat at zero and
+ * ranks on elo alone, so an empty pool is not the signal -- a pool of zeroes is. Short circuits on
+ * the first game played.
+ */
+export const isPreSeasonPool = (rows: object[]): boolean => {
+  return rows.length > 0 && rows.every((row) => !+(('games' in row && row.games) || 0));
+};
+
+/**
  * The team and name filters the table inputs drive.
  *
  * Split out from the pool so the draft zone can hold one flattened copy and still answer which
@@ -154,6 +291,47 @@ export const filterPlayerRows = (
   }
 
   return filtered;
+};
+
+/**
+ * The columns both draft tables show.
+ *
+ * The career list leaves out team_name because the api nulls it on a career row. Here the season
+ * row is still underneath, so the team is known -- and it is half of what the drafter is judging.
+ */
+export const getDraftDisplayColumns = (
+  {
+    organization_id,
+    career,
+  }:
+  {
+    organization_id: string;
+    career: boolean;
+  },
+): string[] => {
+  const columns = TableColumns.getViewableColumns({
+    organization_id,
+    view: 'player',
+    columnView: 'composite',
+    customColumns: [],
+    positions: [],
+    career,
+  });
+
+  // An empty set is left alone: cfb resolves to one today, because every football branch is
+  // gated on a position and the draft tables pass none. Injecting into it would put a lone team
+  // column on a table that is meant to be showing nothing.
+  const name_at = columns.indexOf('name');
+
+  if (!career || name_at < 0 || columns.includes('team_name')) {
+    return columns;
+  }
+
+  const next = [...columns];
+
+  next.splice(name_at + 1, 0, 'team_name');
+
+  return next;
 };
 
 /**

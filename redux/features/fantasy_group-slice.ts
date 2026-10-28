@@ -7,6 +7,8 @@ import { Basketball, Fantasy, General } from '@srating-io/types';
 export type InitialState = {
   view: string;
   subview?: string;
+  // '' until the draft table reads the pool and picks a default, then 'season' or 'career_active'
+  draft_stat_view?: string;
   isOwner: boolean;
   fantasy_group: Fantasy.FantasyGroup;
   fantasy_group_user: Fantasy.FantasyGroupUser | null;
@@ -42,6 +44,7 @@ stateController.set_url_param_type_x_keys({
   string: [
     'view',
     'subview',
+    'draft_stat_view',
   ],
   number: [],
   array: [
@@ -57,6 +60,7 @@ stateController.set_key_x_is_push_state({
 stateController.setInitialState({
   view: 'home',
   subview: 'draft_board',
+  draft_stat_view: '',
   isOwner: false,
   fantasy_group: {} as Fantasy.FantasyGroup,
   fantasy_group_invites: {} as Fantasy.FantasyGroupInvites,
