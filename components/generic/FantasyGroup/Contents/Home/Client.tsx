@@ -10,6 +10,7 @@ import Comments from './Comments';
 import MyEntries from './MyEntries';
 import LeagueManagement from './LeagueManagement';
 import DraftOrBracketCountdown from './DraftOrBracketCountdown';
+import HowItWorks from './HowItWorks';
 import { useAppSelector } from '@/redux/hooks';
 import FantasyGroup from '@/components/helpers/FantasyGroup';
 import Rosters from './Rosters';
@@ -64,6 +65,9 @@ const Client = () => {
         <MyEntries />
         {started ? <Ranking /> : <DraftOrBracketCountdown />}
       </Columns>
+      <div style = {{ marginBottom: 20 }}>
+        <HowItWorks />
+      </div>
       {fantasyHelper.isDraft() && started ? <div style = {{ marginBottom: 20 }}><Rosters /></div> : ''}
       <div style = {{ marginBottom: 20 }}>
         <LeagueManagement />
