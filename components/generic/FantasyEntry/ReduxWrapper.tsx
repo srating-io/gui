@@ -2,9 +2,10 @@
 
 import React, { useEffect } from 'react';
 import { useAppDispatch } from '@/redux/hooks';
-import { setDataKey } from '@/redux/features/fantasy_entry-slice';
+import { reset, setDataKey } from '@/redux/features/fantasy_entry-slice';
 import { updateDivisionID, updateOrganizationID, updateSeason } from '@/redux/features/organization-slice';
 import { AppDispatch } from '@/redux/store';
+import { getStore } from '@/app/StoreProvider';
 import { Basketball, Fantasy, General } from '@srating-io/types';
 
 export interface FantasyEntryLoadData {
@@ -65,13 +66,27 @@ const ReduxWrapper = (
   const dispatch = useAppDispatch();
 
   useEffect(() => {
+    const current = getStore().getState().fantasyEntryReducer.fantasy_entry;
+    const isNewEntry = !!fantasy_entry && current.fantasy_entry_id !== fantasy_entry.fantasy_entry_id;
+
+    if (isNewEntry) {
+      // back / forward skips the navigation helper, so nothing else clears the previous entry out
+      // of this slice, and its roster would render under this entry's name
+      dispatch(reset(false));
+    }
+
     if (fantasy_group) {
       dispatch(updateOrganizationID(fantasy_group.organization_id));
       dispatch(updateDivisionID(fantasy_group.division_id));
       dispatch(updateSeason(fantasy_group.season));
-      dispatch(setDataKey({ key: 'fantasy_group', value: fantasy_group }));
     }
-    if (fantasy_entry) {
+
+    // Both rows come from an anonymous render, and a private league strips the entry to three
+    // fields, so seed them once and let the client load own them from there
+    if (isNewEntry) {
+      if (fantasy_group) {
+        dispatch(setDataKey({ key: 'fantasy_group', value: fantasy_group }));
+      }
       dispatch(setDataKey({ key: 'fantasy_entry', value: fantasy_entry }));
     }
   }, [

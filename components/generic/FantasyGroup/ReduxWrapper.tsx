@@ -2,7 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { useAppDispatch } from '@/redux/hooks';
-import { InitialState, setDataKey } from '@/redux/features/fantasy_group-slice';
+import { InitialState, reset, setDataKey, updateFromURL } from '@/redux/features/fantasy_group-slice';
 import { updateDivisionID, updateOrganizationID, updateSeason } from '@/redux/features/organization-slice';
 import { AppDispatch } from '@/redux/store';
 import { getStore } from '@/app/StoreProvider';
@@ -92,7 +92,20 @@ const ReduxWrapper = (
     dispatch(updateOrganizationID(fantasy_group.organization_id));
     dispatch(updateDivisionID(fantasy_group.division_id));
     dispatch(updateSeason(fantasy_group.season));
-    dispatch(setDataKey({ key: 'fantasy_group', value: fantasy_group }));
+
+    const current = getStore().getState().fantasyGroupReducer.fantasy_group;
+
+    if (current.fantasy_group_id !== fantasy_group.fantasy_group_id) {
+      // back / forward skips the navigation helper, so nothing else clears another league out of
+      // this slice, and its members and entries would render under this league's name
+      dispatch(reset(false));
+      // reset does not re-read the url, so ?view= and ?subview= would be lost with it
+      dispatch(updateFromURL());
+      dispatch(setDataKey({ key: 'fantasy_group', value: fantasy_group }));
+    }
+
+    // Same league: this render is anonymous and a private league arrives stripped to five fields,
+    // so the client load owns the row. Writing it on a history restore is what gave "$undefined".
   }, [dispatch, fantasy_group]);
 
 
