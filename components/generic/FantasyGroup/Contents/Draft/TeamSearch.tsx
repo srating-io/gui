@@ -2,7 +2,7 @@
 
 import { useClientAPI } from '@/components/clientAPI';
 import useDebounce from '@/components/hooks/useDebounce';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import SearchIcon from '@esmalley/react-material-icons/Search';
 import { Textor } from '@esmalley/ts-utils';
 import { Inputs, Menu, MenuOption, TextInput } from '@esmalley/react-material-ui';
@@ -18,7 +18,7 @@ const TeamSearch = (
   {
     inputHandler: Inputs;
     fantasy_group: Fantasy.FantasyGroup;
-    handleSelect: (team_id: string) => void;
+    handleSelect: (team_id: string | null) => void;
   },
 ) => {
   const [teamSearchValue, setTeamSearchValue] = useState('');
@@ -27,15 +27,18 @@ const TeamSearch = (
   const [teamMenuOpen, setTeamMenuOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleTeamSelect = (team_id) => {
-    setAnchorTeam(null);
-    setTeamMenuOpen(false);
-    handleSelect(team_id);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
-    const foundTeam = teams.find((team) => team.team_id === team_id);
-    if (foundTeam) {
-      setTeamSearchValue(foundTeam.alt_name || foundTeam.name);
+  // Menu hands the whole option to onSelect, not its value. Taking the label off the option rather
+  // than looking the team up again keeps this working regardless of the teams array.
+  const handleTeamSelect = (option: MenuOption) => {
+    if (!option || !option.value) {
+      return;
     }
+
+    setTeamMenuOpen(false);
+    setTeamSearchValue(option.label || '');
+    handleSelect(option.value as string);
   };
 
   const menuOptions: MenuOption[] = teams.map((row) => {
@@ -83,7 +86,15 @@ const TeamSearch = (
   }
 
   const debouncedRequest = useDebounce(() => {
-    setLoading(true);
+    // Abort the previous request if it's still pending
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // Create a new AbortController for this request
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     useClientAPI({
       class: 'search',
       function: 'search',
@@ -95,10 +106,14 @@ const TeamSearch = (
         player: 0,
         coach: 0,
       },
-    }).then((response) => {
+    }, { signal: controller.signal }).then((response) => {
       setTeams((response && response.teams) || []);
       setLoading(false);
     }).catch((e) => {
+      // Ignore the error if we intentionally aborted it
+      if (e.name === 'AbortError') {
+        return;
+      }
       setTeams([]);
       setLoading(false);
     });
@@ -131,8 +146,9 @@ const TeamSearch = (
           setTeamSearchValue(val as string);
           if (!val) {
             setTeams([]);
+            setLoading(false);
             setTeamMenuOpen(false);
-            handleTeamSelect(null);
+            handleSelect(null);
           } else if (val !== teamSearchValue) {
             setTeamMenuOpen(true);
             setLoading(true);
