@@ -18,8 +18,10 @@ const GeneralDetails = (
   },
 ) => {
   const theme = useTheme();
-  const organization_id = useAppSelector((state) => state.organizationReducer.organization_id);
   const organizations = useAppSelector((state) => state.dictionaryReducer.organization);
+
+  // the row, not organizationReducer - on the invite route global state is still the default sport
+  const { organization_id } = fantasy_group;
 
   return (
     <Paper style={paperStyle}>

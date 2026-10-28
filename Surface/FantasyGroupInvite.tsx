@@ -6,6 +6,7 @@ import Organization from '@/components/helpers/Organization';
 import { useServerAPI } from '@/components/serverAPI';
 
 import ContentsWrapper from '@/components/generic/FantasyGroupInvite/ContentsWrapper';
+import ReduxWrapper from '@/components/generic/FantasyGroupInvite/ReduxWrapper';
 import { Client } from '@/components/generic/FantasyGroupInvite/Client';
 import { Dates } from '@esmalley/ts-utils';
 import { Typography } from '@esmalley/react-material-ui';
@@ -143,9 +144,11 @@ class FantasyGroupInvite extends Surface {
     }
 
     return (
-      <ContentsWrapper>
-        <Client fantasy_group = {fantasy_group} fantasy_entrys={fantasy_entrys} fantasy_group_invite_id={fantasy_group_invite_id} code = {code} />
-      </ContentsWrapper>
+      <ReduxWrapper fantasy_group = {fantasy_group}>
+        <ContentsWrapper>
+          <Client fantasy_group = {fantasy_group} fantasy_entrys={fantasy_entrys} fantasy_group_invite_id={fantasy_group_invite_id} code = {code} />
+        </ContentsWrapper>
+      </ReduxWrapper>
     );
   }
 }
