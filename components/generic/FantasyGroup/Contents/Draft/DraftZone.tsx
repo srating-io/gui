@@ -18,6 +18,7 @@ import {
   getDraftDisplayColumns,
   getDraftedPlayerTeamSeasonIds,
   getNextAvailablePrePickRows,
+  isPoolLoading,
 } from './shared';
 import { Columns, Inputs, LinearProgress, TextInput, Typography, useTheme, VirtualTable } from '@esmalley/react-material-ui';
 
@@ -30,10 +31,11 @@ const DraftZone = () => {
   const fantasy_entry_pre_picks = useAppSelector((state) => state.fantasyGroupReducer.fantasy_entry_pre_picks);
   const user = useAppSelector((state) => state.userReducer.user);
   const draft_stat_view = useAppSelector((state) => state.fantasyGroupReducer.draft_stat_view);
-  const loadingRankingData = useAppSelector((state) => state.rankingReducer.loadingView);
+  const loadErrorKeys = useAppSelector((state) => state.rankingReducer.loadErrorKeys);
   const rankingData = useAppSelector((state) => state.cacheReducer.rankingData);
 
   const isCareerActive = draft_stat_view === 'career_active';
+  const loadingPool = isPoolLoading({ rankingData, loadErrorKeys, fantasy_group, draft_stat_view });
 
   const [playerSearchValue, setPlayerSearchValue] = useState('');
   const [selectedRow, setSelectedRow] = useState<object | null>(null);
@@ -122,7 +124,7 @@ const DraftZone = () => {
 
 
   const getContainer = () => {
-    if (loadingRankingData) {
+    if (loadingPool) {
       return (
         <div style = {{ display: 'flex', justifyContent: 'center', height: 40, alignItems: 'center' }}>
           <LinearProgress color = {theme.secondary.main} containerStyle={{ width: '50%' }} />

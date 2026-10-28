@@ -36,6 +36,23 @@ const Loader = ({ organization_id, division_id, season, view, career, career_act
 
     const { rankingData } = store.getState().cacheReducer;
 
+    // Read fresh off the store on every call: both draft Loaders can settle in the same tick, and
+    // updateDataKey toggles membership rather than setting it.
+    const setLoadError = (failed: boolean) => {
+      const { loadErrorKeys } = getStore().getState().rankingReducer;
+
+      if (loadErrorKeys.includes(cachedDataKey) === failed) {
+        return;
+      }
+
+      dispatch(setDataKey({
+        key: 'loadErrorKeys',
+        value: failed ? [...loadErrorKeys, cachedDataKey] : loadErrorKeys.filter((key) => key !== cachedDataKey),
+      }));
+    };
+
+    setLoadError(false);
+
     if (
       rankingData &&
       cachedDataKey in rankingData &&
@@ -64,6 +81,7 @@ const Loader = ({ organization_id, division_id, season, view, career, career_act
         // draft day.
         if (response && response.error) {
           dispatch(setDataKey({ key: 'data', value: {} }));
+          setLoadError(true);
           dispatch(setDataKey({ key: 'loadingView', value: false }));
           return;
         }
@@ -78,6 +96,7 @@ const Loader = ({ organization_id, division_id, season, view, career, career_act
         dispatch(setDataKey({ key: 'loadingView', value: false }));
       }).catch((e) => {
         if (e?.name !== 'AbortError') {
+          setLoadError(true);
           dispatch(setDataKey({ key: 'loadingView', value: false }));
         }
       });

@@ -36,6 +36,8 @@ export type InitialState = {
   filteredRows: RankingTable[] | null | boolean,
   searchValue: string,
   loadingView: boolean,
+  /** Cache keys whose last load failed, so a screen waiting on a key's data knows to stop. */
+  loadErrorKeys: string[],
   career: number,
   career_active: number,
 };
@@ -102,6 +104,7 @@ stateController.setInitialState({
   filteredRows: null,
   searchValue: '',
   loadingView: true,
+  loadErrorKeys: [],
   career: 0,
   career_active: 0,
 } as InitialState);

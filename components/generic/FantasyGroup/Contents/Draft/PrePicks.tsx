@@ -29,6 +29,7 @@ import {
   getDraftDisplayColumns,
   getDraftedPlayerTeamSeasonIds,
   getPlayerName,
+  isPoolLoading,
 } from './shared';
 
 
@@ -59,10 +60,11 @@ const PrePicks = () => {
   const players = useAppSelector((state) => state.fantasyGroupReducer.players);
   const user = useAppSelector((state) => state.userReducer.user);
   const draft_stat_view = useAppSelector((state) => state.fantasyGroupReducer.draft_stat_view);
-  const loadingRankingData = useAppSelector((state) => state.rankingReducer.loadingView);
+  const loadErrorKeys = useAppSelector((state) => state.rankingReducer.loadErrorKeys);
   const rankingData = useAppSelector((state) => state.cacheReducer.rankingData);
 
   const isCareerActive = draft_stat_view === 'career_active';
+  const loadingPool = isPoolLoading({ rankingData, loadErrorKeys, fantasy_group, draft_stat_view });
 
   const my_fantasy_entrys = useMemo(() => {
     return Object.values(fantasy_entrys).filter((row) => user && row.user_id === user.user_id);
@@ -305,7 +307,7 @@ const PrePicks = () => {
   };
 
   const getTable = () => {
-    if (loadingRankingData) {
+    if (loadingPool) {
       return (
         <div style = {{ display: 'flex', justifyContent: 'center', height: 40, alignItems: 'center' }}>
           <LinearProgress color = {theme.secondary.main} containerStyle={{ width: '50%' }} />

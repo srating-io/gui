@@ -54,6 +54,63 @@ export const getDraftedPlayerTeamSeasonIds = (
 };
 
 /**
+ * The ranking cache key a pool lives under, shared so the loading check and the rows it gates
+ * cannot read different entries.
+ */
+export const getPoolCacheKey = (
+  {
+    fantasy_group,
+    career_active,
+  }:
+  {
+    fantasy_group: Fantasy.FantasyGroup;
+    career_active: number;
+  },
+): string => {
+  return getCachedDataKey({
+    organization_id: fantasy_group.organization_id,
+    division_id: fantasy_group.division_id,
+    season: fantasy_group.season,
+    view: 'player',
+    career: 0,
+    career_active,
+  });
+};
+
+/**
+ * Is a pool the draft table needs still on the way?
+ *
+ * Per cache key, not the ranking slice's loadingView: both Loaders and the ranking screen share
+ * that flag, so it could read false mid flight and the table painted empty.
+ */
+export const isPoolLoading = (
+  {
+    rankingData,
+    loadErrorKeys,
+    fantasy_group,
+    draft_stat_view,
+  }:
+  {
+    rankingData: object | null;
+    loadErrorKeys: string[];
+    fantasy_group: Fantasy.FantasyGroup;
+    draft_stat_view: string | undefined;
+  },
+): boolean => {
+  // rows come off the season pool with career laid over, and an unset view may default to career
+  const career_actives = draft_stat_view === 'season' ? [0] : [0, 1];
+
+  return career_actives.some((career_active) => {
+    const cached_key = getPoolCacheKey({ fantasy_group, career_active });
+
+    // the Loader only writes an entry on success, so its presence is the settled signal
+    const cached = !!(rankingData && cached_key in rankingData);
+
+    return !cached && !loadErrorKeys.includes(cached_key);
+  });
+};
+
+/**
  * The ranking rows for players still available, flattened for the table.
  *
  * Deep clones the whole cached payload, so build it once per pool and narrow it with
@@ -71,14 +128,7 @@ export const getAvailablePlayerRows = (
     excluded_player_team_season_ids: Set<string>;
   },
 ): object[] => {
-  const cached_key = getCachedDataKey({
-    organization_id: fantasy_group.organization_id,
-    division_id: fantasy_group.division_id,
-    season: fantasy_group.season,
-    view: 'player',
-    career: 0,
-    career_active: 0,
-  });
+  const cached_key = getPoolCacheKey({ fantasy_group, career_active: 0 });
 
   const data: object = (
     rankingData &&
@@ -163,14 +213,7 @@ export const getCareerActiveRowsByPlayerID = (
     fantasy_group: Fantasy.FantasyGroup;
   },
 ): Record<string, object> => {
-  const cached_key = getCachedDataKey({
-    organization_id: fantasy_group.organization_id,
-    division_id: fantasy_group.division_id,
-    season: fantasy_group.season,
-    view: 'player',
-    career: 0,
-    career_active: 1,
-  });
+  const cached_key = getPoolCacheKey({ fantasy_group, career_active: 1 });
 
   const data: object = (
     rankingData &&
