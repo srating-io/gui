@@ -47,7 +47,7 @@ const ClientSkeleton = () => {
   );
 };
 
-const Client = ({ fantasy_group_id, rankingGrant }) => {
+const Client = ({ fantasy_group_id, rankingGrant, rankingCareerActiveGrant }) => {
   const theme = useTheme();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
@@ -96,7 +96,14 @@ const Client = ({ fantasy_group_id, rankingGrant }) => {
         {
           fantasy_group &&
           fantasy_group.fantasy_group_id ?
-          <Loader organization_id={fantasy_group.organization_id} division_id={fantasy_group.division_id} season = {fantasy_group.season} view = 'player' career={0} career_active={0} grant={rankingGrant} />
+          <>
+            <Loader organization_id={fantasy_group.organization_id} division_id={fantasy_group.division_id} season = {fantasy_group.season} view = 'player' career={0} career_active={0} grant={rankingGrant} />
+            {/* Both load up front rather than one per toggle. Loader leaves loadingView true when
+                it is aborted, so a Loader unmounted mid flight by a toggle would strand both
+                tables on a spinner -- and starting together means loadingView only ever goes
+                true then false, instead of flashing back to true partway through a draft. */}
+            <Loader organization_id={fantasy_group.organization_id} division_id={fantasy_group.division_id} season = {fantasy_group.season} view = 'player' career={0} career_active={1} grant={rankingCareerActiveGrant} />
+          </>
             : ''
         }
         {getTopTabs()}

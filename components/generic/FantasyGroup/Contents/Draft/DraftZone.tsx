@@ -9,7 +9,16 @@ import TableColumns from '@/components/helpers/TableColumns';
 import TeamSearch from './TeamSearch';
 import { decorateHeaderRow, decorateRows } from '@/components/generic/Ranking/Contents/Client';
 import DraftZonePick from './DraftZonePick';
-import { filterPlayerRows, getAvailablePlayerRows, getDraftedPlayerTeamSeasonIds, getNextAvailablePrePickRows } from './shared';
+import StatViewSwitch from './StatViewSwitch';
+import {
+  applyCareerActiveStats,
+  filterPlayerRows,
+  getAvailablePlayerRows,
+  getCareerActiveRowsByPlayerID,
+  getDraftDisplayColumns,
+  getDraftedPlayerTeamSeasonIds,
+  getNextAvailablePrePickRows,
+} from './shared';
 import { Columns, Inputs, LinearProgress, TextInput, Typography, useTheme, VirtualTable } from '@esmalley/react-material-ui';
 
 
@@ -20,8 +29,11 @@ const DraftZone = () => {
   const fantasy_entry_players = useAppSelector((state) => state.fantasyGroupReducer.fantasy_entry_players);
   const fantasy_entry_pre_picks = useAppSelector((state) => state.fantasyGroupReducer.fantasy_entry_pre_picks);
   const user = useAppSelector((state) => state.userReducer.user);
+  const draft_stat_view = useAppSelector((state) => state.fantasyGroupReducer.draft_stat_view);
   const loadingRankingData = useAppSelector((state) => state.rankingReducer.loadingView);
   const rankingData = useAppSelector((state) => state.cacheReducer.rankingData);
+
+  const isCareerActive = draft_stat_view === 'career_active';
 
   const [playerSearchValue, setPlayerSearchValue] = useState('');
   const [selectedRow, setSelectedRow] = useState<object | null>(null);
@@ -39,13 +51,26 @@ const DraftZone = () => {
 
   // the whole available pool, unfiltered: the prefill has to see every player the list can name,
   // not just the ones left after a team or a search narrows the table
-  const pool = useMemo(() => {
+  const seasonPool = useMemo(() => {
     return getAvailablePlayerRows({
       rankingData,
       fantasy_group,
       excluded_player_team_season_ids: drafted_player_team_season_ids,
     });
   }, [rankingData, fantasy_group, drafted_player_team_season_ids]);
+
+  // Career stats laid over the season rows, never in place of them -- a career row carries no
+  // player_team_season_id, which is the whole of what a pick submits.
+  const pool = useMemo(() => {
+    if (!isCareerActive) {
+      return seasonPool;
+    }
+
+    return applyCareerActiveStats({
+      rows: seasonPool,
+      player_id_x_career_row: getCareerActiveRowsByPlayerID({ rankingData, fantasy_group }),
+    });
+  }, [seasonPool, isCareerActive, rankingData, fantasy_group]);
 
   const rows = useMemo(() => {
     return filterPlayerRows({
@@ -64,8 +89,8 @@ const DraftZone = () => {
     });
   }, [pool, fantasy_entry_pre_picks, fantasy_entrys, user]);
 
-  const columns = TableColumns.getColumns({ organization_id: fantasy_group.organization_id, view: 'player' });
-  const displayColumns = TableColumns.getViewableColumns({ organization_id: fantasy_group.organization_id, view: 'player', columnView: 'composite', customColumns: [], positions: [], career: false });
+  const columns = TableColumns.getColumns({ organization_id: fantasy_group.organization_id, view: 'player', career: isCareerActive });
+  const displayColumns = getDraftDisplayColumns({ organization_id: fantasy_group.organization_id, career: isCareerActive });
 
 
   const inputHandler = new Inputs();
@@ -86,11 +111,12 @@ const DraftZone = () => {
         decorateHeaderRow={decorateHeaderRow}
         defaultSortOrder = 'asc'
         defaultSortOrderBy = {'rank'}
-        sessionStorageKey = {`${fantasy_group.organization_id}.FANTASY.DRAFT`}
+        // keyed per stat view, so a sort saved on a column only one of them has does not carry over
+        sessionStorageKey = {`${fantasy_group.organization_id}.FANTASY.DRAFT.${draft_stat_view}`}
         // secondaryKey = 'secondary'
       />
     );
-  }, [rows, columns, displayColumns]);
+  }, [rows, columns, displayColumns, draft_stat_view]);
 
 
 
@@ -112,6 +138,7 @@ const DraftZone = () => {
           fantasy_entry_id_x_pre_pick_row = {fantasy_entry_id_x_pre_pick_row}
           onSelect = {(row) => setSelectedRow(row)}
         />
+        <StatViewSwitch rows = {seasonPool} />
         <Columns breakPoint={320}>
           <TeamSearch
             inputHandler={inputHandler}
