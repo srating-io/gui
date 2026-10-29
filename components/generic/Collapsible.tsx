@@ -54,7 +54,7 @@ const Collapsible = (
         aria-controls = {`${id}-body`}
         onClick = {() => onToggle(id)}
         onKeyDown = {handleKeyDown}
-        style = {{ display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '8px 0' }}
+        style = {{ display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '6px 0' }}
       >
         {
           marker ?
@@ -64,8 +64,9 @@ const Collapsible = (
         <div style = {{ flex: 1, minWidth: 0 }}>
           <Typography type = 'subtitle2'>{title}</Typography>
           {
+            // a closed row stays one line, so anything long belongs in the body instead
             summary && !open ?
-              <Typography type = 'caption' style = {{ color: theme.text.secondary }}>{summary}</Typography>
+              <Typography type = 'caption' style = {{ color: theme.text.secondary, display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{summary}</Typography>
               : null
           }
         </div>
@@ -79,7 +80,7 @@ const Collapsible = (
         </span>
       </div>
       {open ? <div id = {`${id}-body`} style = {{ padding: '0 0 12px 28px' }}>{children}</div> : null}
-      {divider ? <Divider style = {{ margin: '4px 0px' }} /> : null}
+      {divider ? <Divider style = {{ margin: '2px 0px' }} /> : null}
     </div>
   );
 };
