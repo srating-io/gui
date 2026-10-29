@@ -5,10 +5,9 @@ import { useEffect, useMemo, useState } from 'react';
 import ArrowUpwardIcon from '@esmalley/react-material-icons/ArrowUpward';
 import ArrowDownwardIcon from '@esmalley/react-material-icons/ArrowDownward';
 import CloseIcon from '@esmalley/react-material-icons/Close';
-import SearchIcon from '@esmalley/react-material-icons/Search';
 
 import {
-  Button, Columns, IconButton, Inputs, LinearProgress, Paper, TextInput, Tile, Typography, useTheme, VirtualTable,
+  Button, IconButton, LinearProgress, Paper, Tile, Typography, useTheme,
 } from '@esmalley/react-material-ui';
 import { toast } from '@esmalley/ts-utils';
 import { Fantasy, General } from '@srating-io/types';
@@ -16,17 +15,12 @@ import { Fantasy, General } from '@srating-io/types';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { setDataKey } from '@/redux/features/fantasy_group-slice';
 import { useClientAPI } from '@/components/clientAPI';
-import TableColumns from '@/components/helpers/TableColumns';
-import { decorateHeaderRow, decorateRows } from '@/components/generic/Ranking/Contents/Client';
 import OptionPicker from '@/components/generic/OptionPicker';
-import TeamSearch from './TeamSearch';
-import StatViewSwitch from './StatViewSwitch';
+import PlayerPoolTable from './PlayerPoolTable';
 import {
   applyCareerActiveStats,
-  filterPlayerRows,
   getAvailablePlayerRows,
   getCareerActiveRowsByPlayerID,
-  getDraftDisplayColumns,
   getDraftedPlayerTeamSeasonIds,
   getPlayerName,
   isPoolLoading,
@@ -62,6 +56,7 @@ const PrePicks = () => {
   const draft_stat_view = useAppSelector((state) => state.fantasyGroupReducer.draft_stat_view);
   const loadErrorKeys = useAppSelector((state) => state.rankingReducer.loadErrorKeys);
   const rankingData = useAppSelector((state) => state.cacheReducer.rankingData);
+  const conferences = useAppSelector((state) => state.dictionaryReducer.conference);
 
   const isCareerActive = draft_stat_view === 'career_active';
   const loadingPool = isPoolLoading({ rankingData, loadErrorKeys, fantasy_group, draft_stat_view });
@@ -73,8 +68,6 @@ const PrePicks = () => {
   const [fantasy_entry_id, setFantasyEntryID] = useState<string | null>(null);
   const [list, setList] = useState<string[]>([]);
   const [nameCache, setNameCache] = useState<Record<string, string>>({});
-  const [playerSearchValue, setPlayerSearchValue] = useState('');
-  const [selectedTeamID, setSelectedTeamID] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
 
   // pre-picks are per entry, and entries_per_user lets someone hold more than one
@@ -119,8 +112,9 @@ const PrePicks = () => {
       rankingData,
       fantasy_group,
       excluded_player_team_season_ids: excluded,
+      conferences,
     });
-  }, [rankingData, fantasy_group, excluded_key]);
+  }, [rankingData, fantasy_group, excluded_key, conferences]);
 
   // Career stats laid over the season rows, never in place of them -- a career row carries no
   // player_team_season_id, which is the whole of what a pre-pick stores.
@@ -134,19 +128,6 @@ const PrePicks = () => {
       player_id_x_career_row: getCareerActiveRowsByPlayerID({ rankingData, fantasy_group }),
     });
   }, [seasonPool, isCareerActive, rankingData, fantasy_group]);
-
-  const rows = useMemo(() => {
-    return filterPlayerRows({
-      rows: pool,
-      team_id: selectedTeamID,
-      search: playerSearchValue,
-    });
-  }, [pool, selectedTeamID, playerSearchValue]);
-
-  const columns = TableColumns.getColumns({ organization_id: fantasy_group.organization_id, view: 'player', career: isCareerActive });
-  const displayColumns = getDraftDisplayColumns({ organization_id: fantasy_group.organization_id, career: isCareerActive });
-
-  const inputHandler = new Inputs();
 
   const isDirty = (
     list.length !== saved.length ||
@@ -316,38 +297,13 @@ const PrePicks = () => {
     }
 
     return (
-      <div>
-        <StatViewSwitch rows = {seasonPool} />
-        <Columns breakPoint={320}>
-          <TeamSearch
-            inputHandler={inputHandler}
-            fantasy_group={fantasy_group}
-            handleSelect={(val) => setSelectedTeamID(val)}
-          />
-          <TextInput
-            inputHandler={inputHandler}
-            placeholder='Player search'
-            variant='filled'
-            icon = {<SearchIcon style = {{ fontSize: 20 }} />}
-            style = {{ borderRadius: 5 }}
-            onChange = {(val) => setPlayerSearchValue(val as string)}
-          />
-        </Columns>
-        <VirtualTable
-          rows={rows}
-          columns={columns}
-          displayColumns={displayColumns}
-          rowKey = 'player_statistic_ranking_id'
-          height={300}
-          handleRowClick={handleAdd}
-          decorateRows={decorateRows}
-          decorateHeaderRow={decorateHeaderRow}
-          defaultSortOrder = 'asc'
-          defaultSortOrderBy = {'rank'}
-          // keyed per stat view, so a sort saved on a column only one of them has does not carry over
-          sessionStorageKey = {`${fantasy_group.organization_id}.FANTASY.PRE_PICKS.${draft_stat_view}`}
-        />
-      </div>
+      <PlayerPoolTable
+        seasonPool = {seasonPool}
+        pool = {pool}
+        handleRowClick = {handleAdd}
+        sessionStoragePrefix = 'FANTASY.PRE_PICKS'
+        openPlayerInNewTab = {true}
+      />
     );
   };
 

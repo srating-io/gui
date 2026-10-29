@@ -1,3 +1,4 @@
+import { TableColumnsType } from '@esmalley/react-material-ui';
 import { Objector } from '@esmalley/ts-utils';
 import { TERMINOLOGY_ID } from '@srating-io/common';
 import { Fantasy, General } from '@srating-io/types';
@@ -121,11 +122,13 @@ export const getAvailablePlayerRows = (
     rankingData,
     fantasy_group,
     excluded_player_team_season_ids,
+    conferences,
   }:
   {
     rankingData: object | null;
     fantasy_group: Fantasy.FantasyGroup;
     excluded_player_team_season_ids: Set<string>;
+    conferences?: General.Conferences;
   },
 ): object[] => {
   const cached_key = getPoolCacheKey({ fantasy_group, career_active: 0 });
@@ -158,6 +161,7 @@ export const getAvailablePlayerRows = (
 
     row.rank_delta_combo = `${row.rank_delta_one || '-'}/${row.rank_delta_seven || '-'}`;
     row.name = row.player ? (`${row.player.first_name} ${row.player.last_name}`) : null;
+    row.conference_code = (row.conference_id && conferences && row.conference_id in conferences) ? conferences[row.conference_id].code : null;
 
     row.number = (row.player_team_season && row.player_team_season.number) || (row.player && row.player.number) || null;
     row.position = (row.player_team_season && row.player_team_season.position) || (row.player && row.player.position) || null;
@@ -189,6 +193,7 @@ const IDENTITY_COLUMNS = [
   'team_name',
   'team_slug',
   'conference_id',
+  'conference_code',
   'slug',
   'name',
   'number',
@@ -274,8 +279,13 @@ export const applyCareerActiveStats = (
     // with zero games. They stay in the pool because they are still draftable, but with the stats
     // blank rather than their season numbers sitting under a career heading.
     const career_row = (player_id && player_id in player_id_x_career_row) ? player_id_x_career_row[player_id] : null;
+    const rank_delta_one = (career_row && 'rank_delta_one' in career_row && career_row.rank_delta_one) || '-';
+    const rank_delta_seven = (career_row && 'rank_delta_seven' in career_row && career_row.rank_delta_seven) || '-';
 
-    const next: object = { ...(career_row || blank) };
+    const next: object = {
+      ...(career_row || blank),
+      rank_delta_combo: `${rank_delta_one}/${rank_delta_seven}`,
+    };
 
     for (const column of IDENTITY_COLUMNS) {
       if (column in row) {
@@ -337,12 +347,12 @@ export const filterPlayerRows = (
 };
 
 /**
- * The columns both draft tables show.
+ * The column definitions both draft tables use.
  *
- * The career list leaves out team_name because the api nulls it on a career row. Here the season
- * row is still underneath, so the team is known -- and it is half of what the drafter is judging.
+ * Career rows in the draft pool still sit on top of the season row, so team_name and
+ * conference_code remain known even when TableColumns drops them for standalone career views.
  */
-export const getDraftDisplayColumns = (
+export const getDraftColumns = (
   {
     organization_id,
     career,
@@ -351,12 +361,56 @@ export const getDraftDisplayColumns = (
     organization_id: string;
     career: boolean;
   },
+): TableColumnsType => {
+  const columns = TableColumns.getColumns({ organization_id, view: 'player', career });
+
+  if (!career) {
+    return columns;
+  }
+
+  const seasonColumns = TableColumns.getColumns({ organization_id, view: 'player', career: false });
+  const next: TableColumnsType = {};
+
+  for (const key in columns) {
+    next[key] = columns[key];
+    if (key === 'name') {
+      if (seasonColumns.team_name) {
+        next.team_name = seasonColumns.team_name;
+      }
+      if (seasonColumns.conference_code) {
+        next.conference_code = seasonColumns.conference_code;
+      }
+    }
+  }
+
+  return next;
+};
+
+/**
+ * The columns both draft tables show.
+ *
+ * The career list leaves out team_name because the api nulls it on a career row. Here the season
+ * row is still underneath, so the team is known -- and it is half of what the drafter is judging.
+ */
+export const getDraftDisplayColumns = (
+  {
+    organization_id,
+    columnView = 'composite',
+    customColumns = [],
+    career,
+  }:
+  {
+    organization_id: string;
+    columnView?: string;
+    customColumns?: string[];
+    career: boolean;
+  },
 ): string[] => {
   const columns = TableColumns.getViewableColumns({
     organization_id,
     view: 'player',
-    columnView: 'composite',
-    customColumns: [],
+    columnView,
+    customColumns,
     positions: [],
     career,
   });
@@ -366,7 +420,7 @@ export const getDraftDisplayColumns = (
   // column on a table that is meant to be showing nothing.
   const name_at = columns.indexOf('name');
 
-  if (!career || name_at < 0 || columns.includes('team_name')) {
+  if (!career || columnView !== 'composite' || name_at < 0 || columns.includes('team_name')) {
     return columns;
   }
 
