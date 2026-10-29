@@ -372,12 +372,9 @@ class FantasyGroupExplainer {
   private getDraftSections(phase: ExplainerPhase): ExplainerSection[] {
     return [
       this.entrySection(phase),
-      this.orderSection(),
-      this.turnsSection(phase),
+      this.orderSection(phase),
       this.clockSection(phase),
-      this.rosterSection(),
       this.scoringSection(),
-      this.scheduleSection(),
       ...(this.isPaid() ? [this.payoutSection()] : []),
     ];
   }
@@ -456,7 +453,7 @@ class FantasyGroupExplainer {
     return section;
   }
 
-  private orderSection(): ExplainerSection {
+  private orderSection(phase: ExplainerPhase): ExplainerSection {
     const { locked, draft_start_datetime } = this.fantasy_group;
     const paragraphs: string[] = [];
     const count = this.eligibleEntryCount();
@@ -494,22 +491,57 @@ class FantasyGroupExplainer {
     const starts = this.formatDateTime(draft_start_datetime);
 
     if (starts) {
-      facts.push({ label: 'Draft starts', primary: starts, info: 'You get an email and a notification before it begins.' });
+      paragraphs.push(`The draft is ${starts}, and you get an email and a notification before it begins.`);
+      facts.push({ label: 'Draft starts', primary: starts });
     }
 
-    return {
+    // the viewer's own position reads as part of the order, so it shares this section
+    this.appendMyTurns({ paragraphs, facts, phase });
+
+    const mine = this.myTurnNumbers();
+    const myTurn = !!this.myOpenRows().length && phase === 'drafting';
+
+    let status: ExplainerStatus = 'info';
+    let badge: string | undefined;
+
+    if (myTurn) {
+      status = 'active';
+      badge = 'Your turn';
+    } else if (locked) {
+      status = 'done';
+      badge = 'Drawn';
+    }
+
+    const section: ExplainerSection = {
       id: 'order',
-      title: 'How the draft order is drawn',
-      status: locked ? 'done' : 'info',
-      badge: locked ? 'Drawn' : undefined,
+      title: mine.length ? 'The draft order, and when you are up' : 'How the draft order is drawn',
+      status,
+      badge,
       paragraphs,
       facts,
     };
+
+    if (phase === 'drafting' || phase === 'locked') {
+      section.action = { kind: 'view', title: 'Enter draft room', view: 'draft' };
+    }
+
+    return section;
   }
 
-  private turnsSection(phase: ExplainerPhase): ExplainerSection {
+  /** The viewer's own turn numbers, folded into the order section. */
+  private appendMyTurns(
+    {
+      paragraphs,
+      facts,
+      phase,
+    }:
+    {
+      paragraphs: string[];
+      facts: ExplainerFact[];
+      phase: ExplainerPhase;
+    },
+  ): void {
     const { draft_start_datetime } = this.fantasy_group;
-    const paragraphs: string[] = [];
     const mine = this.myTurnNumbers();
     const count = this.eligibleEntryCount();
     const done = phase === 'drafted' || phase === 'running' || phase === 'finished';
@@ -548,30 +580,9 @@ class FantasyGroupExplainer {
       paragraphs.push(`Once you have an entry and the league locks, your own turn numbers show up here. Everyone gets ${DRAFT_ROUNDS}, one in every round.`);
     }
 
-    const facts: ExplainerFact[] = [{ label: 'Your turns', primary: DRAFT_ROUNDS }];
-
-    if (count) {
-      facts.push({ label: 'Turns in the draft', primary: count * DRAFT_ROUNDS });
-    }
-
     if (mine.length === 1) {
       facts.push({ label: 'You are up at', primary: mine[0].turns.map((turn) => `#${turn}`).join(', ') });
     }
-
-    const section: ExplainerSection = {
-      id: 'turns',
-      title: 'When your turn comes around',
-      status: this.myOpenRows().length && phase === 'drafting' ? 'active' : 'info',
-      badge: this.myOpenRows().length && phase === 'drafting' ? 'Your turn' : undefined,
-      paragraphs,
-      facts,
-    };
-
-    if (phase === 'drafting' || phase === 'locked') {
-      section.action = { kind: 'view', title: 'Enter draft room', view: 'draft' };
-    }
-
-    return section;
   }
 
   private clockSection(phase: ExplainerPhase): ExplainerSection {
@@ -623,26 +634,6 @@ class FantasyGroupExplainer {
     return section;
   }
 
-  private rosterSection(): ExplainerSection {
-    const ended = this.formatDate(this.fantasy_group.end_date);
-    const paragraphs = [
-      `Every roster in this league is exactly ${DRAFT_ROUNDS} players, one from each round. There is no bench and no reserve.`,
-      `Positions show up on your roster so you can see its shape, but nothing is enforced. ${DRAFT_ROUNDS} guards is a legal roster here.`,
-      `There are no trades, no waivers and no lineup to set. What you draft is what scores for you${ended ? ` until ${ended}` : ''}.`,
-    ];
-
-    return {
-      id: 'roster',
-      title: 'What you end up with',
-      status: 'info',
-      paragraphs,
-      facts: [
-        { label: 'Roster size', primary: `${DRAFT_ROUNDS} players` },
-        { label: 'Changes after the draft', primary: 'None' },
-      ],
-    };
-  }
-
   private scoringSection(): ExplainerSection {
     const { start_date, end_date, draft_scoring_terminology_id } = this.fantasy_group;
     const scoring = this.draftScoring();
@@ -650,6 +641,11 @@ class FantasyGroupExplainer {
     const opens = this.formatDate(start_date);
     const ended = this.formatDate(end_date);
     const count = this.eligibleEntryCount();
+
+    // what the roster is has to come before what it scores
+    paragraphs.push(`Every roster in this league is exactly ${DRAFT_ROUNDS} players, one from each round. There is no bench and no reserve, and positions show up on your roster without being enforced, so ${DRAFT_ROUNDS} guards is a legal roster here.`);
+
+    paragraphs.push(`There are no trades, no waivers and no lineup to set. What you draft is what scores for you${ended ? ` until ${ended}` : ''}.`);
 
     if (draft_scoring_terminology_id === TERMINOLOGY_ID.DRAFT_SCORING.FANTASY_POINTS) {
       paragraphs.push(`All ${DRAFT_ROUNDS} of your players earn fantasy points, and your score is the total.`);
@@ -681,6 +677,7 @@ class FantasyGroupExplainer {
     }
 
     const facts: ExplainerFact[] = [
+      { label: 'Roster size', primary: `${DRAFT_ROUNDS} players` },
       { label: 'Scoring metric', primary: scoring?.name || 'Not set', info: scoring?.description },
     ];
 
@@ -690,47 +687,7 @@ class FantasyGroupExplainer {
 
     return {
       id: 'scoring',
-      title: 'How scoring works',
-      status: 'info',
-      paragraphs,
-      facts,
-    };
-  }
-
-  private scheduleSection(): ExplainerSection {
-    const { draft_start_datetime, start_date, end_date, season } = this.fantasy_group;
-    const paragraphs: string[] = [];
-    const draft = this.formatDateTime(draft_start_datetime);
-    const opens = this.formatDate(start_date);
-    const ended = this.formatDate(end_date);
-
-    if (draft) {
-      paragraphs.push(`The draft is ${draft}. You get an email and a notification beforehand, and the league locks itself about five minutes ahead of it.`);
-    }
-
-    if (opens && ended) {
-      paragraphs.push(`Scoring runs ${opens} through ${ended}, and the final standings land the day after that.`);
-    }
-
-    const facts: ExplainerFact[] = [];
-
-    if (draft) {
-      facts.push({ label: 'Draft starts', primary: draft });
-    }
-
-    if (opens) {
-      facts.push({ label: 'League starts', primary: opens });
-    }
-
-    if (ended) {
-      facts.push({ label: 'League ends', primary: ended });
-    }
-
-    facts.push({ label: 'Season', primary: season });
-
-    return {
-      id: 'schedule',
-      title: 'The dates that matter',
+      title: 'What you draft, and how it scores',
       status: 'info',
       paragraphs,
       facts,
@@ -769,25 +726,39 @@ class FantasyGroupExplainer {
     return [
       this.entrySection(phase),
       this.bracketSection(),
-      this.scheduleSection(),
       ...(this.isPaid() ? [this.payoutSection()] : []),
     ];
   }
 
   private bracketSection(): ExplainerSection {
+    const paragraphs = [
+      'You call every game in the tournament before it starts, and the bracket locks once the first game tips off.',
+      'A correct call is worth more the further the round goes: 1 point in the first round, then 2, 4, 8, 16, and 32 for the champion. A perfect bracket is 192.',
+      'There is one bonus point on top of that, for getting the exact combined score of the championship game.',
+    ];
+
+    const opens = this.formatDate(this.fantasy_group.start_date);
+    const ended = this.formatDate(this.fantasy_group.end_date);
+
+    if (opens && ended) {
+      paragraphs.push(`The tournament runs ${opens} through ${ended}, and the final standings land the day after that.`);
+    }
+
+    const facts: ExplainerFact[] = [
+      { label: 'Perfect bracket', primary: 192 },
+      { label: 'Tiebreaker', primary: 'Championship combined score' },
+    ];
+
+    if (opens && ended) {
+      facts.push({ label: 'Tournament', primary: `${opens} to ${ended}` });
+    }
+
     return {
       id: 'bracket',
       title: 'How a bracket is scored',
       status: 'info',
-      paragraphs: [
-        'You call every game in the tournament before it starts, and the bracket locks once the first game tips off.',
-        'A correct call is worth more the further the round goes: 1 point in the first round, then 2, 4, 8, 16, and 32 for the champion. A perfect bracket is 192.',
-        'There is one bonus point on top of that, for getting the exact combined score of the championship game.',
-      ],
-      facts: [
-        { label: 'Perfect bracket', primary: 192 },
-        { label: 'Tiebreaker', primary: 'Championship combined score' },
-      ],
+      paragraphs,
+      facts,
     };
   }
 }
