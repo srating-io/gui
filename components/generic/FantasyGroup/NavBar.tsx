@@ -6,6 +6,8 @@ import SettingsIcon from '@esmalley/react-material-icons/Settings';
 import { useState } from 'react';
 import { setLoading } from '@/redux/features/loading-slice';
 import { setDataKey } from '@/redux/features/fantasy_group-slice';
+import { setDataKey as setDisplayDataKey } from '@/redux/features/display-slice';
+import HelpOutlineIcon from '@esmalley/react-material-icons/HelpOutline';
 import { useClientAPI } from '@/components/clientAPI';
 import LockIcon from '@esmalley/react-material-icons/Lock';
 import LogoutIcon from '@esmalley/react-material-icons/Logout';
@@ -55,6 +57,7 @@ const NavBar = () => {
   const fantasy_group = useAppSelector((state) => state.fantasyGroupReducer.fantasy_group);
   const fantasy_entrys = useAppSelector((state) => state.fantasyGroupReducer.fantasy_entrys);
   const isOwner = useAppSelector((state) => state.fantasyGroupReducer.isOwner);
+  const fantasyGuideDismissed = useAppSelector((state) => state.displayReducer.fantasyGuideDismissed);
   const organizations = useAppSelector((state) => state.dictionaryReducer.organization);
   const organization_id = useAppSelector((state) => state.organizationReducer.organization_id);
   const path = Organization.getPath({ organizations, organization_id });
@@ -305,6 +308,23 @@ const NavBar = () => {
         handleClose();
       },
       icon: <LogoutIcon style = {{ color: theme.error.main, fontSize: 20 }} />,
+    });
+  }
+
+  // only offered once it has been dismissed, so the menu does not grow for everyone
+  if (fantasy_group.fantasy_group_id in (fantasyGuideDismissed || {})) {
+    const remaining = { ...fantasyGuideDismissed };
+    delete remaining[fantasy_group.fantasy_group_id];
+
+    options.push({
+      value: 'how-it-works',
+      label: 'How it works',
+      selectable: true,
+      onSelect: () => {
+        dispatch(setDisplayDataKey({ key: 'fantasyGuideDismissed', value: remaining }));
+        handleClose();
+      },
+      icon: <HelpOutlineIcon style = {{ fontSize: 20 }} />,
     });
   }
 
