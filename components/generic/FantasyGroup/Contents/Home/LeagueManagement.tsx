@@ -9,6 +9,8 @@ import EntriesAndFees from '../../Card/EntriesAndFees';
 import DraftSettings from '../../Card/DraftSettings';
 import BracketInfo from '../../Card/BracketInfo';
 import PayoutInfo from '../../Card/PayoutInfo';
+import Anchor from '../../Anchor';
+import { FANTASY_ANCHOR } from '../../anchors';
 import { Columns, Typography } from '@esmalley/react-material-ui';
 
 const LeagueManagement = () => {
@@ -25,20 +27,28 @@ const LeagueManagement = () => {
       <Typography type = 'h6' style={{ marginBottom: 12 }}>League Management</Typography>
       <Columns numberOfColumns={2} breakPoint = {breakPoint} style = {{ gap: 10 }}>
         <GeneralDetails fantasy_group = {fantasy_group} />
-        <EntriesAndFees fantasy_group = {fantasy_group} />
+        <Anchor id = {FANTASY_ANCHOR.entries_and_fees}>
+          <EntriesAndFees fantasy_group = {fantasy_group} />
+        </Anchor>
         {
           FantasyGroupHelper.isDraft() ?
-            <DraftSettings fantasy_group = {fantasy_group} />
+            <Anchor id = {FANTASY_ANCHOR.draft_settings}>
+              <DraftSettings fantasy_group = {fantasy_group} />
+            </Anchor>
             : ''
         }
         {
           FantasyGroupHelper.isNCAABracket() ?
-            <BracketInfo fantasy_group = {fantasy_group} />
+            <Anchor id = {FANTASY_ANCHOR.bracket}>
+              <BracketInfo fantasy_group = {fantasy_group} />
+            </Anchor>
             : ''
         }
         {
           fantasy_group.fantasy_payout_rule_id ?
-            <PayoutInfo fantasy_group = {fantasy_group} fantasy_entrys = {fantasy_entrys} />
+            <Anchor id = {FANTASY_ANCHOR.payouts}>
+              <PayoutInfo fantasy_group = {fantasy_group} fantasy_entrys = {fantasy_entrys} />
+            </Anchor>
             : ''
           }
       </Columns>

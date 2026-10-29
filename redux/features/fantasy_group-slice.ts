@@ -27,6 +27,9 @@ export type InitialState = {
   // the create entry modal: null is closed, '' is a new entry, a name resumes that entry's checkout.
   // shared because the checklist and the how it works card both open it, and only MyEntries mounts it
   joining_entry_name: string | null;
+  // the card the how it works guide is pointing at, by dom id. shared because the guide and the
+  // card it outlines are siblings, and deliberately not a url param so a reload does not restore it
+  highlighted_anchor: string | null;
   loadingView: boolean;
 };
 
@@ -77,6 +80,7 @@ stateController.setInitialState({
     [fantasy_entry_player_statistic_ranking_id: string]: Fantasy.FantasyEntryPlayerStatisticRanking & Basketball.PlayerStatisticRanking
   },
   joining_entry_name: null,
+  highlighted_anchor: null,
   loadingView: true,
 });
 

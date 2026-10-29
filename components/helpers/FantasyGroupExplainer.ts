@@ -16,10 +16,20 @@ export type ExplainerFact = {
   info?: string;
 };
 
+/** One line of rule. The detail lives in `info` and stays hidden until it is asked for. */
+export type ExplainerPoint = {
+  text: string;
+  info?: string;
+};
+
+/** Where on the page a section's own card lives. The renderer resolves it to a dom id. */
+export type ExplainerTarget = 'entries' | 'entries_and_fees' | 'draft_settings' | 'payouts' | 'bracket' | 'rosters';
+
 /** Data, not JSX, so the helper stays JSX-free and a walkthrough can reuse the same copy. */
 export type ExplainerAction =
   | { kind: 'view'; title: string; view: string; subview?: string }
-  | { kind: 'create_entry'; title: string };
+  | { kind: 'create_entry'; title: string }
+  | { kind: 'scroll'; title: string; target: ExplainerTarget };
 
 export type ExplainerSection = {
   /** Stable, so a walkthrough can key its steps off these. */
@@ -27,9 +37,11 @@ export type ExplainerSection = {
   title: string;
   status: ExplainerStatus;
   badge?: string;
-  paragraphs: string[];
+  /** The one thing the reader has to know. A single string, so prose creep is a type error. */
+  lead: string;
+  points?: ExplainerPoint[];
   facts?: ExplainerFact[];
-  action?: ExplainerAction;
+  actions?: ExplainerAction[];
 };
 
 export type Explainer = {
@@ -247,14 +259,6 @@ class FantasyGroupExplainer {
     return this.formatDateTime(new Date(Dates.parse(draft_start_datetime, true).getTime() - (5 * 60 * 1000)).toISOString());
   }
 
-  private joinList(values: string[]): string {
-    if (values.length <= 1) {
-      return values.join('');
-    }
-
-    return `${values.slice(0, -1).join(', ')} and ${values[values.length - 1]}`;
-  }
-
   // ---------------------------------------------------------------- public
 
   hasStarted(): boolean {
@@ -374,47 +378,60 @@ class FantasyGroupExplainer {
       this.entrySection(phase),
       this.orderSection(phase),
       this.clockSection(phase),
-      this.scoringSection(),
+      this.scoringSection(phase),
       ...(this.isPaid() ? [this.payoutSection()] : []),
     ];
   }
 
   private entrySection(phase: ExplainerPhase): ExplainerSection {
     const { name, entries_per_user, entry_fee, cap, entries, private: is_private, locked } = this.fantasy_group;
-    const paragraphs: string[] = [];
+    const points: ExplainerPoint[] = [];
     const counting = this.myCountingEntries().length;
     const unpaid = this.isPaid() && this.myEntries().some((row) => +row.paid !== 1);
     const eligible = this.eligibleEntryCount();
 
     const several = entries_per_user > 1;
+    const isDraft = this.groupHelper.isDraft();
 
-    if (this.groupHelper.isDraft()) {
-      paragraphs.push(`An entry is your team in ${name}, and you need one before you can draft.${several ? ` You can hold up to ${entries_per_user} of them here, and each one drafts its own separate roster.` : ' You get one.'}`);
-    } else {
-      paragraphs.push(`An entry is one bracket in ${name}.${several ? ` You can hold up to ${entries_per_user} of them here, and each one is filled in and scored separately.` : ' You get one.'}`);
+    const lead = locked ?
+      `Entries are closed, so every ${isDraft ? 'team' : 'bracket'} in ${name} is set.`
+      : `An entry is ${isDraft ? 'your team' : 'one bracket'} in ${name}, and you need one before ${isDraft ? 'the draft' : 'the first game'}.`;
+
+    points.push({
+      text: is_private ?
+        'Private league, so only people the owner invites can enter.'
+        : 'Public league, so anyone with the link can enter.',
+    });
+
+    if (!locked && isDraft) {
+      const moment = this.lockMoment();
+      points.push({
+        text: `Entries close about five minutes before the draft${moment ? `, around ${moment}` : ''}.`,
+        info: 'The league locks itself at that point, so the owner does not have to do anything.',
+      });
     }
 
-    if (this.isPaid() && entry_fee) {
-      paragraphs.push(`Entry costs $${entry_fee}. Only a paid entry counts: an unpaid one is left out${this.groupHelper.isDraft() ? ' of the draft order entirely' : ' of scoring entirely'}${several ? ', and it does not use up one of your slots either' : ''}.`);
-    } else {
-      paragraphs.push('Entry is free.');
-    }
+    const feeInfo = `Only a paid entry counts. An unpaid one is left out ${isDraft ? 'of the draft order' : 'of scoring'}${several ? ', and it does not use up one of your slots' : ''}.`;
+
+    const facts: ExplainerFact[] = [
+      {
+        label: 'Entry fee',
+        primary: this.isPaid() && entry_fee ? `$${entry_fee}` : 'Free',
+        info: this.isPaid() && entry_fee ? feeInfo : undefined,
+      },
+      {
+        label: 'Entries you can hold',
+        primary: entries_per_user,
+        info: several ? `Each one ${isDraft ? 'drafts its own roster' : 'is filled in and scored'} separately.` : undefined,
+      },
+    ];
 
     if (cap && entries) {
-      paragraphs.push(`The league is capped at ${entries} ${this.plural(entries, 'entry', 'entries')}, and ${eligible} ${this.plural(eligible, 'is', 'are')} in so far.`);
-    }
-
-    paragraphs.push(
-      is_private ?
-        'This league is private, so only people the owner invites can enter.'
-        : 'This league is public, so anyone with the link can enter.',
-    );
-
-    if (!locked && this.groupHelper.isDraft()) {
-      const moment = this.lockMoment();
-      paragraphs.push(`Entries close when the league locks, which happens on its own about five minutes before the draft${moment ? `, so around ${moment}` : ''}. The owner does not have to do anything.`);
-    } else if (locked) {
-      paragraphs.push(`Entries are closed. The league locked when ${this.groupHelper.isDraft() ? 'the draft order was drawn' : 'the tournament began'}.`);
+      facts.push({
+        label: 'Entries in',
+        primary: `${eligible} of ${entries}`,
+        info: 'The league stops taking entries once it is full.',
+      });
     }
 
     let status: ExplainerStatus = 'info';
@@ -434,72 +451,101 @@ class FantasyGroupExplainer {
       badge = 'Closed';
     }
 
-    const section: ExplainerSection = {
+    const actions: ExplainerAction[] = [];
+
+    if (phase === 'open' && this.canCreateEntry()) {
+      actions.push({ kind: 'create_entry', title: unpaid ? 'Finish payment' : 'Create an entry' });
+    }
+
+    actions.push({ kind: 'scroll', title: 'Show me', target: 'entries' });
+
+    return {
       id: 'entry',
       title: 'Get an entry in this league',
       status,
       badge,
-      paragraphs,
-      facts: [
-        { label: 'Entry fee', primary: this.isPaid() && entry_fee ? `$${entry_fee}` : 'Free' },
-        { label: 'Entries you can hold', primary: entries_per_user },
-      ],
+      lead,
+      points,
+      facts,
+      actions,
     };
-
-    if (phase === 'open' && this.canCreateEntry()) {
-      section.action = { kind: 'create_entry', title: unpaid ? 'Finish payment' : 'Create an entry' };
-    }
-
-    return section;
   }
 
   private orderSection(phase: ExplainerPhase): ExplainerSection {
     const { locked, draft_start_datetime } = this.fantasy_group;
-    const paragraphs: string[] = [];
+    const points: ExplainerPoint[] = [];
     const count = this.eligibleEntryCount();
     const type = this.draftType();
+    const open = this.myOpenRows();
+    const myTurn = !!open.length && phase === 'drafting';
 
-    paragraphs.push(`Every entry gets one turn in each of the ${DRAFT_ROUNDS} rounds${count ? `, so with ${count} ${this.plural(count, 'entry', 'entries')} the draft runs ${count * DRAFT_ROUNDS} turns end to end` : ''}.`);
+    let lead: string;
 
-    paragraphs.push('The order is not who joined first. It is a shuffle, seeded from a value saved on the league, so the exact same draw can be reproduced later if anyone ever questions it.');
-
-    if (this.isPaid()) {
-      paragraphs.push('Only paid entries go into the draw. An entry that is not paid up when the league locks is not in the draft at all.');
+    if (myTurn) {
+      const soonest = open.map((row) => row.expires).filter((value) => !!value).sort()[0];
+      const expires = soonest ? this.formatDateTime(soonest) : null;
+      lead = `It is your turn right now${expires ? `, until ${expires}` : ''}.`;
+    } else if (this.orderIsFinal()) {
+      lead = `The order is drawn, and every entry takes one turn in each of the ${DRAFT_ROUNDS} rounds.`;
+    } else {
+      lead = 'The order is a seeded shuffle drawn when the league locks, not who joined first.';
     }
 
     if (this.isSnake()) {
-      paragraphs.push(`This is a snake draft, so the order reverses every even round. Go first in round one and you go last in round two, first again in round three, and so on through round ${DRAFT_ROUNDS}.`);
+      points.push({
+        text: 'The order reverses every even round.',
+        info: `Go first in round one and you go last in round two, first again in round three, and so on through round ${DRAFT_ROUNDS}.`,
+      });
     } else if (this.isFreeForAll()) {
-      paragraphs.push(`This is a free for all draft, so the order never reverses: the same running order repeats in all ${DRAFT_ROUNDS} rounds. Every entry's first turn opens the moment the draft starts, so your opening selection does not have to wait. After that first round, each turn opens the next one.`);
+      points.push({
+        text: `The same running order repeats in all ${DRAFT_ROUNDS} rounds.`,
+        info: 'Every entry\'s first turn opens the moment the draft starts, so your opening selection does not have to wait. After that, each turn opens the next one.',
+      });
+    }
+
+    if (this.isPaid()) {
+      points.push({
+        text: 'Only paid entries go into the draw.',
+        info: 'An entry that is not paid up when the league locks is not in the draft at all.',
+      });
     }
 
     if (!locked) {
-      paragraphs.push('The draw happens at lock time. Until then nobody\'s position is decided, including the owner\'s. Anything shown as a preview before that is only an example of the shape.');
-    } else {
-      paragraphs.push('The draw is done. The full order is on the Draft Settings card below, under "View draft order".');
-    }
-
-    if (type?.description) {
-      paragraphs.push(type.description);
+      points.push({
+        text: 'Nobody\'s position is decided until lock time, the owner\'s included.',
+        info: 'The draw is seeded from a value saved on the league, so the exact same order can be reproduced later if anyone questions it. Anything shown before the draw is only an example of the shape.',
+      });
     }
 
     const facts: ExplainerFact[] = [
       { label: 'Draft style', primary: type?.name || 'Not set', info: type?.description },
-      { label: 'Rounds', primary: DRAFT_ROUNDS },
+      {
+        label: 'Rounds',
+        primary: DRAFT_ROUNDS,
+        info: count ? `With ${count} ${this.plural(count, 'entry', 'entries')} in, each round is ${count} ${this.plural(count, 'turn', 'turns')} long, so the draft runs ${count * DRAFT_ROUNDS} turns end to end.` : undefined,
+      },
     ];
 
     const starts = this.formatDateTime(draft_start_datetime);
 
     if (starts) {
-      paragraphs.push(`The draft is ${starts}, and you get an email and a notification before it begins.`);
-      facts.push({ label: 'Draft starts', primary: starts });
+      facts.push({
+        label: 'Draft starts',
+        primary: starts,
+        info: 'You get an email and a notification before it begins.',
+      });
     }
 
     // the viewer's own position reads as part of the order, so it shares this section
-    this.appendMyTurns({ paragraphs, facts, phase });
-
     const mine = this.myTurnNumbers();
-    const myTurn = !!this.myOpenRows().length && phase === 'drafting';
+
+    for (const row of mine) {
+      facts.push({
+        label: mine.length === 1 ? 'You are up at' : `${row.name} is up at`,
+        primary: row.turns.map((turn) => `#${turn}`).join(', '),
+        info: `One turn in every round, ${DRAFT_ROUNDS} in total.`,
+      });
+    }
 
     let status: ExplainerStatus = 'info';
     let badge: string | undefined;
@@ -512,103 +558,73 @@ class FantasyGroupExplainer {
       badge = 'Drawn';
     }
 
-    const section: ExplainerSection = {
+    const actions: ExplainerAction[] = [];
+
+    if (phase === 'drafting' || phase === 'locked') {
+      actions.push({ kind: 'view', title: 'Enter draft room', view: 'draft' });
+    }
+
+    actions.push({
+      kind: 'scroll',
+      title: this.orderIsFinal() ? 'Show me the order' : 'Show me the settings',
+      target: 'draft_settings',
+    });
+
+    return {
       id: 'order',
       title: mine.length ? 'The draft order, and when you are up' : 'How the draft order is drawn',
       status,
       badge,
-      paragraphs,
+      lead,
+      points,
       facts,
+      actions,
     };
-
-    if (phase === 'drafting' || phase === 'locked') {
-      section.action = { kind: 'view', title: 'Enter draft room', view: 'draft' };
-    }
-
-    return section;
-  }
-
-  /** The viewer's own turn numbers, folded into the order section. */
-  private appendMyTurns(
-    {
-      paragraphs,
-      facts,
-      phase,
-    }:
-    {
-      paragraphs: string[];
-      facts: ExplainerFact[];
-      phase: ExplainerPhase;
-    },
-  ): void {
-    const { draft_start_datetime } = this.fantasy_group;
-    const mine = this.myTurnNumbers();
-    const count = this.eligibleEntryCount();
-    const done = phase === 'drafted' || phase === 'running' || phase === 'finished';
-
-    if (mine.length) {
-      const single = mine.length === 1;
-
-      for (const row of mine) {
-        const list = this.joinList(row.turns.map((turn) => `#${turn}`));
-        paragraphs.push(
-          done ?
-            `${single ? 'You drafted' : `${row.name} drafted`} at ${list}.`
-            : `${single ? 'You are on the clock at' : `${row.name} is on the clock at`} ${list}.`,
-        );
-      }
-
-      if (!done) {
-        paragraphs.push(`That is ${DRAFT_ROUNDS} turns, one in every round.`);
-      }
-
-      const open = this.myOpenRows();
-
-      if (open.length && phase === 'drafting') {
-        const soonest = open.map((row) => row.expires).filter((value) => !!value).sort()[0];
-        const expires = soonest ? this.formatDateTime(soonest) : null;
-        paragraphs.push(`${open.length === 1 ? 'One of your turns is open right now' : `${open.length} of your turns are open right now`}${expires ? `, and the clock runs out at ${expires}` : ''}.`);
-      }
-    } else if (this.myEntries().length) {
-      const starts = this.formatDateTime(draft_start_datetime);
-      paragraphs.push(`Your position is not decided yet. It is drawn when the league locks${starts ? `, about five minutes before the draft on ${starts}` : ''}.`);
-
-      if (count) {
-        paragraphs.push(`With ${count} ${this.plural(count, 'entry', 'entries')} in, each round is ${count} ${this.plural(count, 'turn', 'turns')} long. Whatever position you draw, you select ${DRAFT_ROUNDS} times.`);
-      }
-    } else {
-      paragraphs.push(`Once you have an entry and the league locks, your own turn numbers show up here. Everyone gets ${DRAFT_ROUNDS}, one in every round.`);
-    }
-
-    if (mine.length === 1) {
-      facts.push({ label: 'You are up at', primary: mine[0].turns.map((turn) => `#${turn}`).join(', ') });
-    }
   }
 
   private clockSection(phase: ExplainerPhase): ExplainerSection {
     const { draft_time_per_user_in_seconds, drafted } = this.fantasy_group;
-    const paragraphs: string[] = [];
+    const points: ExplainerPoint[] = [];
     const lined_up = this.prePickCount();
     const has_entry = this.myEntries().length > 0;
 
-    if (draft_time_per_user_in_seconds) {
-      paragraphs.push(`Each turn gets ${this.formatClock(draft_time_per_user_in_seconds)}. The clock is not a fixed schedule: it starts the instant the turn before yours is filled, so the draft moves as fast as the room does and can reach you earlier than you expect.`);
-    } else {
-      paragraphs.push('This league has no clock, so no turn ever times out. The draft only moves when someone makes a selection.');
-    }
+    const lead = draft_time_per_user_in_seconds ?
+      `Each turn gets ${this.formatClock(draft_time_per_user_in_seconds)}, and it starts the instant the turn before yours is filled.`
+      : 'There is no clock here, so the draft only moves when someone makes a selection.';
 
-    paragraphs.push('Missing your turn does not cost you the player. The draft takes the highest name still available on your pre-draft list. If that list is empty, or everyone on it is already gone, it takes someone at random from the undrafted players instead.');
+    // the headline rule stays on screen. only how it resolves is worth hiding
+    points.push({
+      text: 'Miss your turn and your pre-draft list drafts for you.',
+      info: 'It takes the highest name still available on your list. If the list is empty, or everyone on it is already gone, it takes someone at random from the undrafted players instead.',
+    });
 
-    paragraphs.push('That makes the pre-draft list the one thing worth doing ahead of draft day. Order it best first and it drafts for you whether you are watching or not, and you can keep editing it right up until the draft ends.');
+    points.push({
+      text: 'Order it best first, and keep editing it right up until the draft ends.',
+      info: 'It is the one thing worth doing ahead of draft day, and it works whether you are watching or not.',
+    });
 
     if (this.isSnake()) {
-      paragraphs.push('A player somebody drafts is gone for everyone, so your list gets worked down from the top as names disappear.');
+      points.push({
+        text: 'A player somebody drafts is gone for everyone.',
+        info: 'Your list gets worked down from the top as names disappear.',
+      });
     } else if (this.isFreeForAll()) {
-      paragraphs.push('Two entries can hold the same player here, so only your own roster takes a name off your board.');
+      points.push({
+        text: 'Two entries can hold the same player here.',
+        info: 'Only your own roster takes a name off your board.',
+      });
     }
 
+    const clockInfo = draft_time_per_user_in_seconds ?
+      'The clock is not a fixed schedule. It starts when the turn before yours is filled, so the draft can reach you earlier than you expect.'
+      : 'No turn ever times out.';
+
     const facts: ExplainerFact[] = [
-      { label: 'Time per turn', primary: draft_time_per_user_in_seconds ? this.formatClock(draft_time_per_user_in_seconds) : 'No limit' },
+      {
+        label: 'Time per turn',
+        primary: draft_time_per_user_in_seconds ? this.formatClock(draft_time_per_user_in_seconds) : 'No limit',
+        info: clockInfo,
+      },
       {
         label: 'Your pre-draft list',
         primary: lined_up ? `${lined_up} ${this.plural(lined_up, 'player', 'players')}` : 'Not set',
@@ -617,64 +633,65 @@ class FantasyGroupExplainer {
     ];
 
     const needs_list = has_entry && !lined_up && !drafted;
+    const actions: ExplainerAction[] = [];
 
-    const section: ExplainerSection = {
+    // no scroll target: the only thing Draft Settings adds here is already the time per turn fact
+    if (!drafted && phase !== 'running' && phase !== 'finished') {
+      actions.push({ kind: 'view', title: 'Set pre-draft selections', view: 'draft', subview: 'pre_picks' });
+    }
+
+    return {
       id: 'clock',
       title: 'The clock, and missing your turn',
       status: needs_list ? 'active' : 'info',
       badge: needs_list ? 'Not set' : undefined,
-      paragraphs,
+      lead,
+      points,
       facts,
+      actions,
     };
-
-    if (!drafted && phase !== 'running' && phase !== 'finished') {
-      section.action = { kind: 'view', title: 'Set pre-draft selections', view: 'draft', subview: 'pre_picks' };
-    }
-
-    return section;
   }
 
-  private scoringSection(): ExplainerSection {
+  private scoringSection(phase: ExplainerPhase): ExplainerSection {
     const { start_date, end_date, draft_scoring_terminology_id } = this.fantasy_group;
     const scoring = this.draftScoring();
-    const paragraphs: string[] = [];
+    const points: ExplainerPoint[] = [];
     const opens = this.formatDate(start_date);
     const ended = this.formatDate(end_date);
     const count = this.eligibleEntryCount();
 
-    // what the roster is has to come before what it scores
-    paragraphs.push(`Every roster in this league is exactly ${DRAFT_ROUNDS} players, one from each round. There is no bench and no reserve, and positions show up on your roster without being enforced, so ${DRAFT_ROUNDS} guards is a legal roster here.`);
+    const lead = `Your roster is ${DRAFT_ROUNDS} players, one from each round, and what you draft is what scores${ended ? ` until ${ended}` : ''}.`;
 
-    paragraphs.push(`There are no trades, no waivers and no lineup to set. What you draft is what scores for you${ended ? ` until ${ended}` : ''}.`);
+    points.push({
+      text: 'No trades, no waivers, no lineup to set.',
+      info: `There is no bench and no reserve, and positions are not enforced, so ${DRAFT_ROUNDS} guards is a legal roster here.`,
+    });
 
     if (draft_scoring_terminology_id === TERMINOLOGY_ID.DRAFT_SCORING.FANTASY_POINTS) {
-      paragraphs.push(`All ${DRAFT_ROUNDS} of your players earn fantasy points, and your score is the total.`);
-      paragraphs.push('A point is worth 1, a rebound 1.2, an assist 1.5, a steal 3, a block 3, and a turnover -1.');
-      paragraphs.push('So 25 points, 12 rebounds, 10 assists, 1 steal and 4 turnovers works out to 25 + 14.4 + 15 + 3 - 4, which is 53.4.');
+      points.push({
+        text: `All ${DRAFT_ROUNDS} of your players earn fantasy points, and your score is the total.`,
+        info: 'A point is worth 1, a rebound 1.2, an assist 1.5, a steal 3, a block 3, and a turnover -1. So 25 points, 12 rebounds, 10 assists, 1 steal and 4 turnovers is 25 + 14.4 + 15 + 3 - 4, which is 53.4.',
+      });
     } else if (draft_scoring_terminology_id === TERMINOLOGY_ID.DRAFT_SCORING.EFFICIENCY_RATING) {
-      paragraphs.push(`All ${DRAFT_ROUNDS} of your players get an efficiency rating, and your score is the total.`);
-      paragraphs.push('A rating is points plus rebounds, assists, steals and blocks, minus missed field goals, missed free throws and turnovers, all divided by games played.');
-      paragraphs.push('Because it is a per game rate rather than a season total, a productive player in a handful of games can out-score a steady one who played many.');
+      points.push({
+        text: `All ${DRAFT_ROUNDS} of your players get an efficiency rating, and your score is the total.`,
+        info: 'A rating is points plus rebounds, assists, steals and blocks, minus missed field goals, missed free throws and turnovers, all divided by games played. Because it is a per game rate rather than a season total, a productive player in a handful of games can out-score a steady one who played many.',
+      });
     } else if (draft_scoring_terminology_id === TERMINOLOGY_ID.DRAFT_SCORING.ROTO) {
-      paragraphs.push(`Your ${DRAFT_ROUNDS} players' stats add into one team total, and the teams are then ranked in each of nine categories.`);
-      paragraphs.push('The categories are points, rebounds, assists, steals, blocks, three pointers made, field goal percentage, free throw percentage, and turnovers, with turnovers being the one where fewer is better.');
+      const ranking = count ?
+        `With ${count} ${this.plural(count, 'entry', 'entries')}, the best team in a category takes ${count} points, the next ${count - 1}, down to 1.`
+        : 'The best team in a category takes a point for every team it beat.';
 
-      if (count) {
-        paragraphs.push(`With ${count} ${this.plural(count, 'entry', 'entries')}, the best team in a category takes ${count} points, the next takes ${count - 1}, down to 1. Teams that tie split those points between them. Add up all nine categories and the highest total wins.`);
-      } else {
-        paragraphs.push('The best team in a category takes a point for every team it beat, and teams that tie split those points. Add up all nine categories and the highest total wins.');
-      }
+      points.push({
+        text: 'Your players\' stats add into one team total, then every team is ranked in nine categories.',
+        info: `The categories are points, rebounds, assists, steals, blocks, three pointers made, field goal percentage, free throw percentage, and turnovers, where fewer is better. ${ranking} Teams that tie split those points. Add up all nine and the highest total wins.`,
+      });
     }
 
-    if (opens && ended) {
-      paragraphs.push(`Only games played between ${opens} and ${ended} count. Whatever your players did before the league started is ignored.`);
-    }
-
-    paragraphs.push(`Standings are recalculated once a day while the league runs, and the final result lands the day after it ends${ended ? `, so just after ${ended}` : ''}.`);
-
-    if (scoring?.description) {
-      paragraphs.push(scoring.description);
-    }
+    points.push({
+      text: 'Standings are recalculated once a day.',
+      info: `The final result lands the day after the league ends${ended ? `, so just after ${ended}` : ''}.`,
+    });
 
     const facts: ExplainerFact[] = [
       { label: 'Roster size', primary: `${DRAFT_ROUNDS} players` },
@@ -682,41 +699,64 @@ class FantasyGroupExplainer {
     ];
 
     if (opens && ended) {
-      facts.push({ label: 'Games that count', primary: `${opens} to ${ended}` });
+      facts.push({
+        label: 'Games that count',
+        primary: `${opens} to ${ended}`,
+        info: 'Whatever your players did before the league started is ignored.',
+      });
     }
+
+    // rosters only exist on the page once the league is running, so point at the settings before that
+    const running = phase === 'running' || phase === 'finished';
 
     return {
       id: 'scoring',
       title: 'What you draft, and how it scores',
       status: 'info',
-      paragraphs,
+      lead,
+      points,
       facts,
+      actions: [{ kind: 'scroll', title: 'Show me', target: running ? 'rosters' : 'draft_settings' }],
     };
   }
 
   private payoutSection(): ExplainerSection {
     const { entry_fee } = this.fantasy_group;
-    const paragraphs: string[] = [];
+    const points: ExplainerPoint[] = [];
     const paid = this.paidEntryCount();
     const pool = Payment.get_pool_after_fees(entry_fee, paid);
     const split = Payment.get_payout_split(this.fantasy_payout_rule?.json_payout_structure);
 
-    paragraphs.push(`Entry is $${entry_fee}. The pool is every paid entry's fee less the card processing fee of ${(Payment.stripe_percentage * 100).toFixed(2)}% plus $0.${Payment.stripe_transaction_cents}, and the srating.io fee of ${(Payment.srating_percentage * 100).toFixed(2)}%.`);
+    const lead = this.fantasy_payout_rule && split.length ?
+      `Every paid entry's fee goes into one pool, split by the ${this.fantasy_payout_rule.name} rule.`
+      : 'Every paid entry\'s fee goes into one pool, less processing and site fees.';
 
-    paragraphs.push(`With ${paid} paid ${this.plural(paid, 'entry', 'entries')} in, the pool stands at $${pool.toFixed(2)}, and it grows with every entry that pays.`);
+    const poolInfo = `Every paid entry's fee, less the card processing fee of ${(Payment.stripe_percentage * 100).toFixed(2)}% plus $0.${Payment.stripe_transaction_cents}, and the srating.io fee of ${(Payment.srating_percentage * 100).toFixed(2)}%. It grows with every entry that pays.`;
+
+    const facts: ExplainerFact[] = [
+      { label: 'Current pool', primary: `$${pool.toFixed(2)}`, info: poolInfo },
+      { label: 'Paid entries', primary: paid },
+    ];
 
     if (this.fantasy_payout_rule && split.length) {
-      const shares = split.map((row) => `${Numbers.formatOrdinal(row.rank)} takes ${(row.share * 100).toFixed(1)}% of it`);
-      paragraphs.push(`${this.fantasy_payout_rule.name}: ${this.joinList(shares)}.`);
+      const shares = split.map((row) => `${Numbers.formatOrdinal(row.rank)} ${(row.share * 100).toFixed(1)}%`).join(', ');
+      points.push({ text: `${shares}.`, info: 'The dollar amounts behind those shares are on the Payout Info card.' });
     }
 
-    paragraphs.push('Winners are paid by hand once the league finishes. The live numbers are on the Payout Info card below.');
+    points.push({
+      text: 'Winners are paid by hand once the league finishes.',
+      info: 'Nothing is paid out while the league is still running.',
+    });
 
+    // PayoutInfo only renders when the league has a payout rule, so do not point at nothing
     return {
       id: 'payouts',
       title: 'Entry fee and payouts',
       status: 'info',
-      paragraphs,
+      lead,
+      points,
+      facts,
+      actions: [{ kind: 'scroll', title: 'Show me', target: this.fantasy_payout_rule ? 'payouts' : 'entries_and_fees' }],
     };
   }
 
@@ -731,34 +771,47 @@ class FantasyGroupExplainer {
   }
 
   private bracketSection(): ExplainerSection {
-    const paragraphs = [
-      'You call every game in the tournament before it starts, and the bracket locks once the first game tips off.',
-      'A correct call is worth more the further the round goes: 1 point in the first round, then 2, 4, 8, 16, and 32 for the champion. A perfect bracket is 192.',
-      'There is one bonus point on top of that, for getting the exact combined score of the championship game.',
+    const lead = 'You call every game before the tournament starts, and the bracket locks when the first game tips off.';
+
+    const points: ExplainerPoint[] = [
+      {
+        text: 'A correct call is worth more the deeper the round goes.',
+        info: '1 point in the first round, then 2, 4, 8, 16, and 32 for the champion.',
+      },
+      {
+        text: 'One bonus point for the exact combined score of the championship game.',
+        info: 'It is also what separates two brackets on the same score.',
+      },
     ];
 
     const opens = this.formatDate(this.fantasy_group.start_date);
     const ended = this.formatDate(this.fantasy_group.end_date);
 
-    if (opens && ended) {
-      paragraphs.push(`The tournament runs ${opens} through ${ended}, and the final standings land the day after that.`);
-    }
-
     const facts: ExplainerFact[] = [
-      { label: 'Perfect bracket', primary: 192 },
+      {
+        label: 'Perfect bracket',
+        primary: 192,
+        info: 'Every round doubles: 32 first-round calls at 1 point each, then 2, 4, 8, 16, and 32 for the champion.',
+      },
       { label: 'Tiebreaker', primary: 'Championship combined score' },
     ];
 
     if (opens && ended) {
-      facts.push({ label: 'Tournament', primary: `${opens} to ${ended}` });
+      facts.push({
+        label: 'Tournament',
+        primary: `${opens} to ${ended}`,
+        info: 'The final standings land the day after it ends.',
+      });
     }
 
     return {
       id: 'bracket',
       title: 'How a bracket is scored',
       status: 'info',
-      paragraphs,
+      lead,
+      points,
       facts,
+      actions: [{ kind: 'scroll', title: 'Show me', target: 'bracket' }],
     };
   }
 }

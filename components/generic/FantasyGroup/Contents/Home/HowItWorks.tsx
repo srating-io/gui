@@ -3,9 +3,11 @@
 import CloseIcon from '@esmalley/react-material-icons/Close';
 import ExpandLessIcon from '@esmalley/react-material-icons/ExpandLess';
 import ExpandMoreIcon from '@esmalley/react-material-icons/ExpandMore';
+import HelpIcon from '@esmalley/react-material-icons/Help';
 import { useEffect, useMemo, useState } from 'react';
 import { Button, Columns, IconButton, Paper, Slab, Typography, useTheme } from '@esmalley/react-material-ui';
 import { innerBreakPoint, paperStyle } from '../../Card';
+import { FANTASY_ANCHOR } from '../../anchors';
 import Collapsible from '@/components/generic/Collapsible';
 import FantasyGroupExplainer, { ExplainerSection, ExplainerStatus } from '@/components/helpers/FantasyGroupExplainer';
 import { useNavigation } from '@/components/hooks/useNavigation';
@@ -39,6 +41,8 @@ const HowItWorks = () => {
   const [openId, setOpenId] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
   const [expanded, setExpanded] = useState<boolean | null>(null);
+  // one map for every point, since a hook cannot live inside the section map
+  const [revealed, setRevealed] = useState<{ [key: string]: boolean }>({});
 
   const fantasy_payout_rule = (
     fantasy_group.fantasy_payout_rule_id && fantasy_group.fantasy_payout_rule_id in fantasy_payout_rules ?
@@ -102,25 +106,39 @@ const HowItWorks = () => {
     return theme.text.secondary;
   };
 
-  const getAction = (section: ExplainerSection) => {
-    if (!section.action) {
+  const getActions = (section: ExplainerSection) => {
+    if (!section.actions || !section.actions.length) {
       return null;
     }
 
-    const { action } = section;
-
-    const onClick = () => {
-      if (action.kind === 'create_entry') {
-        dispatch(setDataKey({ key: 'joining_entry_name', value: '' }));
-        return;
-      }
-
-      navigation.fantasyGroupView(action.subview ? { view: action.view, subview: action.subview } : { view: action.view });
-    };
-
     return (
-      <div style = {{ marginTop: 8 }}>
-        <Button value = {`${section.id}-action`} title = {action.title} onClick = {onClick} />
+      <div style = {{ marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+        {section.actions.map((action, a) => {
+          const onClick = () => {
+            if (action.kind === 'create_entry') {
+              dispatch(setDataKey({ key: 'joining_entry_name', value: '' }));
+              return;
+            }
+
+            if (action.kind === 'scroll') {
+              dispatch(setDataKey({ key: 'highlighted_anchor', value: FANTASY_ANCHOR[action.target] }));
+              return;
+            }
+
+            navigation.fantasyGroupView(action.subview ? { view: action.view, subview: action.subview } : { view: action.view });
+          };
+
+          return (
+            <Button
+              key = {`${section.id}-${a}`}
+              value = {`${section.id}-${a}`}
+              title = {action.title}
+              onClick = {onClick}
+              // the thing to see must not outrank the thing to do
+              ink = {action.kind === 'scroll'}
+            />
+          );
+        })}
       </div>
     );
   };
@@ -128,12 +146,14 @@ const HowItWorks = () => {
   const paperButtons = [
     <IconButton
       key = 'expand'
+      type = 'circle'
       value = 'expand'
       onClick = {() => setExpanded(!isExpanded)}
       icon = {isExpanded ? <ExpandLessIcon style = {{ fontSize: 22 }} /> : <ExpandMoreIcon style = {{ fontSize: 22 }} />}
     />,
     <IconButton
       key = 'dismiss'
+      type = 'circle'
       value = 'dismiss'
       onClick = {handleDismiss}
       icon = {<CloseIcon style = {{ fontSize: 20 }} />}
@@ -167,9 +187,31 @@ const HowItWorks = () => {
             onToggle = {handleToggle}
             divider = {index < explainer.sections.length - 1}
           >
-            {section.paragraphs.map((paragraph, p) => (
-              <Typography key = {p} type = 'body2' style = {{ marginBottom: 8 }}>{paragraph}</Typography>
-            ))}
+            <Typography type = 'body2' style = {{ color: theme.text.secondary, marginBottom: 8 }}>{section.lead}</Typography>
+            {(section.points || []).map((point, p) => {
+              const key = `${section.id}-${p}`;
+
+              return (
+                <div key = {key} style = {{ marginBottom: 6 }}>
+                  <Typography type = 'body2' style = {{ color: theme.text.secondary, display: 'flex', alignItems: 'flex-start' }}>
+                    <span style = {{ marginRight: 6 }}>&bull;</span>
+                    <span>{point.text}</span>
+                    {
+                      point.info ?
+                        <span style = {{ display: 'flex' }} onClick = {() => setRevealed({ ...revealed, [key]: !revealed[key] })}>
+                          <HelpIcon style = {{ color: theme.info.main, cursor: 'pointer', marginLeft: 5, fontSize: 20 }} />
+                        </span>
+                        : null
+                    }
+                  </Typography>
+                  {
+                    point.info && revealed[key] ?
+                      <Typography type = 'caption' style = {{ color: theme.text.secondary, marginLeft: 14 }}>{point.info}</Typography>
+                      : null
+                  }
+                </div>
+              );
+            })}
             {
               section.facts && section.facts.length ?
                 <Columns numberOfColumns = {section.facts.length > 2 ? 3 : 2} breakPoint = {innerBreakPoint}>
@@ -179,7 +221,7 @@ const HowItWorks = () => {
                 </Columns>
                 : null
             }
-            {getAction(section)}
+            {getActions(section)}
           </Collapsible>
         )) : null}
       </Paper>
