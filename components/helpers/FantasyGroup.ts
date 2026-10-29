@@ -2,6 +2,14 @@
 
 import { getStore } from '@/app/StoreProvider';
 import { Fantasy } from '@srating-io/types';
+import { TERMINOLOGY_ID } from '@srating-io/common';
+
+
+/**
+ * Rounds in a draft, which is also the roster size. The api's generateDraftOrder hardcodes the
+ * same 8, so changing this alone only moves the preview and the copy, not the real draft.
+ */
+export const DRAFT_ROUNDS = 8;
 
 
 /**
@@ -24,7 +32,7 @@ class FantasyGroup {
   isDraft(): boolean {
     if (
       this.getFantasyGroup() &&
-      this.getFantasyGroup().fantasy_group_type_terminology_id === '7ca1ccce-e033-11f0-bc34-529c3ffdbb93'
+      this.getFantasyGroup().fantasy_group_type_terminology_id === TERMINOLOGY_ID.FANTASY_GROUP_TYPE.DRAFT
     ) {
       return true;
     }
@@ -38,7 +46,7 @@ class FantasyGroup {
   isNCAABracket(): boolean {
     if (
       this.getFantasyGroup() &&
-      this.getFantasyGroup().fantasy_group_type_terminology_id === '3e72a9f3-e034-11f0-bc34-529c3ffdbb93'
+      this.getFantasyGroup().fantasy_group_type_terminology_id === TERMINOLOGY_ID.FANTASY_GROUP_TYPE.NCAA_BRACKET
     ) {
       return true;
     }
@@ -154,7 +162,7 @@ class FantasyGroup {
         return a.date_of_entry > b.date_of_entry ? 1 : -1;
       });
 
-      const rounds = 8;
+      const rounds = DRAFT_ROUNDS;
       let pick = 1;
 
       for (let round = 1; round <= rounds; round++) {
@@ -163,7 +171,7 @@ class FantasyGroup {
 
         // if it is snake and If it's an even round (2, 4, 6, 8), reverse the order
         if (
-          fantasy_group.draft_type_terminology_id === '443459f0-eefe-11f0-a514-529c3ffdbb93' &&
+          fantasy_group.draft_type_terminology_id === TERMINOLOGY_ID.DRAFT_TYPE.SNAKE &&
           round % 2 === 0
         ) {
           round_entries.reverse();

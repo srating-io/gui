@@ -10,6 +10,9 @@ import Comments from './Comments';
 import MyEntries from './MyEntries';
 import LeagueManagement from './LeagueManagement';
 import DraftOrBracketCountdown from './DraftOrBracketCountdown';
+import HowItWorks from './HowItWorks';
+import Anchor from '../../Anchor';
+import { FANTASY_ANCHOR } from '../../anchors';
 import { useAppSelector } from '@/redux/hooks';
 import FantasyGroup from '@/components/helpers/FantasyGroup';
 import Rosters from './Rosters';
@@ -60,11 +63,18 @@ const Client = () => {
   return (
     <Contents>
       {fantasy_group.finished ? <Winner /> : ''}
+      <div style = {{ marginBottom: 20 }}>
+        <HowItWorks />
+      </div>
       <Columns numberOfColumns={2} style = {{ marginBottom: 20 }}>
-        <MyEntries />
+        <Anchor id = {FANTASY_ANCHOR.entries}><MyEntries /></Anchor>
         {started ? <Ranking /> : <DraftOrBracketCountdown />}
       </Columns>
-      {fantasyHelper.isDraft() && started ? <div style = {{ marginBottom: 20 }}><Rosters /></div> : ''}
+      {
+        fantasyHelper.isDraft() && started ?
+          <Anchor id = {FANTASY_ANCHOR.rosters} style = {{ marginBottom: 20 }}><Rosters /></Anchor>
+          : ''
+      }
       <div style = {{ marginBottom: 20 }}>
         <LeagueManagement />
       </div>

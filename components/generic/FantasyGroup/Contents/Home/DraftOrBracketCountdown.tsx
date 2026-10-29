@@ -2,7 +2,8 @@
 
 import FantasyGroup from '@/components/helpers/FantasyGroup';
 import { useNavigation } from '@/components/hooks/useNavigation';
-import { useAppSelector } from '@/redux/hooks';
+import { useAppDispatch, useAppSelector } from '@/redux/hooks';
+import { setDataKey } from '@/redux/features/fantasy_group-slice';
 import { Button, Paper, Typography, useTheme } from '@esmalley/react-material-ui';
 import { Dates } from '@esmalley/ts-utils';
 import React, { useEffect, useState, useMemo } from 'react';
@@ -10,6 +11,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 const DraftOrBracketCountdown = () => {
   const theme = useTheme();
   const navigation = useNavigation();
+  const dispatch = useAppDispatch();
   const fantasy_group = useAppSelector((state) => state.fantasyGroupReducer.fantasy_group);
   const fantasy_entrys = useAppSelector((state) => state.fantasyGroupReducer.fantasy_entrys);
   const fantasy_entry_pre_picks = useAppSelector((state) => state.fantasyGroupReducer.fantasy_entry_pre_picks);
@@ -61,12 +63,16 @@ const DraftOrBracketCountdown = () => {
     }[] = [];
 
     if (fantasyHelper.isDraft()) {
-      // Step 1: The entry
+      // Step 1: The entry. MyEntries owns the modal, this only flips the shared flag that opens it
       list.push({
         label: 'Create an entry',
         date: fantasy_group?.draft_start_datetime,
         isComplete: hasEntry,
-        button: false,
+        button: (
+          !hasEntry && fantasy_group.locked === 0 ?
+            <Button value='create-entry' title='Create an entry' onClick={() => dispatch(setDataKey({ key: 'joining_entry_name', value: '' }))} />
+            : false
+        ),
       });
       // Step 2: the safety net for missing the draft live
       if (hasEntry && !fantasy_group?.drafted) {
