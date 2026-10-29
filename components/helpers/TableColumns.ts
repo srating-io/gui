@@ -4063,6 +4063,17 @@ class TableColumns {
     },
   ): string[] => {
     if (columnView === 'custom') {
+      if (view === 'player') {
+        return customColumns.map((column) => {
+          if (career && column === 'elo') {
+            return 'max_elo';
+          }
+          if (!career && column === 'max_elo') {
+            return 'elo';
+          }
+          return column;
+        });
+      }
       return customColumns;
     }
 
@@ -4073,7 +4084,7 @@ class TableColumns {
         }
         if (view === 'player') {
           if (career) {
-            return ['rank', 'name', 'max_elo', 'efficiency_rating', 'player_efficiency_rating', 'points_per_game', 'minutes_per_game', 'wins', 'losses'];
+            return ['rank', 'name', 'rank_delta_combo', 'max_elo', 'efficiency_rating', 'offensive_rating', 'defensive_rating', 'player_efficiency_rating', 'minutes_per_game', 'points_per_game', 'usage_percentage', 'true_shooting_percentage'];
           }
           return ['rank', 'name', 'team_name', 'rank_delta_combo', 'elo', 'efficiency_rating', 'offensive_rating', 'defensive_rating', 'player_efficiency_rating', 'minutes_per_game', 'points_per_game', 'usage_percentage', 'true_shooting_percentage'];
         }
@@ -4143,7 +4154,7 @@ class TableColumns {
             return ['rank', 'is_transfer', 'name', 'elo', 'adjusted_passing_rating', 'passing_rating_college', 'passing_attempts', 'passing_completions', 'passing_yards', 'passing_completion_percentage', 'passing_yards_per_attempt', 'passing_yards_per_completion', 'passing_touchdowns', 'passing_interceptions'];
           }
           if (career) {
-            return ['rank', 'name', 'max_elo', 'adjusted_passing_rating', 'passing_rating_college', 'passing_attempts', 'passing_completions', 'passing_yards', 'passing_completion_percentage', 'passing_yards_per_attempt', 'passing_yards_per_completion', 'passing_touchdowns', 'passing_interceptions'];
+            return ['rank', 'name', 'rank_delta_combo', 'max_elo', 'adjusted_passing_rating', 'passing_rating_college', 'passing_attempts', 'passing_completions', 'passing_yards', 'passing_completion_percentage', 'passing_yards_per_attempt', 'passing_yards_per_completion', 'passing_touchdowns', 'passing_interceptions'];
           }
           return ['rank', 'name', 'team_name', 'rank_delta_combo', 'elo', 'adjusted_passing_rating', 'passing_rating_college', 'passing_attempts', 'passing_completions', 'passing_yards', 'passing_completion_percentage', 'passing_yards_per_attempt', 'passing_yards_per_completion', 'passing_touchdowns', 'passing_interceptions'];
         }
@@ -4156,7 +4167,7 @@ class TableColumns {
             return ['rank', 'is_transfer', 'name', 'elo', 'rushing_attempts', 'rushing_yards', 'rushing_yards_per_attempt', 'rushing_touchdowns', 'rushing_long'];
           }
           if (career) {
-            return ['rank', 'name', 'max_elo', 'rushing_attempts', 'rushing_yards', 'rushing_yards_per_attempt', 'rushing_touchdowns', 'rushing_long'];
+            return ['rank', 'name', 'rank_delta_combo', 'max_elo', 'rushing_attempts', 'rushing_yards', 'rushing_yards_per_attempt', 'rushing_touchdowns', 'rushing_long'];
           }
           return ['rank', 'name', 'team_name', 'rank_delta_combo', 'elo', 'rushing_attempts', 'rushing_yards', 'rushing_yards_per_attempt', 'rushing_touchdowns', 'rushing_long'];
         }
@@ -4169,7 +4180,7 @@ class TableColumns {
             return ['rank', 'is_transfer', 'name', 'elo', 'receptions', 'receiving_yards', 'receiving_yards_per_reception', 'receiving_touchdowns', 'receiving_long'];
           }
           if (career) {
-            return ['rank', 'name', 'max_elo', 'receptions', 'receiving_yards', 'receiving_yards_per_reception', 'receiving_touchdowns', 'receiving_long'];
+            return ['rank', 'name', 'rank_delta_combo', 'max_elo', 'receptions', 'receiving_yards', 'receiving_yards_per_reception', 'receiving_touchdowns', 'receiving_long'];
           }
           return ['rank', 'name', 'team_name', 'rank_delta_combo', 'elo', 'receptions', 'receiving_yards', 'receiving_yards_per_reception', 'receiving_touchdowns', 'receiving_long'];
         }

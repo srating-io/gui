@@ -6,7 +6,7 @@ import ColumnPicker from '../ColumnPicker';
 import Organization from '@/components/helpers/Organization';
 import TableColumns from '@/components/helpers/TableColumns';
 import { Textor } from '@esmalley/ts-utils';
-import { Chip } from '@esmalley/react-material-ui';
+import { Chip, TableColumnsType } from '@esmalley/react-material-ui';
 
 export const getAvailableChips = ({ organization_id, view }) => {
   let availableChips = ['composite'];
@@ -34,17 +34,38 @@ export const getAvailableChips = ({ organization_id, view }) => {
 
 
 
-const ColumnChipPicker = ({ organization_id, view }) => {
+const ColumnChipPicker = (
+  {
+    organization_id,
+    view,
+    options,
+  }:
+  {
+    organization_id: string;
+    view: string;
+    options?: TableColumnsType;
+  },
+) => {
   const dispatch = useAppDispatch();
   const columnView = useAppSelector((state) => state.rankingReducer.columnView);
   const customColumns = useAppSelector((state) => state.rankingReducer.customColumns);
   const career = useAppSelector((state) => state.rankingReducer.career);
   const career_active = useAppSelector((state) => state.rankingReducer.career_active);
 
-  const headCells = TableColumns.getColumns({ organization_id, view, career: (career === 1 || career_active === 1) });
+  const headCells = options || TableColumns.getColumns({ organization_id, view, career: (career === 1 || career_active === 1) });
+
+  const selectedCustomColumns = customColumns.map((column) => {
+    if (column === 'elo' && 'max_elo' in headCells && !('elo' in headCells)) {
+      return 'max_elo';
+    }
+    if (column === 'max_elo' && 'elo' in headCells && !('max_elo' in headCells)) {
+      return 'elo';
+    }
+    return column;
+  });
 
   const handleCustomColumns = (value: string) => {
-    const newColumns = [...customColumns];
+    const newColumns = [...selectedCustomColumns];
 
     const index = newColumns.indexOf(value);
 
@@ -83,7 +104,7 @@ const ColumnChipPicker = ({ organization_id, view }) => {
         key = {view}
         filled = {(columnView === 'custom')}
         options = {headCells}
-        selected = {customColumns}
+        selected = {selectedCustomColumns}
         actionHandler = {handleCustomColumns}
         firstRunAction = {handleRankingView}
       />
