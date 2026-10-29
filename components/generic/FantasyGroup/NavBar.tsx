@@ -220,6 +220,24 @@ const NavBar = () => {
 
   const options: MenuOption[] = [];
 
+  // only offered once it has been dismissed, so the menu does not grow for everyone. first in the
+  // list because it is the only harmless entry and does not belong under a delete
+  if (fantasy_group.fantasy_group_id in (fantasyGuideDismissed || {})) {
+    const remaining = { ...fantasyGuideDismissed };
+    delete remaining[fantasy_group.fantasy_group_id];
+
+    options.push({
+      value: 'how-it-works',
+      label: 'How it works',
+      selectable: true,
+      onSelect: () => {
+        dispatch(setDisplayDataKey({ key: 'fantasyGuideDismissed', value: remaining }));
+        handleClose();
+      },
+      icon: <HelpOutlineIcon style = {{ fontSize: 20 }} />,
+    });
+  }
+
   // updateGroup refuses a league that has started, so only offer it while it can still be changed
   if (
     isOwner &&
@@ -310,24 +328,6 @@ const NavBar = () => {
       icon: <LogoutIcon style = {{ color: theme.error.main, fontSize: 20 }} />,
     });
   }
-
-  // only offered once it has been dismissed, so the menu does not grow for everyone
-  if (fantasy_group.fantasy_group_id in (fantasyGuideDismissed || {})) {
-    const remaining = { ...fantasyGuideDismissed };
-    delete remaining[fantasy_group.fantasy_group_id];
-
-    options.push({
-      value: 'how-it-works',
-      label: 'How it works',
-      selectable: true,
-      onSelect: () => {
-        dispatch(setDisplayDataKey({ key: 'fantasyGuideDismissed', value: remaining }));
-        handleClose();
-      },
-      icon: <HelpOutlineIcon style = {{ fontSize: 20 }} />,
-    });
-  }
-
 
   return (
     <>
