@@ -30,7 +30,7 @@ const Title = () => {
     // before the date check - otherwise it reads "TBD" after the last pick.
     if (fantasy_group.drafted) {
       data.title = 'Draft is over!';
-      data.icon = <CheckIcon style = {{ color: theme.success.main, fontSize: 24 }} />;
+      data.icon = <CheckIcon style = {{ color: theme.success.main, fontSize: 20 }} />;
       return data;
     }
 
@@ -42,7 +42,7 @@ const Title = () => {
 
     if (difference <= 0) {
       data.title = 'Draft in-progress!';
-      data.icon = <FiberManualRecordIcon style = {{ color: theme.error.main, fontSize: 24 }} />;
+      data.icon = <FiberManualRecordIcon style = {{ color: theme.error.main, fontSize: 20 }} />;
       return data;
     }
 
@@ -82,9 +82,9 @@ const Title = () => {
   }, [getData]);
 
   return (
-    <div style = {{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-      {icon ? <span style = {{ display: 'flex', marginRight: 10 }}>{icon}</span> : ''}
-      <Typography type='h5'>{title}</Typography>
+    <div style = {{ display: 'flex', justifyContent: 'center', alignItems: 'center', margin: '4px 0' }}>
+      {icon ? <span style = {{ display: 'flex', marginRight: 6 }}>{icon}</span> : ''}
+      <Typography type='subtitle1'>{title}</Typography>
     </div>
   );
 };

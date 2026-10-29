@@ -58,9 +58,19 @@ const Client = ({ fantasy_group_id, rankingGrant, rankingCareerActiveGrant }) =>
   const isPrePicks = subview === 'pre_picks';
 
   const getTopTabs = () => {
+    if (width <= 475) {
+      return (
+        <div style = {{ textAlign: 'center' }}>
+          <Tab key = {'draft-board'} title = {'Draft board'} value = {'draft_board'} selected = {subview === 'draft_board'} onClick={() => dispatch(setDataKey({ key: 'subview', value: 'draft_board' }))}/>
+          <Tab key = {'draft-zone'} title = {'Draft zone'} value = {'draft_zone'} selected = {subview === 'draft_zone'} onClick={() => dispatch(setDataKey({ key: 'subview', value: 'draft_zone' }))}/>
+          <Tab key = {'pre-picks'} title = {'Pre-picks'} value = {'pre_picks'} selected = {isPrePicks} onClick={() => dispatch(setDataKey({ key: 'subview', value: 'pre_picks' }))}/>
+        </div>
+      );
+    }
+
     return (
       <div style = {{ textAlign: 'center' }}>
-        <Tab key = {'draft'} title = {'Draft'} value = {'draft'} selected = {!isPrePicks} onClick={() => isPrePicks && dispatch(setDataKey({ key: 'subview', value: width <= 475 ? 'draft_zone' : 'draft_board' }))}/>
+        <Tab key = {'draft'} title = {'Draft'} value = {'draft'} selected = {!isPrePicks} onClick={() => isPrePicks && dispatch(setDataKey({ key: 'subview', value: 'draft_board' }))}/>
         <Tab key = {'pre-picks'} title = {'Pre-draft picks'} value = {'pre_picks'} selected = {isPrePicks} onClick={() => dispatch(setDataKey({ key: 'subview', value: 'pre_picks' }))}/>
       </div>
     );
@@ -115,10 +125,6 @@ const Client = ({ fantasy_group_id, rankingGrant, rankingCareerActiveGrant }) =>
         {
           width <= 475 ?
             <>
-              <div style = {{ textAlign: 'center' }}>
-                <Tab key = {'draft-board'} title = {'Draft board'} value = {'draft_board'} selected = {subview === 'draft_board'} onClick={() => dispatch(setDataKey({ key: 'subview', value: 'draft_board' }))}/>
-                <Tab key = {'draft-board'} title = {'Draft zone'} value = {'draft_zone'} selected = {subview === 'draft_zone'} onClick={() => dispatch(setDataKey({ key: 'subview', value: 'draft_zone' }))}/>
-              </div>
               <Title />
               {
                 subview === 'draft_board' &&

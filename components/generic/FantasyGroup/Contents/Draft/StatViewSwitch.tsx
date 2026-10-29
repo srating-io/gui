@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 
 import ButtonSwitch from '@/components/generic/ButtonSwitch';
 import { setDataKey } from '@/redux/features/fantasy_group-slice';
@@ -19,7 +19,7 @@ const CAREER = 'Career';
  * so the preseason default below is decided in one place. Takes the pool rather than building its
  * own -- that is a deep clone and the table calling this already holds one.
  */
-const StatViewSwitch = ({ rows }: { rows: object[] }) => {
+const StatViewSwitch = ({ rows, style = { marginBottom: 10 } }: { rows: object[]; style?: React.CSSProperties }) => {
   const dispatch = useAppDispatch();
 
   const draft_stat_view = useAppSelector((state) => state.fantasyGroupReducer.draft_stat_view);
@@ -52,7 +52,7 @@ const StatViewSwitch = ({ rows }: { rows: object[] }) => {
       selected = {isCareerActive ? CAREER : SEASON}
       handleClick = {handleClick}
       fontSize = '0.75rem'
-      style = {{ marginBottom: 10 }}
+      style = {style}
     />
   );
 };

@@ -12,7 +12,7 @@ import {
   getNextAvailablePrePickRows,
   isPoolLoading,
 } from './shared';
-import { LinearProgress, Typography, useTheme } from '@esmalley/react-material-ui';
+import { LinearProgress, useTheme } from '@esmalley/react-material-ui';
 
 
 const DraftZone = () => {
@@ -104,7 +104,6 @@ const DraftZone = () => {
 
   return (
     <div>
-      <Typography type = 'h6'>Draft zone</Typography>
       {getContainer()}
     </div>
   );

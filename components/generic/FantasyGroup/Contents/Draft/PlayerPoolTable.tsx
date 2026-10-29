@@ -92,8 +92,8 @@ const PlayerPoolTable = (
 
   return (
     <div>
-      <StatViewSwitch rows = {seasonPool} />
-      <div style = {{ marginBottom: 10 }}>
+      <div style = {{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 6 }}>
+        <StatViewSwitch rows = {seasonPool} style = {{ marginBottom: 0 }} />
         <ColumnChipPicker
           organization_id = {fantasy_group.organization_id}
           view = 'player'

@@ -231,7 +231,6 @@ const PrePicks = () => {
   if (!my_fantasy_entrys.length) {
     return (
       <div>
-        <Typography type = 'h6'>Pre-draft selections</Typography>
         <Typography type = 'body1'>You need an entry in this league before you can line up players.</Typography>
       </div>
     );
@@ -248,11 +247,11 @@ const PrePicks = () => {
 
   const getList = () => {
     if (!list.length) {
-      return <Typography type = 'body1' style = {{ color: theme.text.secondary }}>No players lined up yet. Add them from the table below, best first.</Typography>;
+      return <Typography type = 'caption' style = {{ color: theme.text.secondary }}>No players lined up yet. Add them from the table below, best first.</Typography>;
     }
 
     return (
-      <div>
+      <div style = {{ maxHeight: 160, overflowY: 'auto' }}>
         {list.map((player_team_season_id, index) => {
           return (
             <Tile
@@ -309,33 +308,35 @@ const PrePicks = () => {
 
   return (
     <div>
-      <Typography type = 'h6'>Pre-draft selections</Typography>
-      <Paper style = {{ padding: 16, marginBottom: 20 }}>
-        <Typography type = 'body1'>
-          If you are not here for the live draft, you can select a list of players that we will auto-select for you on your turn (if they are still available).
-        </Typography>
-        {
-          my_fantasy_entrys.length > 1 ?
-            <div style = {{ marginTop: 10 }}>
-              <OptionPicker
-                buttonName = {selectedEntryOption ? selectedEntryOption.label : 'My entry'}
-                options = {entryOptions}
-                selected = {[selected_fantasy_entry_id]}
-                actionHandler = {(value) => setFantasyEntryID(value as string)}
-                isRadio = {true}
-              />
-            </div>
-            : ''
-        }
-        <div style = {{ marginTop: 10 }}>{getList()}</div>
-        <div style = {{ textAlign: 'center', marginTop: 10 }}>
-          <Button
-            value = 'save_pre_picks'
-            title = {sending ? 'Saving' : 'Save selections'}
-            onClick = {handleSave}
-            disabled = {!isDirty || sending}
-          />
+      <Paper style = {{ padding: 12, marginBottom: 10 }}>
+        <div style = {{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+          <div>
+            <Typography type = 'subtitle2'>{`Auto-pick queue (${list.length})`}</Typography>
+            <Typography type = 'caption' style = {{ color: theme.text.secondary, display: 'block' }}>
+              Auto-selected in order if you miss your turn.
+            </Typography>
+          </div>
+          <div style = {{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {
+              my_fantasy_entrys.length > 1 ?
+                <OptionPicker
+                  buttonName = {selectedEntryOption ? selectedEntryOption.label : 'My entry'}
+                  options = {entryOptions}
+                  selected = {[selected_fantasy_entry_id]}
+                  actionHandler = {(value) => setFantasyEntryID(value as string)}
+                  isRadio = {true}
+                />
+                : ''
+            }
+            <Button
+              value = 'save_pre_picks'
+              title = {sending ? 'Saving' : 'Save'}
+              onClick = {handleSave}
+              disabled = {!isDirty || sending}
+            />
+          </div>
         </div>
+        <div style = {{ marginTop: 6 }}>{getList()}</div>
       </Paper>
       {getTable()}
     </div>
