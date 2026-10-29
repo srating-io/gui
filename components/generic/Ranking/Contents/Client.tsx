@@ -6,6 +6,7 @@ import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 
 
 import CheckIcon from '@esmalley/react-material-icons/Check';
+import LaunchIcon from '@esmalley/react-material-icons/Launch';
 import { setDataKey } from '@/redux/features/ranking-slice';
 import RankSpan from '../../RankSpan';
 import { getRows } from '../DataHandler';
@@ -96,6 +97,7 @@ export type DecorateRowsOptions = {
    */
   max?: number;
   getRowHref?: (row) => string;
+  openHrefInNewTab?: boolean;
 };
 
 /**
@@ -105,7 +107,7 @@ export type DecorateRowsOptions = {
  * anything the renderer needs to know beyond the row itself has to be closed over.
  */
 export const createDecorateRows = (
-  { heatMap = false, max: maxOverride, getRowHref }: DecorateRowsOptions = {},
+  { heatMap = false, max: maxOverride, getRowHref, openHrefInNewTab = false }: DecorateRowsOptions = {},
 ) => <T extends (Basketball.RankingTable | Football.RankingTable), >(
   {
     rows,
@@ -329,10 +331,28 @@ export const createDecorateRows = (
 
         const rowHref = getRowHref ? getRowHref(row) : '';
         const content = <>{classSpan}{row[displayColumns[i]]}{secondarySpan}</>;
+        let cellContent: React.JSX.Element = content;
+
+        if (rowHref && openHrefInNewTab) {
+          cellContent = (
+            <a
+              href = {rowHref}
+              target = '_blank'
+              rel = 'noopener noreferrer'
+              onClick = {(e) => e.stopPropagation()}
+              style = {{ color: 'inherit', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', maxWidth: '100%' }}
+            >
+              <LaunchIcon style = {{ fontSize: 14, marginRight: 4, color: theme.link.primary, flexShrink: 0 }} />
+              <span style = {{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{content}</span>
+            </a>
+          );
+        } else if (rowHref) {
+          cellContent = <a href = {rowHref} onClick = {(e) => e.preventDefault()} style = {{ color: 'inherit', textDecoration: 'none' }}>{content}</a>;
+        }
 
         tableCells.push(
           <Td key = {i} style = {cellStyle}>
-            {rowHref ? <a href = {rowHref} onClick = {(e) => e.preventDefault()} style = {{ color: 'inherit', textDecoration: 'none' }}>{content}</a> : content}
+            {cellContent}
           </Td>,
         );
       } else {
