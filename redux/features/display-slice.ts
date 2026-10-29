@@ -10,6 +10,7 @@ const statusesLocalStorageKey = 'DISPLAY.STATUSES';
 const cardsViewLocalStorageKey = 'DISPLAY.GAMES.CARDSVIEW';
 const gamesFilterLocalStorageKey = 'DISPLAY.GAMES.FILTER';
 const oddsLocalStorageKey = 'DISPLAY.ODDS';
+const fantasyGuideLocalStorageKey = 'DISPLAY.FANTASY.GUIDE_DISMISSED';
 
 let rankLocalStorage: string | null = null;
 let picksSortLocalStorage: string | null = null;
@@ -19,6 +20,7 @@ let statusesLocalStorage: string | null = null;
 let cardsViewLocalStorage: string | null = null;
 let gamesFilterLocalStorage: string | null = null;
 let oddsLocalStorage: string | null = null;
+let fantasyGuideLocalStorage: string | null = null;
 
 if (typeof window !== 'undefined') {
   rankLocalStorage = localStorage.getItem(rankLocalStorageKey);
@@ -29,7 +31,24 @@ if (typeof window !== 'undefined') {
   cardsViewLocalStorage = localStorage.getItem(cardsViewLocalStorageKey);
   gamesFilterLocalStorage = localStorage.getItem(gamesFilterLocalStorageKey);
   oddsLocalStorage = localStorage.getItem(oddsLocalStorageKey);
+  fantasyGuideLocalStorage = localStorage.getItem(fantasyGuideLocalStorageKey);
 }
+
+/**
+ * A corrupt value here would throw while the store is still importing, which blanks the whole app.
+ */
+const parseGuideDismissed = (value: string | null): { [fantasy_group_id: string]: number } => {
+  if (!value) {
+    return {};
+  }
+
+  try {
+    const parsed = JSON.parse(value);
+    return (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) ? parsed : {};
+  } catch {
+    return {};
+  }
+};
 
 type InitialState = {
   rank: string,
@@ -40,6 +59,8 @@ type InitialState = {
   cardsView: string,
   gamesFilter: string,
   hideOdds: number, // 0 or 1
+  // which leagues the how it works card has been dismissed in, keyed by fantasy_group_id
+  fantasyGuideDismissed: { [fantasy_group_id: string]: number },
   // season: number,
 };
 
@@ -76,6 +97,7 @@ stateController.set_key_x_local_storage_key({
   cardsView: cardsViewLocalStorageKey,
   gamesFilter: gamesFilterLocalStorageKey,
   hideOdds: oddsLocalStorageKey,
+  fantasyGuideDismissed: fantasyGuideLocalStorageKey,
 });
 
 stateController.setDefaultState(Object.freeze({
@@ -87,6 +109,7 @@ stateController.setDefaultState(Object.freeze({
   cardsView: 'compact',
   gamesFilter: 'all',
   hideOdds: 0,
+  fantasyGuideDismissed: {},
 }));
 
 
@@ -99,6 +122,7 @@ stateController.setInitialState({
   cardsView: cardsViewLocalStorage || 'compact',
   gamesFilter: gamesFilterLocalStorage || 'all',
   hideOdds: +(oddsLocalStorage || 0),
+  fantasyGuideDismissed: parseGuideDismissed(fantasyGuideLocalStorage),
   // season: new HelperCBB().getCurrentSeason(),
 });
 
