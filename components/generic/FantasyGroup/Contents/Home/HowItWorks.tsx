@@ -112,7 +112,7 @@ const HowItWorks = () => {
     }
 
     return (
-      <div style = {{ marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+      <div style = {{ marginTop: 8, display: 'flex', flexWrap: 'wrap', justifyContent: 'end' }}>
         {section.actions.map((action, a) => {
           const onClick = () => {
             if (action.kind === 'create_entry') {
@@ -135,7 +135,7 @@ const HowItWorks = () => {
               title = {action.title}
               onClick = {onClick}
               // the thing to see must not outrank the thing to do
-              ink = {action.kind === 'scroll'}
+              ink = {true}
             />
           );
         })}
