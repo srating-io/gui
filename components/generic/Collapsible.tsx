@@ -3,6 +3,7 @@
 import ExpandLessIcon from '@esmalley/react-material-icons/ExpandLess';
 import ExpandMoreIcon from '@esmalley/react-material-icons/ExpandMore';
 import { Divider, Typography, useTheme } from '@esmalley/react-material-ui';
+import { Style } from '@esmalley/ts-utils';
 import React from 'react';
 
 
@@ -45,6 +46,21 @@ const Collapsible = (
     }
   };
 
+  // a class, not an inline style, because the row needs a hover state to read as clickable
+  const rowStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    cursor: 'pointer',
+    padding: '6px 8px',
+    // the hover area bleeds past the body padding while the text stays aligned with it
+    margin: '0px -8px',
+    borderRadius: 4,
+    transition: 'background-color 150ms cubic-bezier(0.4, 0, 0.2, 1) 0ms',
+    '&:hover': {
+      backgroundColor: theme.action.hover,
+    },
+  };
+
   return (
     <div>
       <div
@@ -54,7 +70,7 @@ const Collapsible = (
         aria-controls = {`${id}-body`}
         onClick = {() => onToggle(id)}
         onKeyDown = {handleKeyDown}
-        style = {{ display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '6px 0' }}
+        className = {Style.getStyleClassName(rowStyle)}
       >
         {
           marker ?
