@@ -101,6 +101,46 @@ export type DecorateRowsOptions = {
 };
 
 /**
+ * A cell's contents with a link out to the row's own page seated in front of them.
+ *
+ * Its own target rather than the whole row: a row click in the draft tables queues the player, so
+ * the link has to be smaller than the row to avoid taking that click away. The icon is the entire
+ * link, which is why it carries an aria-label.
+ */
+const LaunchCell = (
+  {
+    children,
+    href,
+    label,
+    color,
+  }:
+  {
+    children: React.ReactNode;
+    href: string;
+    label: string;
+    color: string;
+  },
+) => {
+  return (
+    <span style = {{ display: 'inline-flex', alignItems: 'center', gap: 2, maxWidth: '100%', height: '100%' }}>
+      <a
+        href = {href}
+        target = '_blank'
+        rel = 'noopener noreferrer'
+        aria-label = {`Open ${label} in a new tab`}
+        onClick = {(e) => e.stopPropagation()}
+        // stretched to the cell rather than the icon, which buys a taller tap target for free.
+        // Padding would do it too, but it grows the row past the height the virtualizer fixes.
+        style = {{ display: 'inline-flex', alignItems: 'center', alignSelf: 'stretch', flexShrink: 0, color }}
+      >
+        <LaunchIcon style = {{ fontSize: 14 }} />
+      </a>
+      <span style = {{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{children}</span>
+    </span>
+  );
+};
+
+/**
  * Builds the row renderer VirtualTable calls.
  *
  * A factory rather than a plain function because VirtualTable fixes the signature it calls with, so
@@ -169,6 +209,15 @@ export const createDecorateRows = (
     }
   }
 
+  // The launch link rides the rank column, which is first and sticky. Rank is disabled in the
+  // column picker so it is effectively always shown, but a custom list without it would otherwise
+  // drop the link entirely, so the name takes it back in that case.
+  let launchColumn: string | null = null;
+
+  if (getRowHref && openHrefInNewTab) {
+    launchColumn = displayColumns.includes('rank') ? 'rank' : 'name';
+  }
+
   const i_x_left = {};
 
   const elements: React.JSX.Element[] = rows.map((row, index) => {
@@ -198,6 +247,10 @@ export const createDecorateRows = (
     if (width <= breakPoint) {
       tdStyle.fontSize = '12px';
     }
+
+    const launchHref = (launchColumn && getRowHref) ? getRowHref(row) : '';
+    // the icon is the whole link, so the row's name is the only thing that can name it
+    const launchLabel = ('name' in row && row.name) ? String(row.name) : 'player';
 
     const tableCells: React.JSX.Element[] = [];
 
@@ -333,21 +386,13 @@ export const createDecorateRows = (
         const content = <>{classSpan}{row[displayColumns[i]]}{secondarySpan}</>;
         let cellContent: React.JSX.Element = content;
 
-        if (rowHref && openHrefInNewTab) {
-          cellContent = (
-            <a
-              href = {rowHref}
-              target = '_blank'
-              rel = 'noopener noreferrer'
-              onClick = {(e) => e.stopPropagation()}
-              style = {{ color: 'inherit', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', maxWidth: '100%' }}
-            >
-              <LaunchIcon style = {{ fontSize: 14, marginRight: 4, color: theme.link.primary, flexShrink: 0 }} />
-              <span style = {{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{content}</span>
-            </a>
-          );
-        } else if (rowHref) {
+        if (rowHref) {
           cellContent = <a href = {rowHref} onClick = {(e) => e.preventDefault()} style = {{ color: 'inherit', textDecoration: 'none' }}>{content}</a>;
+        }
+
+        // only reached when the rank column is not on screen to carry it
+        if (launchHref && launchColumn === displayColumns[i]) {
+          cellContent = <LaunchCell href = {launchHref} label = {launchLabel} color = {theme.link.primary}>{cellContent}</LaunchCell>;
         }
 
         tableCells.push(
@@ -385,10 +430,15 @@ export const createDecorateRows = (
         }
 
         const rowHref = displayColumns[i] === 'name' && getRowHref ? getRowHref(row) : '';
+        const cellBody = rowHref ? <a href = {rowHref} onClick = {(e) => e.preventDefault()} style = {{ color: 'inherit', textDecoration: 'none' }}>{text}</a> : text;
 
         tableCells.push(
           <Td key = {i} style = {cellStyle}>
-            {rowHref ? <a href = {rowHref} onClick = {(e) => e.preventDefault()} style = {{ color: 'inherit', textDecoration: 'none' }}>{text}</a> : text}
+            {
+              launchHref && launchColumn === displayColumns[i] ?
+                <LaunchCell href = {launchHref} label = {launchLabel} color = {theme.link.primary}>{cellBody}</LaunchCell> :
+                cellBody
+            }
             {rankSpan}
           </Td>,
         );

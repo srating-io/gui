@@ -346,6 +346,45 @@ export const filterPlayerRows = (
   return filtered;
 };
 
+/** Room for the launch link ahead of the rank: the 14px icon plus its gap, rounded up. */
+const LAUNCH_ICON_WIDTH = 18;
+
+/**
+ * The name column at the narrow breakpoint, now the launch link is out of the cell.
+ *
+ * 100 there had to seat the icon too, which cut most names off mid-surname.
+ */
+const LAUNCH_NAME_MOBILE_WIDTH = 115;
+
+/**
+ * The columns resized to seat the launch link in front of the rank.
+ *
+ * The widths map rather than a cell style, because the row renderer and the header renderer both
+ * size a cell from it and both stack the sticky left offsets off it -- styling one cell would walk
+ * the header out of line with the body.
+ */
+const withLaunchLinkWidths = (columns: TableColumnsType): TableColumnsType => {
+  const next: TableColumnsType = { ...columns };
+
+  if (next.rank && next.rank.widths) {
+    const widths = { ...next.rank.widths };
+
+    // every breakpoint, so this tracks TableColumns if those widths ever move
+    for (const breakpoint in widths) {
+      widths[breakpoint] += LAUNCH_ICON_WIDTH;
+    }
+
+    next.rank = { ...next.rank, widths };
+  }
+
+  // only the narrow breakpoint: desktop was never the one cutting names short
+  if (next.name && next.name.widths) {
+    next.name = { ...next.name, widths: { ...next.name.widths, 425: LAUNCH_NAME_MOBILE_WIDTH } };
+  }
+
+  return next;
+};
+
 /**
  * The column definitions both draft tables use.
  *
@@ -356,34 +395,36 @@ export const getDraftColumns = (
   {
     organization_id,
     career,
+    launchLink = false,
   }:
   {
     organization_id: string;
     career: boolean;
+    launchLink?: boolean;
   },
 ): TableColumnsType => {
   const columns = TableColumns.getColumns({ organization_id, view: 'player', career });
 
-  if (!career) {
-    return columns;
-  }
+  let ordered = columns;
 
-  const seasonColumns = TableColumns.getColumns({ organization_id, view: 'player', career: false });
-  const next: TableColumnsType = {};
+  if (career) {
+    const seasonColumns = TableColumns.getColumns({ organization_id, view: 'player', career: false });
+    ordered = {};
 
-  for (const key in columns) {
-    next[key] = columns[key];
-    if (key === 'name') {
-      if (seasonColumns.team_name) {
-        next.team_name = seasonColumns.team_name;
-      }
-      if (seasonColumns.conference_code) {
-        next.conference_code = seasonColumns.conference_code;
+    for (const key in columns) {
+      ordered[key] = columns[key];
+      if (key === 'name') {
+        if (seasonColumns.team_name) {
+          ordered.team_name = seasonColumns.team_name;
+        }
+        if (seasonColumns.conference_code) {
+          ordered.conference_code = seasonColumns.conference_code;
+        }
       }
     }
   }
 
-  return next;
+  return launchLink ? withLaunchLinkWidths(ordered) : ordered;
 };
 
 /**
