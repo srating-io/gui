@@ -1,14 +1,17 @@
 'use client';
 
-import MenuBookIcon from '@esmalley/react-material-icons/MenuBook';
+import CloseIcon from '@esmalley/react-material-icons/Close';
+import ExpandLessIcon from '@esmalley/react-material-icons/ExpandLess';
+import ExpandMoreIcon from '@esmalley/react-material-icons/ExpandMore';
 import { useEffect, useMemo, useState } from 'react';
-import { Button, Columns, Paper, Slab, Typography, useTheme } from '@esmalley/react-material-ui';
-import { getTitle, innerBreakPoint, paperStyle } from '../../Card';
+import { Button, Columns, IconButton, Paper, Slab, Typography, useTheme } from '@esmalley/react-material-ui';
+import { innerBreakPoint, paperStyle } from '../../Card';
 import Collapsible from '@/components/generic/Collapsible';
 import FantasyGroupExplainer, { ExplainerSection, ExplainerStatus } from '@/components/helpers/FantasyGroupExplainer';
 import { useNavigation } from '@/components/hooks/useNavigation';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { setDataKey } from '@/redux/features/fantasy_group-slice';
+import { setDataKey as setDisplayDataKey } from '@/redux/features/display-slice';
 
 
 const HowItWorks = () => {
@@ -22,6 +25,7 @@ const HowItWorks = () => {
   const fantasy_entry_pre_picks = useAppSelector((state) => state.fantasyGroupReducer.fantasy_entry_pre_picks);
   const terminology = useAppSelector((state) => state.dictionaryReducer.terminology);
   const fantasy_payout_rules = useAppSelector((state) => state.dictionaryReducer.fantasy_payout_rule);
+  const dismissed = useAppSelector((state) => state.displayReducer.fantasyGuideDismissed);
   const user = useAppSelector((state) => state.userReducer.user);
 
   // the phase turns on the draft start passing, which no store update announces
@@ -34,6 +38,7 @@ const HowItWorks = () => {
 
   const [openId, setOpenId] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
+  const [expanded, setExpanded] = useState<boolean | null>(null);
 
   const fantasy_payout_rule = (
     fantasy_group.fantasy_payout_rule_id && fantasy_group.fantasy_payout_rule_id in fantasy_payout_rules ?
@@ -61,12 +66,28 @@ const HowItWorks = () => {
     now,
   ]);
 
+  if (fantasy_group.fantasy_group_id in (dismissed || {})) {
+    return null;
+  }
+
+  // the entry section only leads when the viewer has no usable entry yet, which is exactly the
+  // person who needs this open. everyone else gets the one line strip.
+  const isNewcomer = explainer.defaultOpenSectionId === 'entry';
+  const isExpanded = expanded === null ? isNewcomer : expanded;
+
   // until someone clicks, follow whatever the league's own state says is worth reading
   const activeId = touched ? openId : explainer.defaultOpenSectionId;
 
   const handleToggle = (id: string) => {
     setTouched(true);
     setOpenId(activeId === id ? null : id);
+  };
+
+  const handleDismiss = () => {
+    dispatch(setDisplayDataKey({
+      key: 'fantasyGuideDismissed',
+      value: { ...(dismissed || {}), [fantasy_group.fantasy_group_id]: 1 },
+    }));
   };
 
   const getMarkerColor = (status: ExplainerStatus) => {
@@ -104,23 +125,37 @@ const HowItWorks = () => {
     );
   };
 
+  const paperButtons = [
+    <IconButton
+      key = 'expand'
+      value = 'expand'
+      onClick = {() => setExpanded(!isExpanded)}
+      icon = {isExpanded ? <ExpandLessIcon style = {{ fontSize: 22 }} /> : <ExpandMoreIcon style = {{ fontSize: 22 }} />}
+    />,
+    <IconButton
+      key = 'dismiss'
+      value = 'dismiss'
+      onClick = {handleDismiss}
+      icon = {<CloseIcon style = {{ fontSize: 20 }} />}
+    />,
+  ];
+
   return (
     <div>
-      <Typography type = 'h6'>Getting started</Typography>
-      <Paper style = {paperStyle}>
-        {getTitle(
-          <MenuBookIcon style = {{ color: theme.info.main, fontSize: 24 }} />,
-          explainer.title,
-        )}
-        <Typography type = 'body2' style = {{ color: theme.text.secondary, marginBottom: 12 }}>
+      <Typography type = 'h6'>{explainer.title}</Typography>
+      <Paper style = {paperStyle} buttons = {paperButtons}>
+        <Typography
+          type = 'body2'
+          style = {{ color: theme.text.secondary, marginBottom: isExpanded ? 8 : 0, cursor: 'pointer' }}
+          onClick = {() => setExpanded(!isExpanded)}
+        >
           {explainer.summary}
         </Typography>
-        {explainer.sections.map((section, index) => (
+        {isExpanded ? explainer.sections.map((section, index) => (
           <Collapsible
             key = {section.id}
             id = {section.id}
-            title = {`${index + 1}. ${section.title}`}
-            summary = {section.paragraphs[0]}
+            title = {section.title}
             marker = {
               <Typography type = 'caption' style = {{ color: getMarkerColor(section.status), fontWeight: 'bold' }}>
                 {section.status === 'done' ? '✓' : index + 1}
@@ -146,7 +181,7 @@ const HowItWorks = () => {
             }
             {getAction(section)}
           </Collapsible>
-        ))}
+        )) : null}
       </Paper>
     </div>
   );
