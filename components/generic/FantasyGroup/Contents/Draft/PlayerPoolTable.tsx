@@ -61,8 +61,9 @@ const PlayerPoolTable = (
     return getDraftColumns({
       organization_id: fantasy_group.organization_id,
       career: isCareerActive,
+      launchLink: openPlayerInNewTab,
     });
-  }, [fantasy_group.organization_id, isCareerActive]);
+  }, [fantasy_group.organization_id, isCareerActive, openPlayerInNewTab]);
 
   const displayColumns = useMemo(() => {
     return getDraftDisplayColumns({
