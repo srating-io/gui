@@ -2,7 +2,6 @@
 
 import { useAppSelector } from '@/redux/hooks';
 import Blank from '@/components/generic/Blank';
-import Organization from '@/components/helpers/Organization';
 import Url from '@/components/helpers/Url';
 import Team from '@/components/helpers/Team';
 import { Dates } from '@esmalley/ts-utils';
@@ -17,14 +16,11 @@ const Games = ({ fantasy_entry_id }) => {
   const navigation = useNavigation();
   const { width } = useWindowDimensions();
   const theme = useTheme();
-  const fantasy_group = useAppSelector((state) => state.fantasyEntryReducer.fantasy_group);
 
   const games = useAppSelector((state) => state.fantasyEntryReducer.games);
   const teams = useAppSelector((state) => state.fantasyEntryReducer.teams);
   const player_team_seasons = useAppSelector((state) => state.fantasyEntryReducer.player_team_seasons);
   const players = useAppSelector((state) => state.fantasyEntryReducer.players);
-  const organizations = useAppSelector((state) => state.dictionaryReducer.organization);
-  const path = Organization.getPath({ organizations, organization_id: fantasy_group.organization_id });
 
   const past: General.Game[] = [];
   const future: General.Game[] = [];
@@ -89,7 +85,7 @@ const Games = ({ fantasy_entry_id }) => {
     });
 
     const getGameHref = () => {
-      return Url.game({ sport: path, game });
+      return Url.game({ organization_id: game.organization_id, game });
     };
 
     const handleGameClick = (e) => {
@@ -98,7 +94,7 @@ const Games = ({ fantasy_entry_id }) => {
     };
 
     const getTeamHref = (team_id) => {
-      return Url.team({ sport: path, team: game.teams[team_id], season: game.season });
+      return Url.team({ organization_id: game.organization_id, team: teams[team_id], season: game.season });
     };
 
     const handleTeamClick = (e, team_id) => {
