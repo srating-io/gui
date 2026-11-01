@@ -53,8 +53,8 @@ const Why = () => {
     {
       key: 'no-ads',
       icon: <BlockIcon style = {{ fontSize: 22, color: theme.error.main }} />,
-      title: 'Nobody pays us for a pick',
-      body: 'No ads, no affiliate sportsbooks, no sponsored edges. The subscription is the only way money comes in, so a projection has no reason to be anything other than our best guess.',
+      title: 'Nobody pays us for an outcome',
+      body: 'No ads, no affiliate links, no referral kickbacks. The subscription is the only way money comes in, so a projection has no reason to be anything other than our best guess.',
     },
   ];
 

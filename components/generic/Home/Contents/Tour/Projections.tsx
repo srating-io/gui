@@ -36,7 +36,7 @@ const Projections = ({ path }: { path: string }) => {
       bullets = {[
         'Every scheduled game',
         'Projected score and margin',
-        'A calculator',
+        'Scenario simulator',
         'Accuracy published daily',
       ]}
       icon = {<InsightsIcon style = {{ fontSize: 22, color: theme.success.dark }} />}
