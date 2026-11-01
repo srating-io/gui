@@ -30,7 +30,7 @@ const Games = ({ fantasy_entry_id }) => {
   for (const game_id in games) {
     const row = games[game_id];
 
-    const start = Dates.parse(row.start_date, true);
+    const start = Dates.parse(row.start_datetime, true);
 
     if (now <= start || row.status === 'live' || row.status === 'pre') {
       future.push(row);
@@ -42,14 +42,14 @@ const Games = ({ fantasy_entry_id }) => {
   // Sort and trim to get exactly three of each
   // Past games: Sort descending (most recent first)
   past.sort((a, b) => {
-    return (Dates.parse(b.start_date, true).getTime() - Dates.parse(a.start_date, true).getTime());
+    return (Dates.parse(b.start_datetime, true).getTime() - Dates.parse(a.start_datetime, true).getTime());
   });
 
   const last_three_games = past.slice(0, 3).reverse();
 
   // Future games: Sort ascending (soonest first)
   future.sort((a, b) => {
-    return (Dates.parse(a.start_date, true).getTime() - Dates.parse(b.start_date, true).getTime());
+    return (Dates.parse(a.start_datetime, true).getTime() - Dates.parse(b.start_datetime, true).getTime());
   });
 
   const next_three_games = future.slice(0, 5);
