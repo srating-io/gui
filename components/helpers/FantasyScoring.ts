@@ -1,40 +1,6 @@
 import { TERMINOLOGY_ID } from '@srating-io/common';
 import { Basketball } from '@srating-io/types';
 
-export type ScoringMetric = {
-  name: string;
-  formula: string;
-};
-
-/**
- * How each scoring metric is worked out, so the number in the table is not a black box.
- * Mirrors the writer in sports-scraper/processors/ranking/processFantasyRanking.ts.
- */
-export const getScoringMetric = (draft_scoring_terminology_id: string | null): ScoringMetric | null => {
-  if (draft_scoring_terminology_id === TERMINOLOGY_ID.DRAFT_SCORING.FANTASY_POINTS) {
-    return {
-      name: 'Fantasy points',
-      formula: 'Points + rebounds x 1.2 + assists x 1.5 + steals x 3 + blocks x 3 - turnovers',
-    };
-  }
-
-  if (draft_scoring_terminology_id === TERMINOLOGY_ID.DRAFT_SCORING.EFFICIENCY_RATING) {
-    return {
-      name: 'Efficiency rating',
-      formula: 'Points + rebounds + assists + steals + blocks - missed field goals - missed free throws - turnovers, per game',
-    };
-  }
-
-  if (draft_scoring_terminology_id === TERMINOLOGY_ID.DRAFT_SCORING.ROTO) {
-    return {
-      name: 'Roto',
-      formula: 'Ranked in each of points, rebounds, assists, steals, blocks, threes, field goal %, free throw % and turnovers, then added up',
-    };
-  }
-
-  return null;
-};
-
 /**
  * Roto scores an entry by comparing it with the rest of the league, so a single player in a
  * single game has no score of their own. Callers hide the column rather than show a zero.

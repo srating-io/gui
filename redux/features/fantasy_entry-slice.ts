@@ -55,7 +55,7 @@ stateController.set_key_x_is_push_state({
 });
 
 stateController.setInitialState({
-  view: 'schedule',
+  view: 'overview',
   fantasy_entry: {} as Fantasy.FantasyEntry,
   fantasy_group: {} as Fantasy.FantasyGroup,
   fantasy_entry_players: {} as Fantasy.FantasyEntryPlayers,
