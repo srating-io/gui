@@ -406,7 +406,9 @@ const RankTable = (
                 );
               }
 
-              return null;
+              // A footer with no value for this column still needs the cell, or every total after
+              // it slides one column to the left and reads under the wrong header.
+              return <Td key = {column} style = {tdStyle} />;
             })}
           </Tr>
         </Tfoot>
