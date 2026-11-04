@@ -173,34 +173,25 @@ const DraftRecap = () => {
     navigation.player(Url.player({ sport: path, slug: player_id }));
   };
 
-  let lastRound: number | null = null;
-  const rendered: React.JSX.Element[] = [];
-
-  for (const row of picks) {
-    if (hasDraftOrder && row.round !== lastRound) {
-      lastRound = row.round;
-      rendered.push(
-        <Typography key = {`round-${row.round}`} type = 'subtitle2' style = {{ color: theme.text.secondary, marginTop: 10 }}>
-          {row.round === null ? 'Undrafted' : `Round ${row.round}`}
-        </Typography>,
-      );
-    }
-
+  // An entry gets one pick per round, so a heading per round was a heading per tile. The round
+  // rides along on the tile instead, and the picks go in a grid rather than one tall column.
+  const rendered: React.JSX.Element[] = picks.map((row) => {
     const secondary = [
+      row.round === null ? '' : `R${row.round}`,
       row.team_name,
       row.score === null ? 'Has not played' : `${row.score} ${isRoto ? 'rating' : 'points'}`,
     ].filter((part) => !!part).join(' · ');
 
-    rendered.push(
+    return (
       <Tile
         key = {row.fantasy_entry_player_id}
         primary = {row.pick === null ? row.name : `${row.pick}. ${row.name}`}
         secondary = {secondary}
         onClick = {() => handleClick(row.player_id)}
         style = {{ cursor: 'pointer' }}
-      />,
+      />
     );
-  }
+  });
 
 
   return (
@@ -215,7 +206,9 @@ const DraftRecap = () => {
           Pick order is not available for this entry yet.
         </Typography>
       ) : null}
-      {rendered}
+      <Columns numberOfColumns = {2} breakPoint = {600} style = {{ gap: 10 }}>
+        {rendered}
+      </Columns>
     </div>
   );
 };
