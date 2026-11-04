@@ -21,7 +21,16 @@ export interface FantasyEntryLoadData {
   fantasy_entry_player_statistic_rankings: {
     [fantasy_entry_player_statistic_ranking_id: string]: Fantasy.FantasyEntryPlayerStatisticRanking & Basketball.PlayerStatisticRanking
   },
-  // player_boxscores: PlayerBoxscores;
+  // Everything below is optional: the api returns it only once the extended `load` ships, and
+  // every section that reads it is gated on it being there, so the page degrades rather than
+  // rendering empty furniture.
+  player_boxscores?: Basketball.PlayerBoxscores;
+  fantasy_rankings?: Fantasy.FantasyRankings;
+  fantasy_ranking_history?: Fantasy.FantasyRankings;
+  fantasy_entrys?: Fantasy.FantasyEntrys;
+  fantasy_draft_orders?: Fantasy.FantasyDraftOrders;
+  fantasy_group_user?: Fantasy.FantasyGroupUser;
+  league_player_ratings?: { [fantasy_entry_player_id: string]: number };
   error?: string;
 }
 
@@ -48,7 +57,29 @@ export const handleLoad = (
   dispatch(setDataKey({ key: 'teams', value: data.teams }));
   dispatch(setDataKey({ key: 'games', value: data.games }));
   dispatch(setDataKey({ key: 'fantasy_entry_player_statistic_rankings', value: data.fantasy_entry_player_statistic_rankings }));
-  // dispatch(setDataKey({ key: 'player_boxscores', value: data.player_boxscores }));
+
+  // Writing a missing key would blank whatever a previous load put there, so skip it instead.
+  if (data.player_boxscores) {
+    dispatch(setDataKey({ key: 'player_boxscores', value: data.player_boxscores }));
+  }
+  if (data.fantasy_rankings) {
+    dispatch(setDataKey({ key: 'fantasy_rankings', value: data.fantasy_rankings }));
+  }
+  if (data.fantasy_ranking_history) {
+    dispatch(setDataKey({ key: 'fantasy_ranking_history', value: data.fantasy_ranking_history }));
+  }
+  if (data.fantasy_entrys) {
+    dispatch(setDataKey({ key: 'fantasy_entrys', value: data.fantasy_entrys }));
+  }
+  if (data.fantasy_draft_orders) {
+    dispatch(setDataKey({ key: 'fantasy_draft_orders', value: data.fantasy_draft_orders }));
+  }
+  if (data.fantasy_group_user) {
+    dispatch(setDataKey({ key: 'fantasy_group_user', value: data.fantasy_group_user }));
+  }
+  if (data.league_player_ratings) {
+    dispatch(setDataKey({ key: 'league_player_ratings', value: data.league_player_ratings }));
+  }
 };
 
 const ReduxWrapper = (

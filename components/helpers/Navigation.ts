@@ -17,7 +17,7 @@ import { setLoading } from '@/redux/features/loading-slice';
 import { reset as resetFantasy, setDataKey as setDataKeyFantasy, InitialStateKeys as InitialStateKeysFantasy, InitialState as InitialStateFantasy, stateController as FantasyStateController } from '@/redux/features/fantasy-slice';
 import { resetDataKey as resetDataKeyUser, setDataKey as setDataKeyUser, InitialStateKeys as InitialStateKeysUser, InitialState as InitialStateUser, stateController as UserStateController } from '@/redux/features/user-slice';
 import { reset as resetFantasyGroup, setDataKey as setDataKeyFantasyGroup, InitialStateKeys as InitialStateKeysFantasyGroup, InitialState as InitialStateFantasyGroup, stateController as FantasyGroupStateController } from '@/redux/features/fantasy_group-slice';
-import { reset as resetFantasyEntry } from '@/redux/features/fantasy_entry-slice';
+import { reset as resetFantasyEntry, setDataKey as setDataKeyFantasyEntry, InitialStateKeys as InitialStateKeysFantasyEntry, InitialState as InitialStateFantasyEntry, stateController as FantasyEntryStateController } from '@/redux/features/fantasy_entry-slice';
 import { setDataKey as setDataKeyDashboard, InitialStateKeys as InitialStateKeysDashboard, InitialState as InitialStateDashboard, stateController as DashboardStateController } from '@/redux/features/dashboard-slice';
 
 // todo remove nextjs router :D
@@ -420,6 +420,41 @@ class Navigation {
 
 
     // picks slice handles this now, but just refetch it here for stupid nextjs router
+    const current = new URLSearchParams(window.location.search);
+    const search = current.toString();
+    const query = search ? `?${search}` : '';
+
+    this.startTransition(() => {
+      this.router[(pushState ? 'push' : 'replace')](`${this.pathName}${query}`);
+      if (onRouter) {
+        onRouter();
+      }
+    });
+  }
+
+  /**
+   * Navigate to something on a fantasy entry view. Must already be on a fantasy entry view.
+   *
+   * Unlike the group view this never raises `loadingView`: the tabs only pick a section of data
+   * the client load already holds, so blanking the page for a fetch that never happens would
+   * leave the spinner up until the next render.
+   */
+  public fantasyEntryView<K extends InitialStateKeysFantasyEntry>(args: Pick<InitialStateFantasyEntry, K>, onRouter: null | undefined | (() => void) = null) {
+    if (!this.pathName.includes('fantasy_entry')) {
+      throw new Error('fantasyEntryView only usable when already navigated to fantasy_entry');
+    }
+
+    let pushState = false;
+
+    const stateController = FantasyEntryStateController;
+
+    for (const key in args) {
+      this.dispatch(setDataKeyFantasyEntry({ key, value: args[key] }));
+      if (!pushState) {
+        pushState = stateController.isKeyPushState(key);
+      }
+    }
+
     const current = new URLSearchParams(window.location.search);
     const search = current.toString();
     const query = search ? `?${search}` : '';

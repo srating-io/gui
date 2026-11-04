@@ -4,6 +4,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Basketball, Fantasy, General } from '@srating-io/types';
 
 export type InitialState = {
+  view: string;
   fantasy_entry: Fantasy.FantasyEntry;
   fantasy_group: Fantasy.FantasyGroup;
   fantasy_entry_players: Fantasy.FantasyEntryPlayers;
@@ -16,7 +17,14 @@ export type InitialState = {
   fantasy_entry_player_statistic_rankings: {
     [fantasy_entry_player_statistic_ranking_id: string]: Fantasy.FantasyEntryPlayerStatisticRanking & Basketball.PlayerStatisticRanking
   };
-  // player_boxscores: PlayerBoxscores;
+  player_boxscores: Basketball.PlayerBoxscores;
+  // The rest of the league, for standing and pick value. Empty until the api returns them.
+  fantasy_rankings: Fantasy.FantasyRankings;
+  fantasy_ranking_history: Fantasy.FantasyRankings;
+  fantasy_entrys: Fantasy.FantasyEntrys;
+  fantasy_draft_orders: Fantasy.FantasyDraftOrders;
+  fantasy_group_user: Fantasy.FantasyGroupUser;
+  league_player_ratings: { [fantasy_entry_player_id: string]: number };
   loadingView: boolean;
 };
 
@@ -33,7 +41,7 @@ export const stateController = new State<InitialState>({
 
 stateController.set_url_param_type_x_keys({
   string: [
-    // 'view',
+    'view',
   ],
   number: [],
   array: [
@@ -42,11 +50,12 @@ stateController.set_url_param_type_x_keys({
   ],
 });
 
-// stateController.set_key_x_is_push_state({
-//   view: true,
-// });
+stateController.set_key_x_is_push_state({
+  view: true,
+});
 
 stateController.setInitialState({
+  view: 'schedule',
   fantasy_entry: {} as Fantasy.FantasyEntry,
   fantasy_group: {} as Fantasy.FantasyGroup,
   fantasy_entry_players: {} as Fantasy.FantasyEntryPlayers,
@@ -56,7 +65,13 @@ stateController.setInitialState({
   bracket_teams: {} as General.BracketTeams,
   teams: {} as General.Teams,
   games: {} as General.Games,
-  // player_boxscores: {} as PlayerBoxscores,
+  player_boxscores: {} as Basketball.PlayerBoxscores,
+  fantasy_rankings: {} as Fantasy.FantasyRankings,
+  fantasy_ranking_history: {} as Fantasy.FantasyRankings,
+  fantasy_entrys: {} as Fantasy.FantasyEntrys,
+  fantasy_draft_orders: {} as Fantasy.FantasyDraftOrders,
+  fantasy_group_user: {} as Fantasy.FantasyGroupUser,
+  league_player_ratings: {} as { [fantasy_entry_player_id: string]: number },
   fantasy_entry_player_statistic_rankings: {} as {
     [fantasy_entry_player_statistic_ranking_id: string]: Fantasy.FantasyEntryPlayerStatisticRanking & Basketball.PlayerStatisticRanking
   },
