@@ -160,6 +160,7 @@ const TeamSearch = (
           open = {teamMenuOpen}
           options={menuOptions}
           anchor={anchorTeam}
+          elevateAnchor
           onClose={() => {
             setAnchorTeam(null);
             setTeamMenuOpen(false);

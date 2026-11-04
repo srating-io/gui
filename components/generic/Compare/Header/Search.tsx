@@ -212,6 +212,7 @@ const Search = () => {
         open = {menuOpen}
         options={menuOptions}
         anchor={anchorSearch}
+        elevateAnchor
         onClose={() => {
           setAnchorSearch(null);
           setMenuOpen(false);
