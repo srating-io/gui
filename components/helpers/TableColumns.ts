@@ -252,6 +252,32 @@ class TableColumns {
           return 'Fantasy points';
         },
       },
+      draft_pick: {
+        id: 'draft_pick',
+        numeric: true,
+        getLabel: () => 'PK',
+        sort: 'lower',
+        organization_ids: [Organization.getCBBID(), Organization.getNBAID(), Organization.getCFBID()],
+        getViews: () => ['fantasy_player_boxscore'],
+        graphable: false,
+        precision: 0,
+        getTooltip: () => {
+          return 'The overall pick this player was drafted at, and the round';
+        },
+      },
+      point_share: {
+        id: 'point_share',
+        numeric: true,
+        getLabel: () => 'SHR',
+        sort: 'higher',
+        organization_ids: [Organization.getCBBID(), Organization.getNBAID(), Organization.getCFBID()],
+        getViews: () => ['fantasy_player_boxscore'],
+        graphable: false,
+        precision: 1,
+        getTooltip: () => {
+          return 'Share of this entry total that the player has scored';
+        },
+      },
       points: {
         id: 'points',
         numeric: true,

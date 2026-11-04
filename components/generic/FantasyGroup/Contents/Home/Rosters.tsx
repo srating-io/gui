@@ -15,6 +15,7 @@ const Rosters = () => {
   const player_team_seasons = useAppSelector((state) => state.fantasyGroupReducer.player_team_seasons);
   const players = useAppSelector((state) => state.fantasyGroupReducer.players);
   const fantasy_entry_player_statistic_rankings = useAppSelector((state) => state.fantasyGroupReducer.fantasy_entry_player_statistic_rankings);
+  const fantasy_draft_orders = useAppSelector((state) => state.fantasyGroupReducer.fantasy_draft_orders);
 
   const keys = Object.keys(fantasy_entrys);
 
@@ -54,6 +55,7 @@ const Rosters = () => {
             player_team_seasons={player_team_seasons}
             players={players}
             fantasy_entry_player_statistic_rankings = {fantasy_entry_player_statistic_rankings}
+            fantasy_draft_orders = {fantasy_draft_orders}
           />
         </div>
         <IconButton icon={<KeyboardArrowRightIcon style = {{ fontSize: 24 }} />} value = {'right'} onClick={handleRotate} />
