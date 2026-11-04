@@ -130,7 +130,7 @@ class FantasyEntry extends Surface {
     const getContents = () => {
       return (
         <HomeClientWrapper>
-          <HomeClient fantasy_entry_id={fantasy_entry_id} />
+          <HomeClient />
         </HomeClientWrapper>
       );
     };
