@@ -77,7 +77,7 @@ const Client = () => {
 
     if (selected === VIEWS.DRAFT) {
       return (
-        <Panel icon = {<FormatListNumberedIcon style = {{ color: theme.info.main, fontSize: 24 }} />} title = 'Draft recap' paper = {false}>
+        <Panel icon = {<FormatListNumberedIcon style = {{ color: theme.info.main, fontSize: 24 }} />} title = 'Draft recap' paper = {true}>
           <DraftRecap />
         </Panel>
       );
