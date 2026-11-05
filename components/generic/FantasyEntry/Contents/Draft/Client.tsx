@@ -11,6 +11,7 @@ import Roster from './Roster';
 import { Games } from './Games';
 import DraftRecap from './DraftRecap';
 import Trends from './Trends';
+import Summary from './Summary';
 import { useNavigation } from '@/components/hooks/useNavigation';
 import { Tab, Typography, useTheme } from '@esmalley/react-material-ui';
 
@@ -86,6 +87,8 @@ const Client = () => {
 
     return (
       <>
+        <Summary />
+
         <Ranking
           fantasy_group = {fantasy_group}
           fantasy_rankings = {fantasy_rankings}
