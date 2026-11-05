@@ -21,6 +21,7 @@ const VIEWS = {
   SCHEDULE: 'schedule',
   DRAFT: 'draft',
   TRENDS: 'trends',
+  LEAGUE: 'league',
 };
 
 const TABS = [
@@ -28,6 +29,7 @@ const TABS = [
   { value: VIEWS.SCHEDULE, title: 'Schedule' },
   { value: VIEWS.DRAFT, title: 'Draft recap' },
   { value: VIEWS.TRENDS, title: 'Trends' },
+  { value: VIEWS.LEAGUE, title: 'League' },
 ];
 
 
@@ -85,16 +87,22 @@ const Client = () => {
       return <Trends />;
     }
 
-    return (
-      <>
-        <Summary />
-
+    // The league's own page carries this table too, but reaching it from here meant leaving the
+    // entry. It gets a tab rather than the top of the overview, where it repeated that page.
+    if (selected === VIEWS.LEAGUE) {
+      return (
         <Ranking
           fantasy_group = {fantasy_group}
           fantasy_rankings = {fantasy_rankings}
           fantasy_entrys = {fantasy_entrys}
           highlight_fantasy_entry_id = {fantasy_entry.fantasy_entry_id}
         />
+      );
+    }
+
+    return (
+      <>
+        <Summary />
 
         <Panel icon = {<GroupsIcon style = {{ color: theme.info.main, fontSize: 24 }} />} title = 'Roster' paper = {false}>
           <Roster
