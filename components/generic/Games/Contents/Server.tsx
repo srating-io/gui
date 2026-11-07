@@ -9,7 +9,7 @@ import StatsLoaderServer from '../StatsLoader/Server';
 import { Objector } from '@esmalley/ts-utils';
 
 
-const Server = async ({ games, date, organization_id, division_id, season }) => {
+const Server = async ({ games, dates, organization_id, division_id, season }) => {
   const revalidateSeconds = 20; // cache scores for 20 seconds
 
   const scores = await useServerAPI({
@@ -18,7 +18,7 @@ const Server = async ({ games, date, organization_id, division_id, season }) => 
     arguments: {
       organization_id,
       division_id,
-      start_date: date,
+      start_date: dates,
     },
     cache: revalidateSeconds,
   });
@@ -35,7 +35,7 @@ const Server = async ({ games, date, organization_id, division_id, season }) => 
 
   return (
     <>
-      <Client games = {games} date = {date} />
+      <Client games = {games} />
       <Suspense fallback = {<ClientSkeleton />}>
         <StatsLoaderServer game_ids = {Object.keys(games)} organization_id = {organization_id} division_id = {division_id} season = {season} />
       </Suspense>

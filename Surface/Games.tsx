@@ -11,6 +11,8 @@ import { Suspense } from 'react';
 import FloatingButtons from '@/components/generic/Games/FloatingButtons';
 import Refresher from '@/components/generic/Games/Refresher';
 import Organization from '@/components/helpers/Organization';
+import Division from '@/components/helpers/Division';
+import Week from '@/components/helpers/Week';
 import { Dates } from '@esmalley/ts-utils';
 import Surface from '../Surface';
 import { Game } from '@srating-io/types';
@@ -20,6 +22,8 @@ export type getDecorateGames = {
   date?: string;
   season?: number;
   division_id?: string;
+  /** 'week' opts the date bar into cfb week buckets, anything else is day mode */
+  mode?: string;
 };
 
 class Games extends Surface {
@@ -63,7 +67,7 @@ class Games extends Surface {
     return dates;
   }
 
-  async getGames({ date, organization_id, division_id }) {
+  async getGames({ dates, organization_id, division_id }) {
     const revalidateSeconds = 1200; // 60 * 20; // cache games for 20 mins
 
     const games: Game.getGamesResults = await useServerAPI({
@@ -72,7 +76,7 @@ class Games extends Surface {
       arguments: {
         organization_id,
         division_id,
-        start_date: date,
+        start_date: dates,
       },
       cache: revalidateSeconds,
     });
@@ -84,25 +88,48 @@ class Games extends Surface {
   // todo this loading is all pretty quick... but when I start to add more data here, update this to split the loading and use suspense like the rest of the app
 
   async getDecorate(
-    { season = this.getCurrentSeason(), division_id = this.getDivisionID(), date }:
+    { season = this.getCurrentSeason(), division_id = this.getDivisionID(), date, mode }:
     getDecorateGames,
   ) {
     const organization_id = this.getOrganizationID();
     const dates = await this.getDates({ season, organization_id, division_id });
-    const selectedDate = date || Dates.getClosestDate(Dates.getTodayEST(), dates);
-    const games = await this.getGames({ date: selectedDate, organization_id, division_id });
+
+    // week mode is a cfb, fbs idea: the bucket labels and the championship week heuristic are both
+    // fbs specific, so a url asking for it anywhere else just gets days
+    const weekModeAvailable = (
+      organization_id === Organization.getCFBID() &&
+      division_id === Division.getFBS()
+    );
+    const weekMode = (weekModeAvailable && mode === 'week');
+
+    const anchorDate = date || Dates.getClosestDate(Dates.getTodayEST(), dates);
+    const weeks = weekModeAvailable ? Week.getWeeks(dates) : [];
+    const selectedWeek = weekMode ? Week.getClosestWeek(weeks, anchorDate) : null;
+
+    // the week's first date is the anchor, so one week has exactly one url
+    const selectedDate = selectedWeek ? selectedWeek.dates[0] : anchorDate;
+    const selectedDates = selectedWeek ? selectedWeek.dates : [selectedDate];
+    const selectedKey = selectedDates.join(',');
+
+    const games = await this.getGames({ dates: selectedDates, organization_id, division_id });
 
     return (
       <>
-        <DateBar dates = {dates} date = {selectedDate} />
+        <DateBar
+          dates = {dates}
+          date = {selectedDate}
+          mode = {weekMode ? 'week' : 'day'}
+          weeks = {weeks}
+          showModeToggle = {weekModeAvailable}
+        />
         <SubNavBar />
         <ContentsClientWrapper>
-          <Suspense key={selectedDate} fallback = {<ContentsClientSkeleton games = {games} />}>
-            <ContentsServer games = {games} date = {selectedDate} organization_id = {organization_id} division_id = {division_id} season={season} />
+          <Suspense key={selectedKey} fallback = {<ContentsClientSkeleton games = {games} />}>
+            <ContentsServer games = {games} dates = {selectedDates} organization_id = {organization_id} division_id = {division_id} season={season} />
           </Suspense>
         </ContentsClientWrapper>
         <FloatingButtons />
-        <Refresher date = {selectedDate} games = {games} />
+        <Refresher dates = {selectedDates} games = {games} />
       </>
     );
   }
