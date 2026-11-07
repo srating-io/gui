@@ -42,9 +42,8 @@ const ClientSkeleton = () => {
   );
 };
 
-const Client = ({ fantasy_entry_id }) => {
+const Client = () => {
   const fantasy_group = useAppSelector((state) => state.fantasyEntryReducer.fantasy_group);
-  const fantasy_entry = useAppSelector((state) => state.fantasyEntryReducer.fantasy_entry);
 
   const fantasyHelper = new FantasyGroup({ fantasy_group });
 
@@ -52,7 +51,7 @@ const Client = ({ fantasy_entry_id }) => {
     <Contents>
       {
         fantasyHelper.isDraft() ?
-          <DraftClient fantasy_entry_id={fantasy_entry_id} />
+          <DraftClient />
           : ''
       }
       {

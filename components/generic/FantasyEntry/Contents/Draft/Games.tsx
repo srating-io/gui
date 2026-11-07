@@ -4,15 +4,18 @@ import { useAppSelector } from '@/redux/hooks';
 import Blank from '@/components/generic/Blank';
 import Url from '@/components/helpers/Url';
 import Team from '@/components/helpers/Team';
+import { getBoxscoreScore } from '@/components/helpers/FantasyScoring';
 import { Dates } from '@esmalley/ts-utils';
 import { useNavigation } from '@/components/hooks/useNavigation';
 import { Paper, Typography, useTheme, useWindowDimensions } from '@esmalley/react-material-ui';
-import { General } from '@srating-io/types';
+import { Basketball, General } from '@srating-io/types';
 
 
+const PREVIOUS_SHOWN = 3;
+const UPCOMING_SHOWN = 5;
 
 
-const Games = ({ fantasy_entry_id }) => {
+const Games = () => {
   const navigation = useNavigation();
   const { width } = useWindowDimensions();
   const theme = useTheme();
@@ -21,7 +24,10 @@ const Games = ({ fantasy_entry_id }) => {
   const teams = useAppSelector((state) => state.fantasyEntryReducer.teams);
   const player_team_seasons = useAppSelector((state) => state.fantasyEntryReducer.player_team_seasons);
   const players = useAppSelector((state) => state.fantasyEntryReducer.players);
+  const player_boxscores = useAppSelector((state) => state.fantasyEntryReducer.player_boxscores);
+  const fantasy_group = useAppSelector((state) => state.fantasyEntryReducer.fantasy_group);
 
+  const live: General.Game[] = [];
   const past: General.Game[] = [];
   const future: General.Game[] = [];
 
@@ -32,27 +38,29 @@ const Games = ({ fantasy_entry_id }) => {
 
     const start = Dates.parse(row.start_datetime, true);
 
-    if (now <= start || row.status === 'live' || row.status === 'pre') {
+    // A game in progress used to sit in with the upcoming ones, so the game that was actually
+    // moving the roster was the hardest one to find.
+    if (row.status === 'live') {
+      live.push(row);
+    } else if (now <= start || row.status === 'pre') {
       future.push(row);
     } else {
       past.push(row);
     }
   }
 
-  // Sort and trim to get exactly three of each
-  // Past games: Sort descending (most recent first)
+  // Past games: most recent first, then flipped so the list reads forwards in time.
   past.sort((a, b) => {
     return (Dates.parse(b.start_datetime, true).getTime() - Dates.parse(a.start_datetime, true).getTime());
   });
 
-  const last_three_games = past.slice(0, 3).reverse();
+  const previous_games = past.slice(0, PREVIOUS_SHOWN).reverse();
 
-  // Future games: Sort ascending (soonest first)
   future.sort((a, b) => {
     return (Dates.parse(a.start_datetime, true).getTime() - Dates.parse(b.start_datetime, true).getTime());
   });
 
-  const next_three_games = future.slice(0, 5);
+  const upcoming_games = future.slice(0, UPCOMING_SHOWN);
 
   const team_id_x_player_id_x_name = {};
 
@@ -71,6 +79,23 @@ const Games = ({ fantasy_entry_id }) => {
 
     team_id_x_player_id_x_name[row.team_id][row.player_id] = `${player.first_name} ${player.last_name}`;
   }
+
+  // What each rostered player did in each game, so a played game can say so rather than just
+  // naming who was in it. Empty until the api returns boxscores.
+  const game_id_x_player_id_x_boxscore: {
+    [game_id: string]: { [player_id: string]: Basketball.PlayerBoxscore };
+  } = {};
+
+  for (const player_boxscore_id in (player_boxscores || {})) {
+    const row = (player_boxscores || {})[player_boxscore_id];
+
+    if (!(row.game_id in game_id_x_player_id_x_boxscore)) {
+      game_id_x_player_id_x_boxscore[row.game_id] = {};
+    }
+
+    game_id_x_player_id_x_boxscore[row.game_id][row.player_id] = row;
+  }
+
 
   const getTile = ({ game }): React.JSX.Element => {
     const home_team = teams[game.home_team_id];
@@ -112,6 +137,7 @@ const Games = ({ fantasy_entry_id }) => {
       lineHeight: 'initial',
     };
 
+    // Each of this entry's players in the game, with what the game was worth to them.
     const players_text: string[] = [];
 
     for (const team_id in team_id_x_player_id_x_name) {
@@ -120,10 +146,28 @@ const Games = ({ fantasy_entry_id }) => {
         team_id === game.home_team_id
       ) {
         for (const player_id in team_id_x_player_id_x_name[team_id]) {
-          players_text.push(team_id_x_player_id_x_name[team_id][player_id]);
+          const name = team_id_x_player_id_x_name[team_id][player_id];
+          const boxscore = (game_id_x_player_id_x_boxscore[game.game_id] || {})[player_id];
+          const score = boxscore ? getBoxscoreScore(boxscore, fantasy_group.draft_scoring_terminology_id) : null;
+
+          players_text.push(score === null ? name : `${name} ${score}`);
         }
       }
     }
+
+    const isScored = game.status === 'final' || game.status === 'live';
+
+    const getStatusText = (): string => {
+      if (game.status === 'final') {
+        return 'Final';
+      }
+
+      if (game.status === 'live') {
+        return [game.current_period, game.clock].filter((part) => !!part).join(' ') || 'Live';
+      }
+
+      return Dates.format(game.start_datetime, 'g:i a');
+    };
 
     return (
       <div key = {game.game_id} style = {{ display: 'flex', margin: '5px 0px', justifyContent: 'space-between' }}>
@@ -141,19 +185,36 @@ const Games = ({ fantasy_entry_id }) => {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            height: 40,
+            minHeight: 40,
+            padding: '2px 10px 2px 0px',
           }}>
-            <div style = {{ display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
-              <div style = {{ marginLeft: '10px', display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' /* 'flexWrap': 'nowrap' */ }}>
-                <Typography style = {titleStyle} type = {'body2'}>
-                  <a style = {{ cursor: 'pointer', color: theme.link.primary }} onClick={(e) => { handleTeamClick(e, game.home_team_id); }} href = {getTeamHref(game.home_team_id)}>{homeTeamHelper.getName()}</a>
-                </Typography>
-                <Typography type = 'caption' style = {{ color: theme.text.secondary }}>vs</Typography>
-                <Typography style = {titleStyle} type = {'body2'}>
-                  <a style = {{ cursor: 'pointer', color: theme.link.primary }} onClick={(e) => { handleTeamClick(e, game.away_team_id); }} href = {getTeamHref(game.away_team_id)}>{awayTeamHelper.getName()}</a>
-                </Typography>
-                <Typography type = 'caption' style = {{ color: theme.text.secondary }}>{players_text.join(', ')}</Typography>
+            <div style = {{ display: 'flex', alignItems: 'center', overflow: 'hidden', minWidth: 0 }}>
+              <div style = {{ marginLeft: '10px', display: 'flex', flexDirection: 'column', justifyContent: 'center', overflow: 'hidden', minWidth: 0 }}>
+                <div style = {{ display: 'flex', alignItems: 'center', overflow: 'hidden', minWidth: 0 }}>
+                  <Typography style = {titleStyle} type = {'body2'}>
+                    <a style = {{ cursor: 'pointer', color: theme.link.primary }} onClick={(e) => { handleTeamClick(e, game.home_team_id); }} href = {getTeamHref(game.home_team_id)}>{homeTeamHelper.getName()}</a>
+                  </Typography>
+                  <Typography type = 'caption' style = {{ color: theme.text.secondary }}>vs</Typography>
+                  <Typography style = {titleStyle} type = {'body2'}>
+                    <a style = {{ cursor: 'pointer', color: theme.link.primary }} onClick={(e) => { handleTeamClick(e, game.away_team_id); }} href = {getTeamHref(game.away_team_id)}>{awayTeamHelper.getName()}</a>
+                  </Typography>
+                </div>
+                {players_text.length ? (
+                  <Typography type = 'caption' style = {{ color: theme.text.secondary, margin: '0px 10px', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+                    {players_text.join(', ')}
+                  </Typography>
+                ) : null}
               </div>
+            </div>
+            <div style = {{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', flexShrink: 0 }}>
+              {isScored ? (
+                <Typography type = 'body2' style = {{ lineHeight: 'initial' }}>
+                  {`${game.home_score ?? 0} - ${game.away_score ?? 0}`}
+                </Typography>
+              ) : null}
+              <Typography type = 'caption' style = {{ color: game.status === 'live' ? theme.error.main : theme.text.secondary, lineHeight: 'initial' }}>
+                {getStatusText()}
+              </Typography>
             </div>
           </div>
         </Paper>
@@ -162,39 +223,18 @@ const Games = ({ fantasy_entry_id }) => {
   };
 
 
-  const getPast = () => {
-    const tiles: React.JSX.Element[] = [];
-    if (last_three_games.length) {
-      for (let i = 0; i < last_three_games.length; i++) {
-        tiles.push(getTile({ game: last_three_games[i] }));
-      }
+  const getSection = (title: string, rows: General.Game[], emptyText: string | null): React.JSX.Element | null => {
+    // A live section with nothing in it is noise, so it is dropped rather than shown empty.
+    if (!rows.length && emptyText === null) {
+      return null;
     }
 
     return (
       <>
-        <Typography type = 'subtitle1'>Previous</Typography>
-        {tiles.length ?
-          tiles :
-          <Blank text='No previous games' />
-        }
-      </>
-    );
-  };
-
-  const getFuture = () => {
-    const tiles: React.JSX.Element[] = [];
-    if (next_three_games.length) {
-      for (let i = 0; i < next_three_games.length; i++) {
-        tiles.push(getTile({ game: next_three_games[i] }));
-      }
-    }
-
-    return (
-      <>
-        <Typography type = 'subtitle1'>Next</Typography>
-        {tiles.length ?
-          tiles :
-          <Blank text='No upcoming games' />
+        <Typography type = 'subtitle1'>{title}</Typography>
+        {rows.length ?
+          rows.map((game) => getTile({ game })) :
+          <Blank text={emptyText as string} />
         }
       </>
     );
@@ -203,9 +243,9 @@ const Games = ({ fantasy_entry_id }) => {
 
   return (
     <div style={{ padding: 5 }}>
-      <Typography type = 'h6'>Games</Typography>
-      {getPast()}
-      {getFuture()}
+      {getSection('Live', live, null)}
+      {getSection('Previous', previous_games, 'No previous games')}
+      {getSection('Upcoming', upcoming_games, 'No upcoming games')}
     </div>
   );
 };

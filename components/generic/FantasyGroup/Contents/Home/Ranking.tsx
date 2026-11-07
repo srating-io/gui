@@ -9,12 +9,33 @@ import SentimentVeryDissatisfiedIcon from '@esmalley/react-material-icons/Sentim
 import { Paper, Typography, useTheme } from '@esmalley/react-material-ui';
 import { Fantasy } from '@srating-io/types';
 
-const Ranking = () => {
+/**
+ * The league leaderboard. The entry page shows the same table, so the rows can be supplied as
+ * props from whichever slice the caller is on; left out, they come from the league slice as before.
+ */
+const Ranking = (
+  {
+    fantasy_group: fantasy_group_prop,
+    fantasy_rankings: fantasy_rankings_prop,
+    fantasy_entrys: fantasy_entrys_prop,
+    highlight_fantasy_entry_id,
+  }:
+  {
+    fantasy_group?: Fantasy.FantasyGroup;
+    fantasy_rankings?: Fantasy.FantasyRankings;
+    fantasy_entrys?: Fantasy.FantasyEntrys;
+    highlight_fantasy_entry_id?: string;
+  } = {},
+) => {
   const navigation = useNavigation();
   const theme = useTheme();
-  const fantasy_group = useAppSelector((state) => state.fantasyGroupReducer.fantasy_group);
-  const fantasy_rankings = useAppSelector((state) => state.fantasyGroupReducer.fantasy_rankings);
-  const fantasy_entrys = useAppSelector((state) => state.fantasyGroupReducer.fantasy_entrys);
+  const group_fantasy_group = useAppSelector((state) => state.fantasyGroupReducer.fantasy_group);
+  const group_fantasy_rankings = useAppSelector((state) => state.fantasyGroupReducer.fantasy_rankings);
+  const group_fantasy_entrys = useAppSelector((state) => state.fantasyGroupReducer.fantasy_entrys);
+
+  const fantasy_group = fantasy_group_prop || group_fantasy_group;
+  const fantasy_rankings = fantasy_rankings_prop || group_fantasy_rankings;
+  const fantasy_entrys = fantasy_entrys_prop || group_fantasy_entrys;
 
   type Row = Fantasy.FantasyRanking & {name: string; rank_delta_combo: string;}
 
@@ -29,6 +50,11 @@ const Ranking = () => {
       const fantasy_entry = fantasy_entrys[row.fantasy_entry_id];
 
       row.name = fantasy_entry.name;
+    }
+
+    // `RankTable` cannot style one row, so the entry being viewed is marked in its own name cell.
+    if (highlight_fantasy_entry_id && row.fantasy_entry_id === highlight_fantasy_entry_id) {
+      row.name = `${row.name} (you)`;
     }
 
     rows.push(row);
