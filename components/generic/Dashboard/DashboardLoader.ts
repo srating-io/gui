@@ -80,6 +80,13 @@ const DashboardLoader = () => {
         };
       }
 
+      if (view === 'logs') {
+        return {
+          key: 'logs' as const,
+          args: { class: 'dashboard', function: 'shishaLogs', arguments: { days } },
+        };
+      }
+
       return {
         key: 'overview' as const,
         args: { class: 'dashboard', function: 'overview', arguments: {} },

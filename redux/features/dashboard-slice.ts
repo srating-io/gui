@@ -15,8 +15,10 @@ type InitialState = {
   search: string,
   order_by: string,
   order: string,
-  /** How far back the traffic panel looks. */
+  /** How far back the traffic and shisha log panels look. */
   days: number,
+  /** Which logging classes the shisha log panel is showing. Empty means all of them. */
+  log_classes: string[],
 
   loadingView: boolean,
   /**
@@ -32,6 +34,7 @@ type InitialState = {
   traffic: Dashboard.apiTrafficResults | null,
   revenue: Dashboard.revenueResults | null,
   keys: Dashboard.apiKeysResults | null,
+  logs: Dashboard.shishaResults | null,
 };
 
 type InitialStateKeys = keyof InitialState;
@@ -48,7 +51,7 @@ export const stateController = new State<InitialState>({
 stateController.set_url_param_type_x_keys({
   string: ['view', 'audit_gui_id', 'resolved', 'release', 'source', 'search', 'order_by', 'order'],
   number: ['days'],
-  array: [],
+  array: ['log_classes'],
   boolean: [],
 });
 
@@ -70,6 +73,7 @@ stateController.setInitialState({
   order_by: 'last_seen',
   order: 'desc',
   days: 7,
+  log_classes: [],
 
   loadingView: true,
   denied: false,
@@ -80,6 +84,7 @@ stateController.setInitialState({
   traffic: null,
   revenue: null,
   keys: null,
+  logs: null,
 });
 
 

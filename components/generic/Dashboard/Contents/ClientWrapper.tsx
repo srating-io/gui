@@ -7,6 +7,7 @@ import Errors from './Errors';
 import ApiTraffic from './ApiTraffic';
 import Revenue from './Revenue';
 import Keys from './Keys';
+import ShishaLogs from './ShishaLogs';
 
 
 const Contents = ({ children }): React.JSX.Element => {
@@ -54,6 +55,7 @@ const Client = () => {
   return (
     <Contents>
       {view === 'errors' ? <Errors /> : ''}
+      {view === 'logs' ? <ShishaLogs /> : ''}
       {view === 'traffic' ? <ApiTraffic /> : ''}
       {view === 'revenue' ? <Revenue /> : ''}
       {view === 'keys' ? <Keys /> : ''}

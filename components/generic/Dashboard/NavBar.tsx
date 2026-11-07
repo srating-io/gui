@@ -26,11 +26,12 @@ const NavBar = () => {
   const view = useAppSelector((state) => state.dashboardReducer.view) || 'overview';
   const audit_gui_id = useAppSelector((state) => state.dashboardReducer.audit_gui_id);
 
-  const tabOrder = ['overview', 'errors', 'traffic', 'revenue', 'keys', 'dictionary'];
+  const tabOrder = ['overview', 'errors', 'logs', 'traffic', 'revenue', 'keys', 'dictionary'];
 
   const tabOptions = {
     overview: 'Overview',
     errors: 'Errors',
+    logs: 'Logs',
     traffic: 'API traffic',
     revenue: 'Revenue',
     keys: 'API keys',
