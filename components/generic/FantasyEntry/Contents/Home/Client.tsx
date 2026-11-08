@@ -6,6 +6,7 @@ import { useAppSelector } from '@/redux/hooks';
 import FantasyGroup from '@/components/helpers/FantasyGroup';
 import { Client as DraftClient } from '../Draft/Client';
 import Bracket from './Bracket';
+import Survivor from './Survivor';
 import { LinearProgress, useTheme } from '@esmalley/react-material-ui';
 
 
@@ -57,6 +58,11 @@ const Client = () => {
       {
         fantasyHelper.isNCAABracket() ?
           <Bracket />
+          : ''
+      }
+      {
+        fantasyHelper.isSurvivor() ?
+          <Survivor />
           : ''
       }
     </Contents>

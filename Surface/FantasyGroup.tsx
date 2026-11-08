@@ -14,6 +14,8 @@ import { Client as HomeClient } from '@/components/generic/FantasyGroup/Contents
 
 import DraftClientWrapper from '@/components/generic/FantasyGroup/Contents/Draft/ClientWrapper';
 import { Client as DraftClient } from '@/components/generic/FantasyGroup/Contents/Draft/Client';
+import SurvivorClientWrapper from '@/components/generic/FantasyGroup/Contents/Survivor/ClientWrapper';
+import { Client as SurvivorClient } from '@/components/generic/FantasyGroup/Contents/Survivor/Client';
 import Surface from '../Surface';
 import { Fantasy } from '@srating-io/types';
 
@@ -147,6 +149,16 @@ class FantasyGroup extends Surface {
               rankingCareerActiveGrant={mintRankingGrant(0, 1)}
             />
           </DraftClientWrapper>
+        );
+      }
+
+      // Simpler than the draft arm above on purpose: a slate's teams come back already scored by
+      // the api, so there is no client side ranking read to sign a cache grant for.
+      if (view === 'survivor') {
+        return (
+          <SurvivorClientWrapper>
+            <SurvivorClient fantasy_group_id={fantasy_group_id} />
+          </SurvivorClientWrapper>
         );
       }
 

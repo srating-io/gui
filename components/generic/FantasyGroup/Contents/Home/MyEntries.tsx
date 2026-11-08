@@ -9,6 +9,7 @@ import AddIcon from '@esmalley/react-material-icons/Add';
 import CreateEntry from './CreateEntry';
 import StadiumIcon from '@esmalley/react-material-icons/Stadium';
 import FantasyGroup from '@/components/helpers/FantasyGroup';
+import FantasyMode from '@/components/helpers/FantasyMode';
 import { useNavigation } from '@/components/hooks/useNavigation';
 import { Button, IconButton, Paper, Tile, Typography, useTheme } from '@esmalley/react-material-ui';
 import { Fantasy } from '@srating-io/types';
@@ -48,7 +49,7 @@ const MyEntries = () => {
         key = {row.fantasy_entry_id}
         icon={<StadiumIcon style = {{ fontSize: 24, color: theme.deepOrange[500] }} />}
         primary={row.name}
-        secondary={`${fantasy_group.entry_fee ? (row.paid ? 'Paid' : 'Pending payment') : 'Free'} ${fantasyHelper.isDraft() ? 'draft entry' : 'bracket entry'}`}
+        secondary={`${fantasy_group.entry_fee ? (row.paid ? 'Paid' : 'Pending payment') : 'Free'} ${FantasyMode.getMode(fantasy_group)?.label.toLowerCase() || ''} entry`}
         buttons = {[
           // An unpaid entry used to be a dead end - "Pending payment" with nothing but View, while
           // still taking up one of the user's slots. billing resumes it rather than duplicating it.

@@ -8,9 +8,9 @@ import { useClientAPI } from '@/components/clientAPI';
 import MyGroups from './MyGroups';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { setDataKey } from '@/redux/features/fantasy-slice';
-import PublicBracketsGroups from './PublicBracketsGroups';
-import PublicDraftGroups from './PublicDraftGroups';
+import PublicGroups from './PublicGroups';
 import CreateGroup from './CreateGroup';
+import FantasyMode from '@/components/helpers/FantasyMode';
 import { Button, Columns, LinearProgress, Typography, useTheme } from '@esmalley/react-material-ui';
 import { Fantasy } from '@srating-io/types';
 
@@ -161,9 +161,9 @@ const Client = () => {
     }
   }
 
-  // const fantasy_group_type_terminology_id_x_public_fantasy_groups = {};
-  const public_bracket_groups: Fantasy.FantasyGroups = {};
-  const public_draft_groups: Fantasy.FantasyGroups = {};
+  // Bucketed by mode rather than by a pair of pasted uuids, so a new mode lists itself.
+  const fantasy_group_type_terminology_id_x_public_fantasy_groups: {[terminology_id: string]: Fantasy.FantasyGroups} = {};
+
   for (const fantasy_group_id in data?.fantasy_groups) {
     const row = data.fantasy_groups[fantasy_group_id];
 
@@ -174,21 +174,11 @@ const Client = () => {
       continue;
     }
 
-    // ncaa bracket
-    if (row.fantasy_group_type_terminology_id === '3e72a9f3-e034-11f0-bc34-529c3ffdbb93') {
-      public_bracket_groups[fantasy_group_id] = row;
+    if (!(row.fantasy_group_type_terminology_id in fantasy_group_type_terminology_id_x_public_fantasy_groups)) {
+      fantasy_group_type_terminology_id_x_public_fantasy_groups[row.fantasy_group_type_terminology_id] = {};
     }
 
-    // draft
-    if (row.fantasy_group_type_terminology_id === '7ca1ccce-e033-11f0-bc34-529c3ffdbb93') {
-      public_draft_groups[fantasy_group_id] = row;
-    }
-
-    // if (!(row.fantasy_group_type_terminology_id in fantasy_group_type_terminology_id_x_public_fantasy_groups)) {
-    //   fantasy_group_type_terminology_id_x_public_fantasy_groups[row.fantasy_group_type_terminology_id] = {};
-    // }
-
-    // fantasy_group_type_terminology_id_x_public_fantasy_groups[row.fantasy_group_type_terminology_id][fantasy_group_id] = row;
+    fantasy_group_type_terminology_id_x_public_fantasy_groups[row.fantasy_group_type_terminology_id][fantasy_group_id] = row;
   }
 
 
@@ -198,8 +188,14 @@ const Client = () => {
         <CreateGroup />
         <MyGroups fantasy_groups = {my_fantasy_groups} />
         <Columns style = {{ marginTop: 20 }}>
-          <PublicBracketsGroups fantasy_groups = {public_bracket_groups} fantasy_group_id_x_fantasy_entrys = {fantasy_group_id_x_fantasy_entrys} />
-          <PublicDraftGroups fantasy_groups = {public_draft_groups} fantasy_group_id_x_fantasy_entrys = {fantasy_group_id_x_fantasy_entrys} />
+          {FantasyMode.getModes().map((mode) => (
+            <PublicGroups
+              key = {mode.code}
+              mode = {mode}
+              fantasy_groups = {fantasy_group_type_terminology_id_x_public_fantasy_groups[mode.terminology_id] || {}}
+              fantasy_group_id_x_fantasy_entrys = {fantasy_group_id_x_fantasy_entrys}
+            />
+          ))}
         </Columns>
       </div>
     </Contents>

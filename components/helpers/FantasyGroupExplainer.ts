@@ -306,10 +306,33 @@ class FantasyGroupExplainer {
 
   getExplainer(): Explainer {
     const phase = this.getPhase();
-    const sections = this.groupHelper.isDraft() ? this.getDraftSections(phase) : this.getBracketSections(phase);
+
+    // Dispatched rather than ternaried: as `isDraft() ? draft : bracket` this handed survivor the
+    // bracket's copy, which describes a tournament it has nothing to do with.
+    const getSections = (): ExplainerSection[] => {
+      if (this.groupHelper.isSurvivor()) {
+        return this.getSurvivorSections(phase);
+      }
+
+      if (this.groupHelper.isDraft()) {
+        return this.getDraftSections(phase);
+      }
+
+      return this.getBracketSections(phase);
+    };
+
+    const getTitle = (): string => {
+      if (this.groupHelper.isSurvivor()) {
+        return 'How this survivor league works';
+      }
+
+      return this.groupHelper.isDraft() ? 'How this draft works' : 'How this bracket works';
+    };
+
+    const sections = getSections();
 
     return {
-      title: this.groupHelper.isDraft() ? 'How this draft works' : 'How this bracket works',
+      title: getTitle(),
       summary: this.getSummary(phase),
       phase,
       sections,
@@ -340,6 +363,13 @@ class FantasyGroupExplainer {
 
     if (phase === 'running' && this.groupHelper.isDraft()) {
       return `Your ${DRAFT_ROUNDS} players are scoring${scoring ? ` on ${scoring.name.toLowerCase()}` : ''}${ended ? ` until ${ended}` : ''}. Standings refresh once a day.`;
+    }
+
+    // ahead of the bracket line below, which `!isDraft()` would otherwise claim for survivor too
+    if (this.groupHelper.isSurvivor()) {
+      const revivals = +this.fantasy_group.survivor_revivals || 0;
+
+      return `Choose one winning team each round, never the same team twice${revivals > 0 ? `, with ${revivals} second ${revivals === 1 ? 'chance' : 'chances'}` : ''}. Last entry standing${ended ? ` by ${ended}` : ''} wins.`;
     }
 
     if (!this.groupHelper.isDraft()) {
@@ -757,6 +787,95 @@ class FantasyGroupExplainer {
       points,
       facts,
       actions: [{ kind: 'scroll', title: 'Show me', target: this.fantasy_payout_rule ? 'payouts' : 'entries_and_fees' }],
+    };
+  }
+
+  // ---------------------------------------------------------------- survivor sections
+
+  private getSurvivorSections(phase: ExplainerPhase): ExplainerSection[] {
+    return [
+      this.entrySection(phase),
+      this.survivorChoosingSection(),
+      this.survivorStayingInSection(),
+      this.survivorStandingsSection(),
+      ...(this.isPaid() ? [this.payoutSection()] : []),
+    ];
+  }
+
+  private survivorChoosingSection(): ExplainerSection {
+    const points: ExplainerPoint[] = [
+      {
+        text: 'A team can only be used once for the whole run.',
+        info: 'This is the game. Spending your best team tonight is the cheapest thing you can do now and the most expensive thing later.',
+      },
+      {
+        text: 'Everything closes when the first game of the round starts.',
+        info: 'One deadline for the whole round, so nobody gets to choose after seeing an earlier result.',
+      },
+    ];
+
+    if (+this.fantasy_group.auto_select === 1) {
+      points.push({
+        text: 'Miss the deadline and we choose for you.',
+        info: 'The team our projections like most out of the ones you have left, so a forgotten deadline costs you a good team rather than your entry.',
+      });
+    }
+
+    return {
+      id: 'survivor_choosing',
+      title: 'Choosing a team',
+      status: 'info',
+      lead: 'Each round you choose one team you think will win.',
+      points,
+      actions: [{ kind: 'view', title: 'Make a selection', view: 'survivor' }],
+    };
+  }
+
+  private survivorStayingInSection(): ExplainerSection {
+    const revivals = +this.fantasy_group.survivor_revivals || 0;
+
+    const points: ExplainerPoint[] = [
+      {
+        text: 'A postponed game does not count against you.',
+        info: 'The selection is voided and the team goes back to the ones you can use.',
+      },
+    ];
+
+    if (revivals > 0) {
+      points.unshift({
+        text: `You get ${revivals} second ${revivals === 1 ? 'chance' : 'chances'}.`,
+        info: 'A wrong selection uses one up instead of ending your run. The team is still spent either way.',
+      });
+    }
+
+    return {
+      id: 'survivor_staying_in',
+      title: 'Staying in',
+      status: 'info',
+      lead: revivals > 0
+        ? 'Your team wins and you are through. Your team loses and you spend a second chance, if you still have one.'
+        : 'Your team wins and you are through. Your team loses and your entry is out.',
+      points,
+    };
+  }
+
+  private survivorStandingsSection(): ExplainerSection {
+    return {
+      id: 'survivor_standings',
+      title: 'Standings',
+      status: 'info',
+      lead: 'Entries are ordered by how many rounds they have survived.',
+      points: [
+        {
+          text: 'Entries level on rounds are separated by how hard their selections were.',
+          info: 'Beating a team our projections had at 55% counts for more than beating one they had at 95%. It can never move you past an entry that lasted a round longer.',
+        },
+        {
+          text: 'Standings refresh once a day.',
+          info: 'Whether you survived a round is settled as soon as the games finish, though.',
+        },
+      ],
+      actions: [{ kind: 'scroll', title: 'See the standings', target: 'entries' }],
     };
   }
 

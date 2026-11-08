@@ -28,6 +28,7 @@ import {
 import HelperGeneral from '@/components/helpers/General';
 import { Fantasy } from '@srating-io/types';
 import { TERMINOLOGY_ID } from '@srating-io/common';
+import FantasyMode from '@/components/helpers/FantasyMode';
 // import InfoOutlineIcon from '@esmalley/react-material-icons/InfoOutline'; need to upgrade MUI for this icon... >.>
 
 
@@ -85,6 +86,7 @@ const Client = () => {
   const draftInputHandler = new Inputs();
   const peopleInputHandler = new Inputs();
   const financialInputHandler = new Inputs();
+  const survivorInputHandler = new Inputs();
 
   const initialFormData = Object.freeze({
     organization_id,
@@ -106,6 +108,11 @@ const Client = () => {
     open_invites: 1,
     private: 0,
     draft_time_per_user_in_seconds: null,
+    fantasy_slate_type_terminology_id: null,
+    selections_per_slate: 1,
+    auto_select: 1,
+    survivor_revivals: 0,
+    official_code: null,
   });
 
   // the inputs return strings, but internally they are formatted as a number, so just overwrite to allow string in a few of these columns
@@ -311,7 +318,7 @@ const Client = () => {
               />
             </div>
             {
-              formData.draft_type_terminology_id !== '782f9c90-e11f-11f0-bc34-529c3ffdbb93' ?
+              formData.draft_type_terminology_id !== TERMINOLOGY_ID.DRAFT_TYPE.FREE_FOR_ALL ?
                 <div>
                   <TextInput
                     inputHandler={draftInputHandler}
@@ -385,6 +392,100 @@ const Client = () => {
           </div>
         </div>
       </>
+    ),
+  };
+
+  const stepSurvivor = {
+    title: 'Survivor Configuration',
+    id: 'survivor',
+    isValid: () => {
+      const errors = survivorInputHandler.getErrors();
+
+      if (errors.length) {
+        return false;
+      }
+
+      if (
+        !formData.fantasy_slate_type_terminology_id ||
+        !formData.start_date ||
+        !formData.end_date
+      ) {
+        return false;
+      }
+
+      if (formData.start_date > formData.end_date) {
+        setErrorModalMessage('League start date can not be after end date.');
+        return false;
+      }
+
+      return true;
+    },
+    content: (
+      <div>
+        <div style={{ marginBottom: 20 }}>
+          <MultiPicker
+            inputHandler={survivorInputHandler}
+            required
+            label = 'How often is a selection due?'
+            onChange={(val) => onChange('fantasy_slate_type_terminology_id', val as string)}
+            options={HelperGeneral.getTerminologyOptions('fantasy_slate_type')}
+            selected={formData.fantasy_slate_type_terminology_id ? [formData.fantasy_slate_type_terminology_id] : []}
+            isRadio
+            triggerValidation={triggerValidation}
+          />
+          <Typography type = 'caption' style = {{ color: theme.text.secondary }}>
+            Daily suits a sport that plays most nights. Weekly gathers a whole week into one deadline.
+          </Typography>
+        </div>
+        <Columns numberOfColumns={2}>
+          <div>
+            <DateInput
+              inputHandler={survivorInputHandler}
+              required
+              label = 'When does it start?'
+              placeholder='Start date'
+              onChange={(val) => {
+                onChange('start_date', val ? Dates.format(Dates.parse(val), 'Y-m-d H:i:s', true) : null);
+              }}
+              triggerValidation={triggerValidation}
+              value = {formData.start_date ? Dates.format(Dates.parse(formData.start_date, true), 'Y-m-d') : undefined}
+              minDate = {seasonOpens}
+              maxDate = {maxDate}
+            />
+          </div>
+          <div>
+            <DateInput
+              inputHandler={survivorInputHandler}
+              required
+              label = 'When does it end?'
+              placeholder='End date'
+              onChange={(val) => {
+                onChange('end_date', val ? Dates.format(Dates.parse(val), 'Y-m-d H:i:s', true) : null);
+              }}
+              triggerValidation={triggerValidation}
+              value = {formData.end_date ? Dates.format(Dates.parse(formData.end_date, true), 'Y-m-d') : undefined}
+              minDate = {formData.start_date ? Dates.format(Dates.parse(formData.start_date, true), 'Y-m-d') : seasonOpens}
+              maxDate = {maxDate}
+            />
+          </div>
+        </Columns>
+        <div style={{ marginBottom: 20 }}>
+          <TextInput
+            inputHandler={survivorInputHandler}
+            label = 'How many second chances does an entry get?'
+            placeholder='Revivals'
+            onChange={(val) => onChange('survivor_revivals', val === '' ? 0 : +val)}
+            triggerValidation={triggerValidation}
+            formatter={'number'}
+            value = {String(formData.survivor_revivals ?? 0)}
+            min={0}
+            max={10}
+          />
+          <Typography type = 'caption' style = {{ color: theme.text.secondary }}>
+            A revival lets an entry survive one wrong selection. Zero makes the first one fatal.
+          </Typography>
+        </div>
+      </div>
     ),
   };
 
@@ -631,28 +732,21 @@ const Client = () => {
   };
 
 
-  /*
-  The problem with this is you need to keep adding to the props deps or the inputs might not update etc
-  const activeSteps = useMemo(() => {
-    const steps = [stepBasicInfo];
+  // The mode's own configuration step, if it has one. Not memoized: a useMemo here has to list
+  // every input it closes over, and a missed dependency stops the step's inputs updating.
+  const mode_steps = {
+    draft: stepDraft,
+    survivor: stepSurvivor,
+    bracket: null,
+  };
 
-    // Only show Draft step if specific terminology ID is selected
-    if (formData.fantasy_group_type_terminology_id === '7ca1ccce-e033-11f0-bc34-529c3ffdbb93') {
-      steps.push(stepDraft);
-    }
-
-    steps.push(stepPeople);
-    steps.push(stepFinancials);
-
-    return steps;
-  }, [formData.fantasy_group_type_terminology_id, formData.draft_type_terminology_id, formData.free, triggerValidation, formData, theme, draftMinutes]);
-  */
+  const mode = FantasyMode.getModeByTerminologyID(formData.fantasy_group_type_terminology_id);
+  const mode_step = mode ? mode_steps[mode.code] : null;
 
   const steps = [stepBasicInfo];
 
-  // Only show Draft step if specific terminology ID is selected
-  if (formData.fantasy_group_type_terminology_id === '7ca1ccce-e033-11f0-bc34-529c3ffdbb93') {
-    steps.push(stepDraft);
+  if (mode_step) {
+    steps.push(mode_step);
   }
 
   steps.push(stepPeople);

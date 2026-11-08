@@ -46,7 +46,9 @@ const Entries = () => {
 
     if (
       (fantasyGroupHelper.isNCAABracket() && fantasy_group.started) ||
-      fantasyGroupHelper.isDraft()
+      fantasyGroupHelper.isDraft() ||
+      // the api withholds a live selection per round, so a survivor entry is safe to open
+      fantasyGroupHelper.isSurvivor()
     ) {
       buttons.push(
         <Button key = {row.fantasy_entry_id} title = 'View' value = {row.fantasy_entry_id} ink onClick={handleTileClick} />,

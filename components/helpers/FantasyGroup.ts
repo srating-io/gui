@@ -54,6 +54,24 @@ class FantasyGroup {
     return false;
   }
 
+  /**
+   * Is this fantasy group a survivor league?
+   *
+   * Note for anything branching on these: they are not two sided any more. `isDraft() ? a : b`
+   * quietly hands survivor the bracket arm, so test the mode you mean -- or read the descriptor
+   * out of components/helpers/FantasyMode.ts instead of branching at all.
+   */
+  isSurvivor(): boolean {
+    if (
+      this.getFantasyGroup() &&
+      this.getFantasyGroup().fantasy_group_type_terminology_id === TERMINOLOGY_ID.FANTASY_GROUP_TYPE.SURVIVOR
+    ) {
+      return true;
+    }
+
+    return false;
+  }
+
   getCurrentPick(
     {
       fantasy_draft_orders,

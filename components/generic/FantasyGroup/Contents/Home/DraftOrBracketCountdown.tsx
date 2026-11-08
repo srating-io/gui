@@ -141,7 +141,12 @@ const DraftOrBracketCountdown = () => {
   return (
     <div>
       <Typography type='h6'>
-        {fantasyHelper.isDraft() ? 'Pre-Season Checklist' : 'Tournament Countdown'}
+        {
+          fantasyHelper.isDraft()
+            ? 'Pre-Season Checklist'
+            // survivor is neither: it counts down to a round's deadline, not to a tournament
+            : (fantasyHelper.isSurvivor() ? 'Countdown' : 'Tournament Countdown')
+        }
       </Typography>
 
       <Paper style={paperStyle}>

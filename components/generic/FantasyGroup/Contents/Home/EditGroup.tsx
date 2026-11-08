@@ -46,7 +46,9 @@ const EditGroup = (
 
   const inputHandler = new Inputs();
   const fantasyHelper = new FantasyGroupHelper({ fantasy_group });
+  // dates are editable for any mode that supplies its own, which is everything but a bracket
   const isDraft = fantasyHelper.isDraft();
+  const editableDates = isDraft || fantasyHelper.isSurvivor();
 
   // the modal stays mounted, so seed from the group each time it opens
   useEffect(() => {
@@ -85,9 +87,13 @@ const EditGroup = (
       args.entries = entries ? +entries : null;
     }
 
-    if (isDraft) {
+    if (editableDates) {
       args.start_date = startDate;
       args.end_date = endDate;
+    }
+
+    // the draft clock belongs to the draft room, which survivor has none of
+    if (isDraft) {
       args.draft_start_datetime = draftStart;
       args.draft_time_per_user_in_seconds = draftMinutes ? +(+draftMinutes * 60).toFixed(2) : null;
     }
@@ -175,7 +181,7 @@ const EditGroup = (
         </Columns>
 
         {
-          isDraft ?
+          editableDates ?
             <>
               <Columns numberOfColumns={2}>
                 <DateInput
@@ -202,6 +208,7 @@ const EditGroup = (
                 />
               </Columns>
 
+              {isDraft ? (
               <Columns numberOfColumns={2}>
                 <DateInput
                   inputHandler={inputHandler}
@@ -226,6 +233,7 @@ const EditGroup = (
                   transformPlaceholder={false}
                 />
               </Columns>
+              ) : ''}
             </>
             : ''
         }

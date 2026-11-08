@@ -57,7 +57,10 @@ class Fantasy extends Surface {
   ) {
     const organization_id = this.getOrganizationID();
 
-    if (organization_id !== Organization.getCBBID()) {
+    // Open to every sport now that survivor only needs a schedule and a result. A draft still
+    // wants player stats, but which modes a sport can actually host is the create wizard's
+    // business -- refusing the whole page here hid the survivor pools too.
+    if (!organization_id) {
       return notFound();
     }
 
