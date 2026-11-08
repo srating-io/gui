@@ -16,6 +16,7 @@ import { FANTASY_ANCHOR } from '../../anchors';
 import { useAppSelector } from '@/redux/hooks';
 import FantasyGroup from '@/components/helpers/FantasyGroup';
 import Rosters from './Rosters';
+import SurvivorStatus from './SurvivorStatus';
 import Winner from './Winner';
 import { Dates } from '@esmalley/ts-utils';
 import { Columns, LinearProgress, useTheme } from '@esmalley/react-material-ui';
@@ -73,6 +74,11 @@ const Client = () => {
       {
         fantasyHelper.isDraft() && started ?
           <Anchor id = {FANTASY_ANCHOR.rosters} style = {{ marginBottom: 20 }}><Rosters /></Anchor>
+          : ''
+      }
+      {
+        fantasyHelper.isSurvivor() ?
+          <div style = {{ marginBottom: 20 }}><SurvivorStatus /></div>
           : ''
       }
       <div style = {{ marginBottom: 20 }}>
