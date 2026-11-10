@@ -2,6 +2,7 @@
 
 import { Button, Paper, Typography, useTheme } from '@esmalley/react-material-ui';
 import { useAppSelector } from '@/redux/hooks';
+import { getOwnEntries } from '@/components/helpers/FantasyGroup';
 import { useNavigation } from '@/components/hooks/useNavigation';
 
 /**
@@ -18,11 +19,14 @@ const SurvivorStatus = () => {
   const user_id = useAppSelector((state) => state.userReducer.user.user_id);
 
   const all = Object.values(fantasy_entrys || {});
-  const own = all.filter((row) => row.user_id === user_id);
+  const own = getOwnEntries(fantasy_entrys, user_id);
   const alive = all.filter((row) => +row.eliminated === 0).length;
 
+  // Across all of this user's entries, not just the first one. Holding several is ordinary, and
+  // "your entry is out" on the strength of one of three was simply wrong.
+  const own_alive = own.filter((row) => +row.eliminated === 0).length;
   const mine = own.length ? own[0] : null;
-  const out = mine ? +mine.eliminated === 1 : false;
+  const out = own.length > 0 && own_alive === 0;
 
   return (
     <Paper style = {{ padding: 16 }}>
@@ -34,7 +38,11 @@ const SurvivorStatus = () => {
         mine
           ? (
             <Typography type = 'caption' style = {{ color: out ? theme.text.secondary : undefined }}>
-              {out ? 'Your entry is out. You can still follow the rest of the field.' : 'Your entry is still alive.'}
+              {
+                out
+                  ? `${own.length === 1 ? 'Your entry is' : 'All of your entries are'} out. You can still follow the rest of the field.`
+                  : `${own.length === 1 ? 'Your entry is' : `${own_alive} of your ${own.length} entries are`} still alive.`
+              }
             </Typography>
           )
           : <Typography type = 'caption' style = {{ color: theme.text.secondary }}>Create an entry to play.</Typography>
