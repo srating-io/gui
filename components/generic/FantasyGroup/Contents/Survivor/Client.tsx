@@ -27,6 +27,7 @@ type SlateData = {
   fantasy_slate: Fantasy.FantasySlate;
   games: General.Games;
   teams: General.Teams;
+  total_teams: number;
   game_id_x_game_outlook: {[game_id: string]: General.GameOutlook};
   fantasy_selections: Fantasy.FantasySelections;
   fantasy_entry_id_x_used_team_ids: {[fantasy_entry_id: string]: string[]};
@@ -290,7 +291,7 @@ const Client = ({ fantasy_group_id }: { fantasy_group_id: string }) => {
               <TeamsRemaining
                 teams = {slateData.teams}
                 used_team_ids = {used_team_ids}
-                total_teams = {0}
+                total_teams = {slateData.total_teams}
               />
             </Columns>
           )
