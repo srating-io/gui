@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { LinearProgress, Paper, Tile, Typography, useTheme } from '@esmalley/react-material-ui';
-import { Fantasy } from '@srating-io/types';
+import { Fantasy, General } from '@srating-io/types';
 import { useClientAPI } from '@/components/clientAPI';
 import { useAppSelector } from '@/redux/hooks';
 
@@ -10,6 +10,11 @@ import { useAppSelector } from '@/redux/hooks';
 const describeOutcome = (row: Fantasy.FantasySelection): string => {
   if (+row.resolved !== 1) {
     return 'waiting';
+  }
+
+  // its game is never going to be played, so the round cost nothing either way
+  if (+row.voided === 1) {
+    return 'game called off';
   }
 
   if (+(row.correct ?? 0) === 1) {
@@ -22,8 +27,9 @@ const describeOutcome = (row: Fantasy.FantasySelection): string => {
 /**
  * One entry's run: what it chose each round, how that went, and what it has spent.
  *
- * Read only, and the same component whoever is looking -- the api already withholds a rival's
- * current selection until the round closes, so there is nothing to hide in here.
+ * Read only, and the same component whoever is looking: loadEntry withholds the team on a round
+ * that has not closed unless the entry is the caller's own, so a rival's live selection renders as
+ * "chosen" with nothing beside it.
  */
 const Survivor = () => {
   const theme = useTheme();
@@ -33,6 +39,8 @@ const Survivor = () => {
 
   const [data, setData] = useState<{
     fantasy_selections: Fantasy.FantasySelections;
+    fantasy_slates: Fantasy.FantasySlates;
+    teams: General.Teams;
     used_team_ids: string[];
   } | null>(null);
   const [loaded, setLoaded] = useState(false);
@@ -69,7 +77,15 @@ const Survivor = () => {
     return <LinearProgress color = {theme.secondary.main} containerStyle={{ width: '50%', margin: 'auto' }} />;
   }
 
-  const selections = data ? Object.values(data.fantasy_selections) : [];
+  // In the order they were played. The api returns them keyed by id, which is no order at all.
+  const selections = data
+    ? Object.values(data.fantasy_selections).sort((a, b) => {
+      const first = data.fantasy_slates[a.fantasy_slate_id];
+      const second = data.fantasy_slates[b.fantasy_slate_id];
+
+      return (first ? +first.ordinal : 0) - (second ? +second.ordinal : 0);
+    })
+    : [];
 
   // correct is null until the round settles, so it cannot be coerced without a default
   const survived = selections.filter((row) => +(row.correct ?? 0) === 1).length;
@@ -87,6 +103,18 @@ const Survivor = () => {
           selections.length
             ? selections.map((row) => {
               const outcome = describeOutcome(row);
+              const team = row.team_id && data ? data.teams[row.team_id] : null;
+              const fantasy_slate = data ? data.fantasy_slates[row.fantasy_slate_id] : null;
+
+              // A rival's live selection comes back with its team nulled, which is not the same
+              // thing as never having chosen -- say so rather than printing the id, which is what
+              // this used to render for every round.
+              const chosen = row.team_id ? 'Chosen' : 'Hidden until the round closes';
+
+              const primary = [
+                fantasy_slate ? (fantasy_slate.name || `Round ${fantasy_slate.ordinal}`) : null,
+                team ? team.name : chosen,
+              ].filter((value) => !!value).join(' · ');
 
               const detail = [
                 outcome,
@@ -97,7 +125,7 @@ const Survivor = () => {
               return (
                 <Tile
                   key = {row.fantasy_selection_id}
-                  primary = {row.team_id ? row.team_id : 'No selection'}
+                  primary = {primary}
                   secondary = {detail}
                 />
               );
