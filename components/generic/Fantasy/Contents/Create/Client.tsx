@@ -157,6 +157,13 @@ const Client = () => {
   };
 
 
+  // Only the modes this sport can host. The terminology table lists every mode regardless of
+  // sport, so offering it raw let someone start an nba bracket -- which fails on brackets.ts
+  // having no season for it -- or a draft on a sport with no player statistics.
+  const allowed_terminology_ids = FantasyMode.getModesForOrganization(organization_id).map((row) => row.terminology_id);
+  const mode_options = HelperGeneral.getTerminologyOptions('fantasy_group_type')
+    .filter((row) => allowed_terminology_ids.includes(String(row.value)));
+
   const stepBasicInfo = {
     title: 'League setup',
     id: 'basic',
@@ -186,7 +193,7 @@ const Client = () => {
             label='What type of league is this?'
             onChange={(val) => onChange('fantasy_group_type_terminology_id', val as string)}
             required
-            options={HelperGeneral.getTerminologyOptions('fantasy_group_type')}
+            options={mode_options}
             selected={formData.fantasy_group_type_terminology_id ? [formData.fantasy_group_type_terminology_id] : []}
             isRadio
             triggerValidation={triggerValidation}

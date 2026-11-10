@@ -188,7 +188,7 @@ const Client = () => {
         <CreateGroup />
         <MyGroups fantasy_groups = {my_fantasy_groups} />
         <Columns style = {{ marginTop: 20 }}>
-          {FantasyMode.getModes().map((mode) => (
+          {FantasyMode.getModesForOrganization(organization_id).map((mode) => (
             <PublicGroups
               key = {mode.code}
               mode = {mode}
