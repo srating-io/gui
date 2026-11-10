@@ -1,4 +1,4 @@
-import { TERMINOLOGY_ID } from '@srating-io/common';
+import { ORGANIZATION_ID, TERMINOLOGY_ID } from '@srating-io/common';
 import { Fantasy } from '@srating-io/types';
 
 /**
@@ -41,6 +41,25 @@ export type FantasyModeDescriptor = {
   hidesEntriesUntilStarted: boolean;
   /** Whether the owner gets a manual "close entries" action. */
   ownerCanLock: boolean;
+  /**
+   * The sports that can actually host this mode.
+   *
+   * The Fantasy surface is open to every sport now, so without this the create wizard offered a
+   * bracket on the nba -- which fails on `brackets.ts` having no season for it -- and a draft on a
+   * sport with no player stats pipeline. The home page also listed a card per mode per sport, two
+   * of them permanently empty.
+   */
+  organization_ids: string[];
+  /**
+   * When the mode's own window opens and closes inside a season, as month and day offsets from the
+   * season's ending year. A negative year offset belongs to the previous calendar year, the same
+   * convention sports-api/util/official_pools.ts uses.
+   *
+   * Per sport because a cbb season is november to april and cfb is august to january -- the wizard
+   * used one hardcoded cbb range for all of them, so a cfb league could not be given a september
+   * start at all.
+   */
+  season_windows: {[organization_id: string]: { start: string; end: string; start_year_offset: number }};
 };
 
 const DESCRIPTORS: FantasyModeDescriptor[] = [
@@ -56,6 +75,11 @@ const DESCRIPTORS: FantasyModeDescriptor[] = [
     playView: 'draft',
     hidesEntriesUntilStarted: false,
     ownerCanLock: true,
+    // a draft scores on player statistics, which only cbb has a pipeline for
+    organization_ids: [ORGANIZATION_ID.CBB],
+    season_windows: {
+      [ORGANIZATION_ID.CBB]: { start: '11-01', end: '04-10', start_year_offset: -1 },
+    },
   },
   {
     code: 'bracket',
@@ -69,6 +93,11 @@ const DESCRIPTORS: FantasyModeDescriptor[] = [
     playView: null,
     hidesEntriesUntilStarted: true,
     ownerCanLock: false,
+    // the ncaa tournament, so cbb only
+    organization_ids: [ORGANIZATION_ID.CBB],
+    season_windows: {
+      [ORGANIZATION_ID.CBB]: { start: '11-01', end: '04-10', start_year_offset: -1 },
+    },
   },
   {
     code: 'survivor',
@@ -83,6 +112,13 @@ const DESCRIPTORS: FantasyModeDescriptor[] = [
     // a selection is hidden per slate by the api, not per league, so the entry list stays open
     hidesEntriesUntilStarted: false,
     ownerCanLock: false,
+    // survivor needs a schedule and a final score, which all three have
+    organization_ids: [ORGANIZATION_ID.CBB, ORGANIZATION_ID.CFB, ORGANIZATION_ID.NBA],
+    season_windows: {
+      [ORGANIZATION_ID.CBB]: { start: '11-01', end: '04-10', start_year_offset: -1 },
+      [ORGANIZATION_ID.CFB]: { start: '08-01', end: '01-20', start_year_offset: -1 },
+      [ORGANIZATION_ID.NBA]: { start: '10-01', end: '04-15', start_year_offset: -1 },
+    },
   },
 ];
 
@@ -118,6 +154,38 @@ class FantasyMode {
   /** What one entry is called in this league, for copy. Falls back to the neutral word. */
   public static getEntryNoun(fantasy_group: Fantasy.FantasyGroup | null | undefined): string {
     return FantasyMode.getMode(fantasy_group)?.entryNoun || 'entry';
+  }
+
+  /** The modes a sport can host, which is what the create wizard and the public lists offer. */
+  public static getModesForOrganization(organization_id: string | null | undefined): FantasyModeDescriptor[] {
+    if (!organization_id) {
+      return [];
+    }
+
+    return DESCRIPTORS.filter((row) => row.organization_ids.includes(organization_id));
+  }
+
+  /**
+   * The first and last date a league of this mode can be played on, as `Y-m-d`.
+   *
+   * Null when the sport cannot host the mode at all, which the callers read as "no dates to offer".
+   * `season` is the ending year, so a 2027 cbb season starts in november 2026.
+   */
+  public static getSeasonWindow(
+    mode: FantasyModeDescriptor | null | undefined,
+    organization_id: string | null | undefined,
+    season: number,
+  ): { opens: string; closes: string } | null {
+    if (!mode || !organization_id || !(organization_id in mode.season_windows)) {
+      return null;
+    }
+
+    const window = mode.season_windows[organization_id];
+
+    return {
+      opens: `${season + window.start_year_offset}-${window.start}`,
+      closes: `${season}-${window.end}`,
+    };
   }
 }
 
