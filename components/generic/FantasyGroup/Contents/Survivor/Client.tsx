@@ -5,7 +5,8 @@ import { Button, Columns, LinearProgress, Paper, Typography, useTheme } from '@e
 import { Dates } from '@esmalley/ts-utils';
 import { Fantasy, General } from '@srating-io/types';
 import { useClientAPI } from '@/components/clientAPI';
-import { useAppSelector } from '@/redux/hooks';
+import { useAppDispatch, useAppSelector } from '@/redux/hooks';
+import { setDataKey } from '@/redux/features/fantasy_group-slice';
 import Slate from './Slate';
 import TeamsRemaining from './TeamsRemaining';
 
@@ -15,6 +16,10 @@ import TeamsRemaining from './TeamsRemaining';
  * Two loads rather than one. The strip of slates changes once a day at most, while the open slate
  * moves with the schedule and has to come back fresh after a selection -- holding both in one call
  * meant refetching the whole run to show one changed row.
+ *
+ * The strip lives in the store rather than in here, because that is where the group's broadcasts
+ * land: generate, lockDue and resolveDue all push `fantasy_slates`, so a lock or an elimination
+ * arrives on its own instead of waiting for a reload.
  */
 
 type SlateData = {
@@ -39,12 +44,13 @@ const ClientSkeleton = () => {
 
 const Client = ({ fantasy_group_id }: { fantasy_group_id: string }) => {
   const theme = useTheme();
+  const dispatch = useAppDispatch();
 
   const fantasy_entrys = useAppSelector((state) => state.fantasyGroupReducer.fantasy_entrys);
+  const fantasy_slates = useAppSelector((state) => state.fantasyGroupReducer.fantasy_slates);
   const user_id = useAppSelector((state) => state.userReducer.user.user_id);
   const session_id = useAppSelector((state) => state.userReducer.session_id);
 
-  const [fantasy_slates, setFantasySlates] = useState<Fantasy.FantasySlates>({});
   const [selectedSlateID, setSelectedSlateID] = useState<string | null>(null);
   const [slateData, setSlateData] = useState<SlateData | null>(null);
   const [loadedSlates, setLoadedSlates] = useState(false);
@@ -52,6 +58,8 @@ const Client = ({ fantasy_group_id }: { fantasy_group_id: string }) => {
   const [message, setMessage] = useState<string | null>(null);
 
   const requesting = useRef(false);
+  // the slate load in flight, so a run of clicks along the strip cannot paint an earlier reply
+  const loadingSlateID = useRef<string | null>(null);
 
   // the session user's entries in this league, which is who a selection can be made for
   const own_fantasy_entrys = Object.values(fantasy_entrys || {}).filter((row) => row.user_id === user_id);
@@ -75,29 +83,28 @@ const Client = ({ fantasy_group_id }: { fantasy_group_id: string }) => {
         return;
       }
 
-      setFantasySlates(data.fantasy_slates);
-
-      // Open on the one still accepting a selection, since that is the only one anyone can act
-      // on. Falls back to the most recent, so a finished league still shows its last result.
-      const ordered = Object.values(data.fantasy_slates as Fantasy.FantasySlates).sort((a, b) => +a.ordinal - +b.ordinal);
-      const open = ordered.find((row) => +row.locked === 0);
-      const latest = ordered.length ? ordered[ordered.length - 1] : null;
-
-      setSelectedSlateID((open || latest)?.fantasy_slate_id ?? null);
+      dispatch(setDataKey({ key: 'fantasy_slates', value: data.fantasy_slates }));
     }).catch(() => {
       requesting.current = false;
       setLoadedSlates(true);
     });
-  }, [fantasy_group_id, session_id]);
+  }, [fantasy_group_id, session_id, dispatch]);
 
   const loadSlate = useCallback((fantasy_slate_id: string) => {
     setLoadingSlate(true);
+    loadingSlateID.current = fantasy_slate_id;
 
     useClientAPI({
       class: 'fantasy_slate',
       function: 'load',
       arguments: { fantasy_slate_id },
     }).then((data: SlateData) => {
+      // a reply for a slate the strip has since moved off must not be painted
+      if (loadingSlateID.current !== fantasy_slate_id) {
+        return;
+      }
+
+      loadingSlateID.current = null;
       setLoadingSlate(false);
 
       if (!data || data.error) {
@@ -107,6 +114,11 @@ const Client = ({ fantasy_group_id }: { fantasy_group_id: string }) => {
 
       setSlateData(data);
     }).catch(() => {
+      if (loadingSlateID.current !== fantasy_slate_id) {
+        return;
+      }
+
+      loadingSlateID.current = null;
       setLoadingSlate(false);
       setSlateData(null);
     });
@@ -115,6 +127,21 @@ const Client = ({ fantasy_group_id }: { fantasy_group_id: string }) => {
   useEffect(() => {
     loadSlates();
   }, [loadSlates]);
+
+  const ordered = Object.values(fantasy_slates || {}).sort((a, b) => +a.ordinal - +b.ordinal);
+
+  // Open on the one still accepting a selection, since that is the only one anyone can act on.
+  // Falls back to the most recent, so a finished league still shows its last result. Only ever
+  // chooses when nothing is chosen -- a broadcast must not move the strip under someone.
+  useEffect(() => {
+    if (selectedSlateID || !ordered.length) {
+      return;
+    }
+
+    const open = ordered.find((row) => +row.locked === 0);
+
+    setSelectedSlateID((open || ordered[ordered.length - 1]).fantasy_slate_id);
+  }, [ordered, selectedSlateID]);
 
   useEffect(() => {
     if (selectedSlateID) {
@@ -155,8 +182,6 @@ const Client = ({ fantasy_group_id }: { fantasy_group_id: string }) => {
   if (!loadedSlates) {
     return <ClientSkeleton />;
   }
-
-  const ordered = Object.values(fantasy_slates).sort((a, b) => +a.ordinal - +b.ordinal);
 
   if (!ordered.length) {
     return (
