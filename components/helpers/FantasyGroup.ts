@@ -213,4 +213,27 @@ class FantasyGroup {
   }
 }
 
+/**
+ * A user's own entries in a league, in a stable order.
+ *
+ * `entries_per_user` goes to 100 and holding several is ordinary in a survivor pool, but three
+ * screens took `[0]` and ignored the rest -- which meant a selection could only ever be made for
+ * whichever entry the store happened to list first.
+ *
+ * Sorted by name so the order does not move between renders, since it is what the entry switcher
+ * is indexed on.
+ */
+export const getOwnEntries = (
+  fantasy_entrys: Fantasy.FantasyEntrys | null | undefined,
+  user_id: string | null | undefined,
+): Fantasy.FantasyEntry[] => {
+  if (!user_id) {
+    return [];
+  }
+
+  return Object.values(fantasy_entrys || {})
+    .filter((row) => row.user_id === user_id)
+    .sort((a, b) => (a.name > b.name ? 1 : -1));
+};
+
 export default FantasyGroup;
