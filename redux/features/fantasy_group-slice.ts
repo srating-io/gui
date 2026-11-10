@@ -16,6 +16,11 @@ export type InitialState = {
   fantasy_group_invites: Fantasy.FantasyGroupInvites;
   fantasy_group_comments: Fantasy.FantasyGroupComments;
   fantasy_entrys: Fantasy.FantasyEntrys;
+  // The survivor windows. Declared here rather than held in the room's own state because the
+  // broadcast handler above only merges a key the slice already knows about -- generate, lockDue
+  // and resolveDue all broadcast `fantasy_slates` on this channel, and without this they landed
+  // nowhere and the room only moved on a reload.
+  fantasy_slates: Fantasy.FantasySlates;
   fantasy_draft_orders: Fantasy.FantasyDraftOrders;
   fantasy_entry_players: Fantasy.FantasyEntryPlayers;
   // only ever this users own entries, the api does not return anyone elses
@@ -74,6 +79,7 @@ stateController.setInitialState({
   fantasy_group_comments: {} as Fantasy.FantasyGroupComments,
   fantasy_group_user: null,
   fantasy_entrys: {} as Fantasy.FantasyEntrys,
+  fantasy_slates: {} as Fantasy.FantasySlates,
   fantasy_draft_orders: {} as Fantasy.FantasyDraftOrders,
   fantasy_entry_players: {} as Fantasy.FantasyEntryPlayers,
   fantasy_entry_pre_picks: {} as Fantasy.FantasyEntryPrePicks,

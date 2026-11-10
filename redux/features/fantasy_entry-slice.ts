@@ -22,6 +22,10 @@ export type InitialState = {
   fantasy_rankings: Fantasy.FantasyRankings;
   fantasy_ranking_history: Fantasy.FantasyRankings;
   fantasy_entrys: Fantasy.FantasyEntrys;
+  // select and clear broadcast these on the fantasy_entry channel, and the handler only merges a
+  // key the slice already knows about
+  fantasy_selections: Fantasy.FantasySelections;
+  fantasy_slates: Fantasy.FantasySlates;
   fantasy_draft_orders: Fantasy.FantasyDraftOrders;
   fantasy_group_user: Fantasy.FantasyGroupUser;
   league_player_ratings: { [fantasy_entry_player_id: string]: number };
@@ -69,6 +73,8 @@ stateController.setInitialState({
   fantasy_rankings: {} as Fantasy.FantasyRankings,
   fantasy_ranking_history: {} as Fantasy.FantasyRankings,
   fantasy_entrys: {} as Fantasy.FantasyEntrys,
+  fantasy_selections: {} as Fantasy.FantasySelections,
+  fantasy_slates: {} as Fantasy.FantasySlates,
   fantasy_draft_orders: {} as Fantasy.FantasyDraftOrders,
   fantasy_group_user: {} as Fantasy.FantasyGroupUser,
   league_player_ratings: {} as { [fantasy_entry_player_id: string]: number },
