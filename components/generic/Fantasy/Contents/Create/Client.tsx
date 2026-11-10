@@ -133,9 +133,14 @@ const Client = () => {
 
   const [triggerValidation, setTriggerValidation] = useState(false);
 
-  // hardcoded for cbb, todo make this dynamic per org + season
-  const seasonOpens = `${season - 1}-11-01`;
-  const maxDate = `${season}-04-10`;
+  // The chosen mode's window for this sport, which is what the date inputs are bounded by. These
+  // used to be one hardcoded cbb range, harmless while the page was cbb only -- opening the
+  // surface to every sport made it refuse a cfb league any start before november.
+  const selected_mode = FantasyMode.getModeByTerminologyID(formData.fantasy_group_type_terminology_id);
+  const season_window = FantasyMode.getSeasonWindow(selected_mode, organization_id, season);
+
+  const seasonOpens = season_window ? season_window.opens : `${season - 1}-11-01`;
+  const maxDate = season_window ? season_window.closes : `${season}-04-10`;
   // part way into a season seasonOpens is already past, and a past date fails validation
   const nowFormatted = Dates.format(Dates.parse(null), 'Y-m-d H:i:s');
   const minDate = nowFormatted > seasonOpens ? nowFormatted : seasonOpens;
@@ -148,6 +153,17 @@ const Client = () => {
       return { label: r.name, value: r.fantasy_payout_rule_id };
     });
 
+
+  /**
+   * The end of the chosen day, not its midnight.
+   *
+   * These columns hold utc and the schedule is eastern, so midnight utc is the evening before --
+   * the slate generator takes its last eligible date from this instant, and a league ending on the
+   * 15th was losing the 15th.
+   */
+  const endOfDay = (value: string | Date): string => {
+    return `${Dates.format(Dates.parse(value), 'Y-m-d', true)} 23:59:59`;
+  };
 
   const onChange = <K extends keyof FantasyGroupForm>(column: K, value: FantasyGroupForm[K]) => {
     setFormData((prev) => ({
@@ -387,7 +403,7 @@ const Client = () => {
               minDate = {minDate}
               maxDate = {maxDate}
               onChange={(val) => {
-                onChange('end_date', val ? Dates.format(Dates.parse(val), 'Y-m-d H:i:s', true) : null);
+                onChange('end_date', val ? endOfDay(val) : null);
               }}
               value = {formData.end_date ? Dates.format(Dates.parse(formData.end_date, true), 'Y-m-d H:i:s') : undefined}
               enableTime
@@ -467,7 +483,7 @@ const Client = () => {
               label = 'When does it end?'
               placeholder='End date'
               onChange={(val) => {
-                onChange('end_date', val ? Dates.format(Dates.parse(val), 'Y-m-d H:i:s', true) : null);
+                onChange('end_date', val ? endOfDay(val) : null);
               }}
               triggerValidation={triggerValidation}
               value = {formData.end_date ? Dates.format(Dates.parse(formData.end_date, true), 'Y-m-d') : undefined}
