@@ -7,6 +7,7 @@ import { Fantasy, General } from '@srating-io/types';
 import { useClientAPI } from '@/components/clientAPI';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { setDataKey } from '@/redux/features/fantasy_group-slice';
+import { getOwnEntries } from '@/components/helpers/FantasyGroup';
 import Slate from './Slate';
 import TeamsRemaining from './TeamsRemaining';
 
@@ -57,13 +58,19 @@ const Client = ({ fantasy_group_id }: { fantasy_group_id: string }) => {
   const [loadingSlate, setLoadingSlate] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
+  // Which of this user's entries the room is acting for. An id rather than an index, so the
+  // selection survives the list reordering under a broadcast.
+  const [selectedEntryID, setSelectedEntryID] = useState<string | null>(null);
+
   const requesting = useRef(false);
   // the slate load in flight, so a run of clicks along the strip cannot paint an earlier reply
   const loadingSlateID = useRef<string | null>(null);
 
-  // the session user's entries in this league, which is who a selection can be made for
-  const own_fantasy_entrys = Object.values(fantasy_entrys || {}).filter((row) => row.user_id === user_id);
-  const fantasy_entry = own_fantasy_entrys.length ? own_fantasy_entrys[0] : null;
+  // Holding several entries is ordinary in a survivor pool, so the room offers all of them rather
+  // than silently acting for whichever one came back first.
+  const own_fantasy_entrys = getOwnEntries(fantasy_entrys, user_id);
+  const fantasy_entry = own_fantasy_entrys.find((row) => row.fantasy_entry_id === selectedEntryID)
+    || (own_fantasy_entrys.length ? own_fantasy_entrys[0] : null);
 
   const loadSlates = useCallback(() => {
     if (requesting.current) {
@@ -211,6 +218,25 @@ const Client = ({ fantasy_group_id }: { fantasy_group_id: string }) => {
 
   return (
     <div style = {{ padding: 5, maxWidth: 1200, margin: 'auto' }}>
+      {
+        own_fantasy_entrys.length > 1 ? (
+          <div style = {{ marginBottom: 12 }}>
+            <Typography type = 'caption' style = {{ color: theme.text.secondary }}>Choosing for</Typography>
+            <div style = {{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
+              {own_fantasy_entrys.map((row) => (
+                <Button
+                  key = {row.fantasy_entry_id}
+                  value = {row.fantasy_entry_id}
+                  title = {`${row.name}${+row.eliminated === 1 ? ' (out)' : ''}`}
+                  ink = {fantasy_entry ? row.fantasy_entry_id !== fantasy_entry.fantasy_entry_id : true}
+                  onClick = {() => setSelectedEntryID(row.fantasy_entry_id)}
+                />
+              ))}
+            </div>
+          </div>
+        ) : ''
+      }
+
       <div style = {{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
         {ordered.map((row) => (
           <Button
