@@ -12,8 +12,7 @@ import SessionHandler from '@/components/handlers/SessionHandler';
 import FavoriteHandler from '@/components/handlers/FavoriteHandler';
 import KryptosClient from '@/components/handlers/kryptos/Client';
 // import KryptosServer from '@/components/handlers/kryptos/Server';
-import DictionaryWrapper from '@/components/handlers/dictionary/ClientWrapper';
-import DictionaryHandler from '@/components/handlers/dictionary/Server';
+// the dictionary is preloaded into the store below instead of dispatched after mount
 import LayoutWrapper from './LayoutWrapper';
 import MutationHandler from '@/components/handlers/MutationHandler';
 // import Style from '@/components/utils/Style';
@@ -56,6 +55,16 @@ export default async function RootLayout({ children }: {children: React.ReactNod
     arguments: {},
   });
 
+  // conference names, team counts per division and the sport codes all live here, and every
+  // one of them is read during render - so the store needs it before the first render, not
+  // after mount
+  const dictionary = await useServerAPI({
+    class: 'dictionary',
+    function: 'load',
+    arguments: {},
+    cache: 60 * 60 * 24,
+  });
+
   // the mode is part of what gets rendered, so it has to be known here rather than looked up in the
   // browser afterwards; the cookie is the only copy of it the request carries
   const themeMode = asMode((await cookies()).get(themeCookieKey)?.value) || defaultMode;
@@ -67,7 +76,7 @@ export default async function RootLayout({ children }: {children: React.ReactNod
       {/* <head>
         <style srating-ssr-css = "true" dangerouslySetInnerHTML={{ __html: css }}></style>
       </head> */}
-      <StoreProvider themeMode = {themeMode}>
+      <StoreProvider themeMode = {themeMode} dictionary = {dictionary}>
         <LayoutWrapper>
           <div id = 'menu-root'></div>
           <NewUpdateHandler />
@@ -75,7 +84,6 @@ export default async function RootLayout({ children }: {children: React.ReactNod
           <MutationHandler />
           <SessionHandler />
           <FavoriteHandler />
-          <DictionaryWrapper><DictionaryHandler /></DictionaryWrapper>
           {children}
           <Script src="https://www.googletagmanager.com/gtag/js?id=G-S67JFT2KZW" strategy="afterInteractive" />
           <Script id="google-analytics" strategy="afterInteractive">
