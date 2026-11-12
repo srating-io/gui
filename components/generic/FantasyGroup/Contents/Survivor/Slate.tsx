@@ -1,9 +1,8 @@
 'use client';
 
-import { Paper, Tile, Typography, useTheme } from '@esmalley/react-material-ui';
+import { Inputs, MultiPicker, MultiPickerOption, Paper, Tile, Typography, useTheme } from '@esmalley/react-material-ui';
 import { General } from '@srating-io/types';
 import { Dates } from '@esmalley/ts-utils';
-import ButtonSwitch from '@/components/generic/ButtonSwitch';
 
 /**
  * One slate's games, as the things an entry chooses between.
@@ -51,6 +50,9 @@ const Slate = (
 ) => {
   const theme = useTheme();
 
+  // one handler for the whole slate, the same way the create wizard shares one across its step
+  const inputHandler = new Inputs();
+
   const sorted = Object.values(games).sort((a, b) => +a.start_timestamp - +b.start_timestamp);
 
   if (!sorted.length) {
@@ -74,14 +76,12 @@ const Slate = (
       { team: home, team_id: game.home_team_id, isHome: true },
     ];
 
-    const [awaySide, homeSide] = sides;
-
-    const buildTitle = ({ team, isHome }: { team: General.Team | undefined, isHome: boolean }): string => {
-      return `${team ? team.code || team.name : 'Team'} ${formatOutlook(outlook, isHome)}`.trim();
-    };
-
-    // a spent team, a game under way and a closed slate are all unpickable, so the side greys out
-    const isDisabled = (team_id: string): boolean => locked || started || used_team_ids.includes(team_id);
+    // a spent team cannot be chosen again, so its option greys out while its opponent stays live
+    const options: MultiPickerOption[] = sides.map(({ team, team_id, isHome }) => ({
+      label: `${team ? team.code || team.name : 'Team'} ${formatOutlook(outlook, isHome)}`.trim(),
+      value: team_id,
+      disabled: used_team_ids.includes(team_id),
+    }));
 
     const usedNote = sides
       .filter(({ team_id }) => used_team_ids.includes(team_id))
@@ -100,15 +100,20 @@ const Slate = (
           primary = {`${away ? away.name : 'Away'} at ${home ? home.name : 'Home'}`}
           secondary = {secondary}
         />
-        <ButtonSwitch
-          leftTitle = {buildTitle(awaySide)}
-          rightTitle = {buildTitle(homeSide)}
-          leftValue = {awaySide.team_id}
-          rightValue = {homeSide.team_id}
-          selected = {selected_team_id}
-          leftDisabled = {isDisabled(awaySide.team_id)}
-          rightDisabled = {isDisabled(homeSide.team_id)}
-          handleClick = {(team_id) => onChoose(game.game_id, team_id)}
+        <MultiPicker
+          inputHandler = {inputHandler}
+          options = {options}
+          selected = {selected_team_id ? [selected_team_id] : []}
+          isRadio
+          numberOfColumns = {2}
+          disabled = {locked || started}
+          onChange = {(value) => {
+            const team_id = Array.isArray(value) ? value[0] : value;
+
+            if (team_id) {
+              onChoose(game.game_id, String(team_id));
+            }
+          }}
         />
       </div>
     );
