@@ -8,10 +8,9 @@ import ButtonSwitch from '@/components/generic/ButtonSwitch';
 /**
  * One slate's games, as the things an entry chooses between.
  *
- * The number beside each team is the point of the whole feature: a projection for a sport that has
- * one, the market line where it does not, and failing both the rating gap, which is never withheld.
- * `win_probability_home` arrives null for a caller without a subscription -- that is the paid line,
- * so show the rating instead rather than an empty cell or a made up 50%.
+ * The number beside each team is a win probability or nothing at all. It used to fall back to the
+ * elo rating, which is never withheld -- but a bare `1494` landed in the same slot a subscriber
+ * sees `72%` in, with no unit to tell them apart, so it read as a broken percentage.
  */
 
 const formatOutlook = (outlook: General.GameOutlook | undefined, isHome: boolean): string => {
@@ -21,13 +20,13 @@ const formatOutlook = (outlook: General.GameOutlook | undefined, isHome: boolean
 
   const probability = isHome ? outlook.win_probability_home : outlook.win_probability_away;
 
-  if (probability !== null && probability !== undefined) {
-    return `${Math.round(+probability * 100)}%`;
+  // null means "not available to you" rather than even odds: the paid columns arrive empty without
+  // a subscription, and a sport with no projection and no money line has nothing to show either
+  if (probability === null || probability === undefined) {
+    return '';
   }
 
-  const elo = isHome ? outlook.elo_home : outlook.elo_away;
-
-  return elo !== null && elo !== undefined ? `${Math.round(+elo)}` : '';
+  return `${Math.round(+probability * 100)}%`;
 };
 
 const Slate = (
