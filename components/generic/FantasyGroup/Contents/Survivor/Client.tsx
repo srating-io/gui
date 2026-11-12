@@ -188,6 +188,31 @@ const Client = ({ fantasy_group_id }: { fantasy_group_id: string }) => {
     });
   };
 
+  // Soft deletes the row rather than blanking it, which is what releases the team for another
+  // round. The api re-checks both the lock flag and the deadline, so there is no need to here.
+  const handleClear = (fantasy_selection_id: string) => {
+    if (!selectedSlateID) {
+      return;
+    }
+
+    setMessage(null);
+
+    useClientAPI({
+      class: 'fantasy_selection',
+      function: 'clear',
+      arguments: { fantasy_selection_id },
+    }).then((data) => {
+      if (!data || data.error) {
+        setMessage(data && data.error ? data.error : 'Could not clear that selection.');
+        return;
+      }
+
+      loadSlate(selectedSlateID);
+    }).catch(() => {
+      setMessage('Could not clear that selection.');
+    });
+  };
+
   if (!loadedSlates) {
     return <ClientSkeleton />;
   }
@@ -252,7 +277,16 @@ const Client = ({ fantasy_group_id }: { fantasy_group_id: string }) => {
       </div>
 
       <Paper style = {{ padding: 16, marginBottom: 12 }}>
-        <Typography type = 'h6'>{getSlateLabel(fantasy_slate)}</Typography>
+        <div style = {{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+          <Typography type = 'h6'>{getSlateLabel(fantasy_slate)}</Typography>
+          <Button
+            value = 'clear-pick'
+            title = 'Clear pick'
+            ink
+            disabled = {!own_selection || locked || !fantasy_entry || +fantasy_entry.eliminated === 1}
+            onClick = {() => own_selection && handleClear(own_selection.fantasy_selection_id)}
+          />
+        </div>
         <Typography type = 'body1' style = {{ color: theme.text.secondary }}>
           {
             fantasy_slate && !locked && fantasy_slate.lock_datetime
