@@ -66,7 +66,9 @@ const DateBar = (
     disabledDates?: string[];
     /**
      * An explicit viewport offset. Left out, the bar fixes itself at wherever it happens to sit in
-     * the flow, which only lands right when it is the first thing on the surface.
+     * the flow, which only lands right when it is the first thing on the surface -- inside a
+     * centered content column it started at the column's edge and ran off the right of the screen.
+     * Setting it pins the bar to the left of the viewport too, so `width: 100%` spans the screen.
      */
     top?: number;
   },
@@ -318,7 +320,7 @@ const DateBar = (
       height,
       backgroundColor,
       color: Color.getTextColor('#ffffff', backgroundColor),
-      ...(top === undefined ? {} : { top }),
+      ...(top === undefined ? {} : { top, left: 0 }),
     })}>
       <div style = {{ display: 'inline-flex' }}>
         {modeToggle}
@@ -334,6 +336,9 @@ const DateBar = (
         height: '100%',
         textAlign: 'center',
         alignItems: 'center',
+        // `safe` so a strip wider than the bar still starts at the first pill rather than
+        // centering its overflow out of reach
+        justifyContent: 'safe center',
       }}>
         {dateContainers}
       </div>
