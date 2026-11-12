@@ -1,14 +1,18 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button, Columns, LinearProgress, Paper, Typography, useTheme } from '@esmalley/react-material-ui';
 import { Dates } from '@esmalley/ts-utils';
 import { Fantasy, General } from '@srating-io/types';
 import { useClientAPI } from '@/components/clientAPI';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { setDataKey } from '@/redux/features/fantasy_group-slice';
+import { TERMINOLOGY_ID } from '@srating-io/common';
 import { getOwnEntries } from '@/components/helpers/FantasyGroup';
-import { getSlateLabel } from '@/components/helpers/FantasySlate';
+import { findSlateByDate, getEasternDate, getSlateEasternRange, getSlateLabel } from '@/components/helpers/FantasySlate';
+import DateBar, { getDateBarHeight } from '@/components/generic/DateBar';
+import { headerBarHeight } from '@/components/generic/Header';
+import { getNavHeaderHeight } from '@/components/generic/FantasyGroup/NavBar';
 import Slate from './Slate';
 import TeamsRemaining from './TeamsRemaining';
 
@@ -51,6 +55,7 @@ const Client = ({ fantasy_group_id }: { fantasy_group_id: string }) => {
 
   const fantasy_entrys = useAppSelector((state) => state.fantasyGroupReducer.fantasy_entrys);
   const fantasy_slates = useAppSelector((state) => state.fantasyGroupReducer.fantasy_slates);
+  const fantasy_group = useAppSelector((state) => state.fantasyGroupReducer.fantasy_group);
   const user_id = useAppSelector((state) => state.userReducer.user.user_id);
   const session_id = useAppSelector((state) => state.userReducer.session_id);
 
@@ -59,6 +64,10 @@ const Client = ({ fantasy_group_id }: { fantasy_group_id: string }) => {
   const [loadedSlates, setLoadedSlates] = useState(false);
   const [loadingSlate, setLoadingSlate] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+
+  // Every date the sport plays on this season. The league's own run is not stored anywhere -- only
+  // two slates exist at a time -- so the full stretch has to be derived from the schedule.
+  const [seasonDates, setSeasonDates] = useState<string[]>([]);
 
   // Which of this user's entries the room is acting for. An id rather than an index, so the
   // selection survives the list reordering under a broadcast.
@@ -133,11 +142,82 @@ const Client = ({ fantasy_group_id }: { fantasy_group_id: string }) => {
     });
   }, [session_id]);
 
+  // Weekly windows are not days, so only a daily league gets the date bar
+  const is_daily = fantasy_group.fantasy_slate_type_terminology_id === TERMINOLOGY_ID.FANTASY_SLATE_TYPE.DAILY;
+
+  const loadSeasonDates = useCallback(() => {
+    if (
+      !is_daily ||
+      !fantasy_group.organization_id ||
+      !fantasy_group.division_id ||
+      !fantasy_group.season
+    ) {
+      return;
+    }
+
+    useClientAPI({
+      class: 'game',
+      function: 'getSeasonDates',
+      arguments: {
+        organization_id: fantasy_group.organization_id,
+        division_id: fantasy_group.division_id,
+        season: fantasy_group.season,
+      },
+    }).then((data) => {
+      if (!Array.isArray(data)) {
+        return;
+      }
+
+      setSeasonDates(data);
+    }).catch(() => {});
+  }, [is_daily, fantasy_group.organization_id, fantasy_group.division_id, fantasy_group.season, session_id]);
+
   useEffect(() => {
     loadSlates();
   }, [loadSlates]);
 
+  useEffect(() => {
+    loadSeasonDates();
+  }, [loadSeasonDates]);
+
   const ordered = Object.values(fantasy_slates || {}).sort((a, b) => +a.ordinal - +b.ordinal);
+
+  // Which days already have a round behind them. Built once per slate rather than range tested per
+  // day, because the eastern date costs an Intl read and a season is ~160 of each.
+  const coveredDates = useMemo(() => {
+    const covered: {[date: string]: boolean} = {};
+
+    for (const row of Object.values(fantasy_slates || {})) {
+      const range = getSlateEasternRange(row);
+
+      if (range) {
+        covered[range.first] = true;
+      }
+    }
+
+    return covered;
+  }, [fantasy_slates]);
+
+  const opensDate = getEasternDate(fantasy_group.start_date);
+  const closesDate = getEasternDate(fantasy_group.end_date);
+
+  // every day the league will run: a day the sport plays on, inside the league's own window
+  const eligibleDates = useMemo(() => {
+    if (!opensDate || !closesDate) {
+      return [];
+    }
+
+    return seasonDates.filter((row) => row >= opensDate && row <= closesDate);
+  }, [seasonDates, opensDate, closesDate]);
+
+  const upcomingDates = useMemo(() => {
+    return eligibleDates.filter((row) => !coveredDates[row]);
+  }, [eligibleDates, coveredDates]);
+
+  const selectedRange = getSlateEasternRange(ordered.find((row) => row.fantasy_slate_id === selectedSlateID));
+  const selectedDate = selectedRange ? selectedRange.first : null;
+
+  const showDateBar = is_daily && eligibleDates.length > 0;
 
   // Open on the one still accepting a selection, since that is the only one anyone can act on.
   // Falls back to the most recent, so a finished league still shows its last result. Only ever
@@ -244,7 +324,7 @@ const Client = ({ fantasy_group_id }: { fantasy_group_id: string }) => {
   const total = Object.keys(fantasy_entrys || {}).length;
 
   return (
-    <div style = {{ padding: 5, maxWidth: 1200, margin: 'auto' }}>
+    <div style = {{ padding: 5, maxWidth: 1200, margin: 'auto', paddingTop: showDateBar ? getDateBarHeight() + 5 : 5 }}>
       {
         own_fantasy_entrys.length > 1 ? (
           <div style = {{ marginBottom: 12 }}>
@@ -264,17 +344,35 @@ const Client = ({ fantasy_group_id }: { fantasy_group_id: string }) => {
         ) : ''
       }
 
-      <div style = {{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
-        {ordered.map((row) => (
-          <Button
-            key = {row.fantasy_slate_id}
-            value = {row.fantasy_slate_id}
-            title = {getSlateLabel(row)}
-            ink = {row.fantasy_slate_id !== selectedSlateID}
-            onClick = {() => setSelectedSlateID(row.fantasy_slate_id)}
+      {
+        showDateBar ? (
+          <DateBar
+            dates = {eligibleDates}
+            date = {selectedDate}
+            disabledDates = {upcomingDates}
+            top = {headerBarHeight + getNavHeaderHeight()}
+            onSelect = {(value) => {
+              const slate = findSlateByDate(fantasy_slates, value);
+
+              if (slate) {
+                setSelectedSlateID(slate.fantasy_slate_id);
+              }
+            }}
           />
-        ))}
-      </div>
+        ) : (
+          <div style = {{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+            {ordered.map((row) => (
+              <Button
+                key = {row.fantasy_slate_id}
+                value = {row.fantasy_slate_id}
+                title = {getSlateLabel(row)}
+                ink = {row.fantasy_slate_id !== selectedSlateID}
+                onClick = {() => setSelectedSlateID(row.fantasy_slate_id)}
+              />
+            ))}
+          </div>
+        )
+      }
 
       <Paper style = {{ padding: 16, marginBottom: 12 }}>
         <div style = {{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
