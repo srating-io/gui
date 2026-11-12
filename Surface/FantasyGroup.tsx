@@ -8,7 +8,6 @@ import NavBar from '@/components/generic/FantasyGroup/NavBar';
 import { useServerAPI } from '@/components/serverAPI';
 import { buildRankingArguments } from '@/components/generic/Ranking/shared';
 import { mintCacheGrant } from '@/components/cacheGrant.server';
-import { hasSurvivorDateBar } from '@/components/helpers/FantasySlate';
 
 import HomeClientWrapper from '@/components/generic/FantasyGroup/Contents/Home/ClientWrapper';
 import { Client as HomeClient } from '@/components/generic/FantasyGroup/Contents/Home/Client';
@@ -122,7 +121,7 @@ class FantasyGroup extends Surface {
     // The api blacklists getSeasonDates for a client caller, so the schedule is read here with the
     // server secret. Only the dates come down: the league's own window is applied in the room,
     // because a private group's start and end are stripped out of getData above.
-    const seasonDates: string[] = view === 'survivor' ? await useServerAPI({
+    const seasonDates: string[] = (view === 'survivor' ? await useServerAPI({
       class: 'game',
       function: 'getSeasonDates',
       arguments: {
@@ -131,7 +130,7 @@ class FantasyGroup extends Surface {
         season: fantasy_group.season,
       },
       cache: 60 * 60 * 12,
-    }) : [];
+    }) : []) || [];
 
     const getContents = () => {
       if (view === 'draft') {
@@ -172,7 +171,7 @@ class FantasyGroup extends Surface {
       if (view === 'survivor') {
         return (
           <SurvivorClientWrapper>
-            <SurvivorClient fantasy_group_id={fantasy_group_id} seasonDates={seasonDates || []} />
+            <SurvivorClient fantasy_group_id={fantasy_group_id} seasonDates={seasonDates} />
           </SurvivorClientWrapper>
         );
       }
@@ -185,13 +184,10 @@ class FantasyGroup extends Surface {
     };
 
 
-    // the nav bar pins under the date bar when there is one, and the content clears both
-    const hasDateBar = view === 'survivor' && hasSurvivorDateBar(fantasy_group, seasonDates);
-
     return (
       <ReduxWrapper fantasy_group = {fantasy_group}>
-        <NavBar fantasy_group_id = {fantasy_group_id} hasDateBar = {hasDateBar} />
-        <ContentsWrapper fantasy_group_id = {fantasy_group_id} hasDateBar = {hasDateBar}>
+        <NavBar fantasy_group_id = {fantasy_group_id} seasonDates = {seasonDates} />
+        <ContentsWrapper fantasy_group_id = {fantasy_group_id} seasonDates = {seasonDates}>
           {getContents()}
         </ContentsWrapper>
       </ReduxWrapper>

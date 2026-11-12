@@ -7,6 +7,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { InitialState, setDataKey } from '@/redux/features/fantasy_group-slice';
 import { getNavHeaderHeight } from './NavBar';
 import { getDateBarHeight } from '@/components/generic/DateBar';
+import { useSurvivorDateBar } from '@/components/hooks/useSurvivorDateBar';
 import { getStore } from '@/app/StoreProvider';
 import { isRequestFailure, useClientAPI } from '@/components/clientAPI';
 import { FantasyGroupLoadData, handleLoad } from './ReduxWrapper';
@@ -43,8 +44,8 @@ const Contents = ({ children, hasDateBar = false }): React.JSX.Element => {
 };
 
 const ContentsWrapper = (
-  { children, fantasy_group_id, hasDateBar = false }:
-  { children: React.JSX.Element; fantasy_group_id: string; hasDateBar?: boolean },
+  { children, fantasy_group_id, seasonDates = [] }:
+  { children: React.JSX.Element; fantasy_group_id: string; seasonDates?: string[] },
 ) => {
   const theme = useTheme();
   const dispatch = useAppDispatch();
@@ -53,6 +54,8 @@ const ContentsWrapper = (
   const session_id = useAppSelector((state) => state.userReducer.session_id);
   const fantasy_group = useAppSelector((state) => state.fantasyGroupReducer.fantasy_group);
   const loadingView = useAppSelector((state) => state.fantasyGroupReducer.loadingView);
+
+  const hasDateBar = useSurvivorDateBar(fantasy_group_id, seasonDates);
 
   const [loaded, setLoaded] = useState(false);
   const [canView, setCanView] = useState(true);

@@ -19,6 +19,7 @@ import FantasyGroupHelper from '@/components/helpers/FantasyGroup';
 import Organization from '@/components/helpers/Organization';
 import { Objector, Style } from '@esmalley/ts-utils';
 import { getDateBarHeight, getMarginTop } from '@/components/generic/DateBar';
+import { useSurvivorDateBar } from '@/components/hooks/useSurvivorDateBar';
 import { useNavigation } from '@/components/hooks/useNavigation';
 import { Button, IconButton, Menu, MenuOption, Modal, Typography, useTheme } from '@esmalley/react-material-ui';
 import { Fantasy } from '@srating-io/types';
@@ -49,8 +50,8 @@ type LockResponse = {
 
 
 const NavBar = (
-  { fantasy_group_id, hasDateBar = false }:
-  { fantasy_group_id: string; hasDateBar?: boolean },
+  { fantasy_group_id, seasonDates = [] }:
+  { fantasy_group_id: string; seasonDates?: string[] },
 ) => {
   const naviation = useNavigation();
   const theme = useTheme();
@@ -70,6 +71,10 @@ const NavBar = (
   const organization_id = useAppSelector((state) => state.organizationReducer.organization_id);
   const path = Organization.getPath({ organizations, organization_id });
   const open = Boolean(anchor);
+
+  // decided here rather than on the surface, which reaches a private group stripped of the
+  // dates the answer comes from
+  const hasDateBar = useSurvivorDateBar(fantasy_group_id, seasonDates);
 
   const fantasyHelper = new FantasyGroupHelper({ fantasy_group });
 

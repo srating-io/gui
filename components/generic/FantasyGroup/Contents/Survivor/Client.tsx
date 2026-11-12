@@ -8,8 +8,9 @@ import { useClientAPI } from '@/components/clientAPI';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { setDataKey } from '@/redux/features/fantasy_group-slice';
 import { getOwnEntries } from '@/components/helpers/FantasyGroup';
-import { findSlateByDate, getEligibleDates, getSlateEasternRange, getSlateLabel, hasSurvivorDateBar } from '@/components/helpers/FantasySlate';
+import { findSlateByDate, getEligibleDates, getSlateEasternRange, getSlateLabel } from '@/components/helpers/FantasySlate';
 import DateBar, { getMarginTop } from '@/components/generic/DateBar';
+import { useSurvivorDateBar } from '@/components/hooks/useSurvivorDateBar';
 import Slate from './Slate';
 import TeamsRemaining from './TeamsRemaining';
 
@@ -176,8 +177,8 @@ const Client = (
   const selectedRange = getSlateEasternRange(ordered.find((row) => row.fantasy_slate_id === selectedSlateID));
   const selectedDate = selectedRange ? selectedRange.first : null;
 
-  // the surface positions the nav bar off this same answer, so it has to come from one place
-  const showDateBar = hasSurvivorDateBar(fantasy_group, seasonDates);
+  // the nav bar pins off this same answer, so it has to come from one place
+  const showDateBar = useSurvivorDateBar(fantasy_group_id, seasonDates);
 
   // getMarginTop reads the window, so it is a hook -- it cannot be called from the branch below
   const dateBarTop = getMarginTop();
