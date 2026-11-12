@@ -8,6 +8,7 @@ import { useClientAPI } from '@/components/clientAPI';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { setDataKey } from '@/redux/features/fantasy_group-slice';
 import { getOwnEntries } from '@/components/helpers/FantasyGroup';
+import { getSlateLabel } from '@/components/helpers/FantasySlate';
 import Slate from './Slate';
 import TeamsRemaining from './TeamsRemaining';
 
@@ -243,7 +244,7 @@ const Client = ({ fantasy_group_id }: { fantasy_group_id: string }) => {
           <Button
             key = {row.fantasy_slate_id}
             value = {row.fantasy_slate_id}
-            title = {row.name || `Round ${row.ordinal}`}
+            title = {getSlateLabel(row)}
             ink = {row.fantasy_slate_id !== selectedSlateID}
             onClick = {() => setSelectedSlateID(row.fantasy_slate_id)}
           />
@@ -251,7 +252,7 @@ const Client = ({ fantasy_group_id }: { fantasy_group_id: string }) => {
       </div>
 
       <Paper style = {{ padding: 16, marginBottom: 12 }}>
-        <Typography type = 'h6'>{fantasy_slate ? (fantasy_slate.name || `Round ${fantasy_slate.ordinal}`) : ''}</Typography>
+        <Typography type = 'h6'>{getSlateLabel(fantasy_slate)}</Typography>
         <Typography type = 'body1' style = {{ color: theme.text.secondary }}>
           {
             fantasy_slate && !locked && fantasy_slate.lock_datetime

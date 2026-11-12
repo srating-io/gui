@@ -5,6 +5,7 @@ import { LinearProgress, Paper, Tile, Typography, useTheme } from '@esmalley/rea
 import { Fantasy, General } from '@srating-io/types';
 import { useClientAPI } from '@/components/clientAPI';
 import { useAppSelector } from '@/redux/hooks';
+import { getSlateLabel } from '@/components/helpers/FantasySlate';
 
 /** How one settled selection went, in a word. `correct` is null until the round settles. */
 const describeOutcome = (row: Fantasy.FantasySelection): string => {
@@ -112,7 +113,7 @@ const Survivor = () => {
               const chosen = row.team_id ? 'Chosen' : 'Hidden until the round closes';
 
               const primary = [
-                fantasy_slate ? (fantasy_slate.name || `Round ${fantasy_slate.ordinal}`) : null,
+                fantasy_slate ? getSlateLabel(fantasy_slate) : null,
                 team ? team.name : chosen,
               ].filter((value) => !!value).join(' · ');
 
