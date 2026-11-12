@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import RankSpan from './RankSpan';
 import {
   Table, TableColumnsType, Tbody, Td, Tfoot, Th, Thead, Tooltip, Tr, useTheme, useWindowDimensions,
@@ -51,11 +51,42 @@ const RankTable = (
   const { width } = useWindowDimensions();
   const theme = useTheme();
 
-  const sessionOrder = sessionStorage.getItem(`${sessionStorageKey}.ORDER`) || null;
-  const sessionOrderBy = sessionStorage.getItem(`${sessionStorageKey}.ORDERBY`) || null;
+  /**
+   * The stored sort is applied after mount, never during render.
+   *
+   * `sessionStorage` does not exist on the server, so reading it here threw and took the whole
+   * boundary down to client rendering. Seeding the state with it would not help either - the
+   * server has no way to know the value, so the first client render would disagree with the
+   * markup it is hydrating. The refs record whether the visitor has a stored sort, which is what
+   * the effect below needs instead of the old render-time reads.
+   */
+  const [order, setOrder] = useState<string>(defaultSortOrder);
+  const [orderBy, setOrderBy] = useState<string>(defaultSortOrderBy);
+  const hasSessionOrder = useRef(false);
+  const hasSessionOrderBy = useRef(false);
 
-  const [order, setOrder] = useState<string>(sessionOrder || defaultSortOrder);
-  const [orderBy, setOrderBy] = useState<string>(sessionOrderBy || defaultSortOrderBy);
+  useEffect(() => {
+    let storedOrder: string | null = null;
+    let storedOrderBy: string | null = null;
+
+    try {
+      storedOrder = sessionStorage.getItem(`${sessionStorageKey}.ORDER`);
+      storedOrderBy = sessionStorage.getItem(`${sessionStorageKey}.ORDERBY`);
+    } catch {
+      // a private window can refuse to read it; the defaults already apply
+    }
+
+    hasSessionOrder.current = !!storedOrder;
+    hasSessionOrderBy.current = !!storedOrderBy;
+
+    if (storedOrder) {
+      setOrder(storedOrder);
+    }
+
+    if (storedOrderBy) {
+      setOrderBy(storedOrderBy);
+    }
+  }, [sessionStorageKey]);
 
   // Sort a copy. `sort` is in place, so sorting the prop reorders whatever the caller holds -- and
   // when that is an array straight out of redux, which freezes its state, the write throws.
@@ -66,11 +97,11 @@ const RankTable = (
 
   // Update internal state whenever the prop changes
   useEffect(() => {
-    if (!sessionOrder) {
+    if (!hasSessionOrder.current) {
       setOrder(defaultSortOrder);
     }
 
-    if (!sessionOrderBy) {
+    if (!hasSessionOrderBy.current) {
       setOrderBy(defaultSortOrderBy);
     }
   }, [defaultSortOrderBy, defaultSortOrder]);
@@ -87,8 +118,16 @@ const RankTable = (
 
   const handleSort = (id: string) => {
     const isAsc = orderBy === id && order === 'asc';
-    sessionStorage.setItem(`${sessionStorageKey}.ORDER`, (isAsc ? 'desc' : 'asc'));
-    sessionStorage.setItem(`${sessionStorageKey}.ORDERBY`, id);
+
+    try {
+      sessionStorage.setItem(`${sessionStorageKey}.ORDER`, (isAsc ? 'desc' : 'asc'));
+      sessionStorage.setItem(`${sessionStorageKey}.ORDERBY`, id);
+    } catch {
+      // the sort still applies for this visit, it just will not be remembered
+    }
+
+    hasSessionOrder.current = true;
+    hasSessionOrderBy.current = true;
     setOrder(isAsc ? 'desc' : 'asc');
     setOrderBy(id);
   };
