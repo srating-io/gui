@@ -49,7 +49,15 @@ const ClientSkeleton = () => {
   );
 };
 
-const Client = ({ fantasy_group_id }: { fantasy_group_id: string }) => {
+/**
+ * `seasonDates` is every date the sport plays on this season, read on the server because the api
+ * blacklists that call for a client. The league's own run is not stored anywhere -- only two slates
+ * exist at a time -- so the stretch of days it will cover is derived from it here.
+ */
+const Client = (
+  { fantasy_group_id, seasonDates = [] }:
+  { fantasy_group_id: string; seasonDates?: string[] },
+) => {
   const theme = useTheme();
   const dispatch = useAppDispatch();
 
@@ -64,10 +72,6 @@ const Client = ({ fantasy_group_id }: { fantasy_group_id: string }) => {
   const [loadedSlates, setLoadedSlates] = useState(false);
   const [loadingSlate, setLoadingSlate] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-
-  // Every date the sport plays on this season. The league's own run is not stored anywhere -- only
-  // two slates exist at a time -- so the full stretch has to be derived from the schedule.
-  const [seasonDates, setSeasonDates] = useState<string[]>([]);
 
   // Which of this user's entries the room is acting for. An id rather than an index, so the
   // selection survives the list reordering under a broadcast.
@@ -145,40 +149,9 @@ const Client = ({ fantasy_group_id }: { fantasy_group_id: string }) => {
   // Weekly windows are not days, so only a daily league gets the date bar
   const is_daily = fantasy_group.fantasy_slate_type_terminology_id === TERMINOLOGY_ID.FANTASY_SLATE_TYPE.DAILY;
 
-  const loadSeasonDates = useCallback(() => {
-    if (
-      !is_daily ||
-      !fantasy_group.organization_id ||
-      !fantasy_group.division_id ||
-      !fantasy_group.season
-    ) {
-      return;
-    }
-
-    useClientAPI({
-      class: 'game',
-      function: 'getSeasonDates',
-      arguments: {
-        organization_id: fantasy_group.organization_id,
-        division_id: fantasy_group.division_id,
-        season: fantasy_group.season,
-      },
-    }).then((data) => {
-      if (!Array.isArray(data)) {
-        return;
-      }
-
-      setSeasonDates(data);
-    }).catch(() => {});
-  }, [is_daily, fantasy_group.organization_id, fantasy_group.division_id, fantasy_group.season, session_id]);
-
   useEffect(() => {
     loadSlates();
   }, [loadSlates]);
-
-  useEffect(() => {
-    loadSeasonDates();
-  }, [loadSeasonDates]);
 
   const ordered = Object.values(fantasy_slates || {}).sort((a, b) => +a.ordinal - +b.ordinal);
 
