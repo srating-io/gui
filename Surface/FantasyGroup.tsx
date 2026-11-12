@@ -8,6 +8,7 @@ import NavBar from '@/components/generic/FantasyGroup/NavBar';
 import { useServerAPI } from '@/components/serverAPI';
 import { buildRankingArguments } from '@/components/generic/Ranking/shared';
 import { mintCacheGrant } from '@/components/cacheGrant.server';
+import { hasSurvivorDateBar } from '@/components/helpers/FantasySlate';
 
 import HomeClientWrapper from '@/components/generic/FantasyGroup/Contents/Home/ClientWrapper';
 import { Client as HomeClient } from '@/components/generic/FantasyGroup/Contents/Home/Client';
@@ -184,10 +185,13 @@ class FantasyGroup extends Surface {
     };
 
 
+    // the nav bar pins under the date bar when there is one, and the content clears both
+    const hasDateBar = view === 'survivor' && hasSurvivorDateBar(fantasy_group, seasonDates);
+
     return (
       <ReduxWrapper fantasy_group = {fantasy_group}>
-        <NavBar />
-        <ContentsWrapper fantasy_group_id = {fantasy_group_id}>
+        <NavBar fantasy_group_id = {fantasy_group_id} hasDateBar = {hasDateBar} />
+        <ContentsWrapper fantasy_group_id = {fantasy_group_id} hasDateBar = {hasDateBar}>
           {getContents()}
         </ContentsWrapper>
       </ReduxWrapper>

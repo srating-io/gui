@@ -6,6 +6,7 @@ import { headerBarHeight } from '@/components/generic/Header';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { InitialState, setDataKey } from '@/redux/features/fantasy_group-slice';
 import { getNavHeaderHeight } from './NavBar';
+import { getDateBarHeight } from '@/components/generic/DateBar';
 import { getStore } from '@/app/StoreProvider';
 import { isRequestFailure, useClientAPI } from '@/components/clientAPI';
 import { FantasyGroupLoadData, handleLoad } from './ReduxWrapper';
@@ -21,10 +22,19 @@ import { Button, LinearProgress, Typography, useTheme } from '@esmalley/react-ma
 
 
 /**
+ * How far the content has to clear the bars above it. The nav bar is always there, and the survivor
+ * view stacks a date bar on top of it -- this is the only place that adds them up.
+ */
+const getContentOffset = (hasDateBar: boolean): number => {
+  return getNavHeaderHeight() + (hasDateBar ? getDateBarHeight() : 0);
+};
+
+
+/**
  * The main wrapper div for all the contents
  */
-const Contents = ({ children }): React.JSX.Element => {
-  const paddingTop = getNavHeaderHeight();
+const Contents = ({ children, hasDateBar = false }): React.JSX.Element => {
+  const paddingTop = getContentOffset(hasDateBar);
   return (
     <div style = {{ paddingTop, maxWidth: 1200, margin: 'auto' }}>
       {children}
@@ -33,8 +43,8 @@ const Contents = ({ children }): React.JSX.Element => {
 };
 
 const ContentsWrapper = (
-  { children, fantasy_group_id }:
-  { children: React.JSX.Element; fantasy_group_id: string },
+  { children, fantasy_group_id, hasDateBar = false }:
+  { children: React.JSX.Element; fantasy_group_id: string; hasDateBar?: boolean },
 ) => {
   const theme = useTheme();
   const dispatch = useAppDispatch();
@@ -56,7 +66,7 @@ const ContentsWrapper = (
   // one already running instead of being dropped by the guard.
   const requesting = useRef<string | null>(null);
 
-  const paddingTop = getNavHeaderHeight();
+  const paddingTop = getContentOffset(hasDateBar);
 
   const heightToRemove = paddingTop + footerNavigationHeight + headerBarHeight + 120;
 
@@ -228,7 +238,7 @@ const ContentsWrapper = (
 
   if (loadFailed) {
     return (
-      <Contents>
+      <Contents hasDateBar = {hasDateBar}>
         <Typography style = {{ textAlign: 'center' }} type = 'h5'>Could not load this league</Typography>
         <Typography style = {{ textAlign: 'center' }} type = 'body1'>Check your connection and try again.</Typography>
         <Button title = 'Retry' value = 'retry' onClick = {() => load()} containerStyle = {{ textAlign: 'center' }} />
@@ -238,7 +248,7 @@ const ContentsWrapper = (
 
   if (!canView) {
     return (
-      <Contents>
+      <Contents hasDateBar = {hasDateBar}>
         <Typography style = {{ textAlign: 'center' }} type = 'h5'>You do not have permission to view this group!</Typography>
       </Contents>
     );
@@ -249,7 +259,7 @@ const ContentsWrapper = (
   const isThisGroup = fantasy_group.fantasy_group_id === fantasy_group_id;
 
   return (
-    <Contents>
+    <Contents hasDateBar = {hasDateBar}>
       {
       loadingView || !loaded || !isThisGroup ?
         <div style = {{

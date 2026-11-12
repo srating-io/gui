@@ -7,12 +7,9 @@ import { Fantasy, General } from '@srating-io/types';
 import { useClientAPI } from '@/components/clientAPI';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { setDataKey } from '@/redux/features/fantasy_group-slice';
-import { TERMINOLOGY_ID } from '@srating-io/common';
 import { getOwnEntries } from '@/components/helpers/FantasyGroup';
-import { findSlateByDate, getEasternDate, getSlateEasternRange, getSlateLabel } from '@/components/helpers/FantasySlate';
-import DateBar, { getDateBarHeight } from '@/components/generic/DateBar';
-import { headerBarHeight } from '@/components/generic/Header';
-import { getNavHeaderHeight } from '@/components/generic/FantasyGroup/NavBar';
+import { findSlateByDate, getEligibleDates, getSlateEasternRange, getSlateLabel, hasSurvivorDateBar } from '@/components/helpers/FantasySlate';
+import DateBar, { getMarginTop } from '@/components/generic/DateBar';
 import Slate from './Slate';
 import TeamsRemaining from './TeamsRemaining';
 
@@ -146,9 +143,6 @@ const Client = (
     });
   }, [session_id]);
 
-  // Weekly windows are not days, so only a daily league gets the date bar
-  const is_daily = fantasy_group.fantasy_slate_type_terminology_id === TERMINOLOGY_ID.FANTASY_SLATE_TYPE.DAILY;
-
   useEffect(() => {
     loadSlates();
   }, [loadSlates]);
@@ -171,17 +165,9 @@ const Client = (
     return covered;
   }, [fantasy_slates]);
 
-  const opensDate = getEasternDate(fantasy_group.start_date);
-  const closesDate = getEasternDate(fantasy_group.end_date);
-
-  // every day the league will run: a day the sport plays on, inside the league's own window
   const eligibleDates = useMemo(() => {
-    if (!opensDate || !closesDate) {
-      return [];
-    }
-
-    return seasonDates.filter((row) => row >= opensDate && row <= closesDate);
-  }, [seasonDates, opensDate, closesDate]);
+    return getEligibleDates(fantasy_group, seasonDates);
+  }, [fantasy_group, seasonDates]);
 
   const upcomingDates = useMemo(() => {
     return eligibleDates.filter((row) => !coveredDates[row]);
@@ -190,7 +176,11 @@ const Client = (
   const selectedRange = getSlateEasternRange(ordered.find((row) => row.fantasy_slate_id === selectedSlateID));
   const selectedDate = selectedRange ? selectedRange.first : null;
 
-  const showDateBar = is_daily && eligibleDates.length > 0;
+  // the surface positions the nav bar off this same answer, so it has to come from one place
+  const showDateBar = hasSurvivorDateBar(fantasy_group, seasonDates);
+
+  // getMarginTop reads the window, so it is a hook -- it cannot be called from the branch below
+  const dateBarTop = getMarginTop();
 
   // Open on the one still accepting a selection, since that is the only one anyone can act on.
   // Falls back to the most recent, so a finished league still shows its last result. Only ever
@@ -297,7 +287,7 @@ const Client = (
   const total = Object.keys(fantasy_entrys || {}).length;
 
   return (
-    <div style = {{ padding: 5, maxWidth: 1200, margin: 'auto', paddingTop: showDateBar ? getDateBarHeight() + 5 : 5 }}>
+    <div style = {{ padding: 5, maxWidth: 1200, margin: 'auto' }}>
       {
         own_fantasy_entrys.length > 1 ? (
           <div style = {{ marginBottom: 12 }}>
@@ -323,7 +313,7 @@ const Client = (
             dates = {eligibleDates}
             date = {selectedDate}
             disabledDates = {upcomingDates}
-            top = {headerBarHeight + getNavHeaderHeight()}
+            top = {dateBarTop}
             onSelect = {(value) => {
               const slate = findSlateByDate(fantasy_slates, value);
 

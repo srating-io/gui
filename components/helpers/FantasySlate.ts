@@ -1,5 +1,6 @@
 import { Fantasy } from '@srating-io/types';
 import { Dates } from '@esmalley/ts-utils';
+import { TERMINOLOGY_ID } from '@srating-io/common';
 
 
 const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
@@ -94,4 +95,51 @@ export const findSlateByDate = (
   });
 
   return found || null;
+};
+
+
+/**
+ * Every day the league will run: a day the sport plays on, inside the league's own window.
+ *
+ * `seasonDates` is every date the sport has a game on, so the filter is what narrows it to the pool.
+ */
+export const getEligibleDates = (
+  fantasy_group: Fantasy.FantasyGroup | null | undefined,
+  seasonDates: string[] | null | undefined,
+): string[] => {
+  if (!fantasy_group) {
+    return [];
+  }
+
+  const opens = getEasternDate(fantasy_group.start_date);
+  const closes = getEasternDate(fantasy_group.end_date);
+
+  if (!opens || !closes) {
+    return [];
+  }
+
+  return (seasonDates || []).filter((row) => row >= opens && row <= closes);
+};
+
+
+/**
+ * Whether the survivor view shows a date bar, which is what the nav bar below it offsets by.
+ *
+ * The surface positions the bars while the view renders them, and the two answering this
+ * differently is what leaves a gap or an overlap, so neither gets to decide it alone.
+ */
+export const hasSurvivorDateBar = (
+  fantasy_group: Fantasy.FantasyGroup | null | undefined,
+  seasonDates: string[] | null | undefined,
+): boolean => {
+  if (!fantasy_group) {
+    return false;
+  }
+
+  // weekly windows are not days, so only a daily league gets the date bar
+  if (fantasy_group.fantasy_slate_type_terminology_id !== TERMINOLOGY_ID.FANTASY_SLATE_TYPE.DAILY) {
+    return false;
+  }
+
+  return getEligibleDates(fantasy_group, seasonDates).length > 0;
 };
