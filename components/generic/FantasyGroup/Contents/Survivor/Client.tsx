@@ -110,8 +110,14 @@ const Client = (
     });
   }, [fantasy_group_id, session_id, dispatch]);
 
-  const loadSlate = useCallback((fantasy_slate_id: string) => {
-    setLoadingSlate(true);
+  // `quiet` holds the grid on screen for the refresh that follows a selection. The rows come
+  // back all but identical, so swapping them for a progress bar reads as the whole page
+  // reloading -- and it unmounts the picker, discarding the click it had already drawn.
+  const loadSlate = useCallback((fantasy_slate_id: string, quiet = false) => {
+    if (!quiet) {
+      setLoadingSlate(true);
+    }
+
     loadingSlateID.current = fantasy_slate_id;
 
     useClientAPI({
@@ -128,7 +134,12 @@ const Client = (
       setLoadingSlate(false);
 
       if (!data || data.error) {
-        setSlateData(null);
+        // a quiet refresh re-reads a slate already on screen, so a failure means those rows are
+        // stale rather than wrong -- blanking them would leave a progress bar standing for good
+        if (!quiet) {
+          setSlateData(null);
+        }
+
         return;
       }
 
@@ -140,7 +151,10 @@ const Client = (
 
       loadingSlateID.current = null;
       setLoadingSlate(false);
-      setSlateData(null);
+
+      if (!quiet) {
+        setSlateData(null);
+      }
     });
   }, [session_id]);
 
@@ -226,7 +240,7 @@ const Client = (
         return;
       }
 
-      loadSlate(selectedSlateID);
+      loadSlate(selectedSlateID, true);
     }).catch(() => {
       setMessage('Could not save that selection.');
     });
@@ -251,7 +265,7 @@ const Client = (
         return;
       }
 
-      loadSlate(selectedSlateID);
+      loadSlate(selectedSlateID, true);
     }).catch(() => {
       setMessage('Could not clear that selection.');
     });
