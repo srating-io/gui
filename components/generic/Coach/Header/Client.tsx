@@ -62,14 +62,29 @@ const ClientSkeleton = () => {
   );
 };
 
-const Client = ({ organization_id, division_id, coach_statistic_rankings, season }) => {
+const Client = ({
+  organization_id, division_id, coach_statistic_rankings, season,
+  coach: serverCoach,
+  coach_team_seasons: serverCoachTeamSeasons,
+  teams: serverTeams,
+  statistic_rankings: serverStatisticRankings,
+}) => {
   const { width } = useWindowDimensions();
   const theme = useTheme();
   const navigation = useNavigation();
-  const coach: General.Coach = useAppSelector((state) => state.coachReducer.coach);
-  const coach_team_seasons = useAppSelector((state) => state.coachReducer.coach_team_seasons);
-  const teams = useAppSelector((state) => state.coachReducer.teams);
-  const statistic_rankings = useAppSelector((state) => state.coachReducer.statistic_rankings);
+  const storeCoach: General.Coach = useAppSelector((state) => state.coachReducer.coach);
+  const storeCoachTeamSeasons = useAppSelector((state) => state.coachReducer.coach_team_seasons);
+  const storeTeams = useAppSelector((state) => state.coachReducer.teams);
+  const storeStatisticRankings = useAppSelector((state) => state.coachReducer.statistic_rankings);
+
+  /**
+   * The rows the server resolved win -- see the same note on the player header. Without this the
+   * server wrote 'undefined undefined' where the coach's name goes, which is what a crawler read.
+   */
+  const coach: General.Coach = serverCoach || storeCoach;
+  const coach_team_seasons = serverCoachTeamSeasons || storeCoachTeamSeasons;
+  const teams = serverTeams || storeTeams;
+  const statistic_rankings = serverStatisticRankings || storeStatisticRankings;
   const organizations = useAppSelector((state) => state.dictionaryReducer.organization);
   const path = Organization.getPath({ organizations, organization_id });
   const numberOfTeams = Organization.getNumberOfTeams({ organization_id, division_id, season });

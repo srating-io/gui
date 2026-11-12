@@ -252,10 +252,10 @@ class Player extends Surface {
         <ReduxWrapper player = {player} player_team_season = {player_team_season} player_team_seasons = {player_team_seasons} team = {team} teams = {teams} season = {+viewSeason} view = {view} >
           <HeaderClientWrapper>
             <Suspense fallback = {<HeaderClientSkeleton />}>
-              <HeaderServer organization_id={organization_id} division_id={division_id} player_id = {player_id} team_id={team.team_id} player_team_season_id = {player_team_season_id} season = {viewSeason} />
+              <HeaderServer organization_id={organization_id} division_id={division_id} player_id = {player_id} team_id={team.team_id} player_team_season_id = {player_team_season_id} season = {viewSeason} player = {player} team = {team} teams = {teams} player_team_season = {player_team_season} player_team_seasons = {player_team_seasons} />
             </Suspense>
           </HeaderClientWrapper>
-          <NavBar />
+          <NavBar view = {view} />
           <ContentsWrapper>
             {getContent()}
           </ContentsWrapper>

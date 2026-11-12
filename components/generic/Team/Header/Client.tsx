@@ -76,6 +76,7 @@ const Client = (
     coach,
     coach_statistic_ranking,
     conference_statistic_ranking,
+    conferenceCode,
   }:
   {
     team: CustomizedTeam,
@@ -85,7 +86,11 @@ const Client = (
     seasons: number[],
     coach: General.Coach | null,
     coach_statistic_ranking: General.CoachStatisticRanking | null,
-    conference_statistic_ranking: Basketball.ConferenceStatisticRanking | Football.ConferenceStatisticRanking
+    conference_statistic_ranking: Basketball.ConferenceStatisticRanking | Football.ConferenceStatisticRanking,
+    /**
+     * Resolved by the server, which the dictionary cannot be on the first render.
+     */
+    conferenceCode?: string,
   },
 ) => {
   const breakPoint = 475;
@@ -108,7 +113,7 @@ const Client = (
 
   const teamHelper = new HelperTeam({ team });
 
-  const conferenceName = teamHelper.getConference(conferences);
+  const conferenceName = teamHelper.getConference(conferences, conferenceCode);
   const conferenceNumber = Organization.getNumberOfConferences({ organization_id, division_id, season });
 
   const bestColor = HelperGeneral.getBestColor();

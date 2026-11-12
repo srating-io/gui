@@ -21,18 +21,24 @@ const Client = (
     season,
     conference_id,
     seasons,
+    conferenceName,
   }:
   {
     conference_statistic_ranking: Basketball.ConferenceStatisticRankings | Football.ConferenceStatisticRankings,
     season: number,
     conference_id: string,
     seasons: number[],
+    /**
+     * Resolved by the server, which the dictionary cannot be on the first render.
+     */
+    conferenceName: string,
   },
 ) => {
   const dispatch = useAppDispatch();
   const conferences = useAppSelector((state) => state.dictionaryReducer.conference);
 
-  const conference = conferences[conference_id];
+  const conference = conferences && conferences[conference_id];
+  const name = (conference && conference.name) || conferenceName;
 
   const router = useRouter();
   const pathName = usePathname();
@@ -67,7 +73,7 @@ const Client = (
       <div style = {{ display: 'flex', flexWrap: 'nowrap' }}>
         <Typography style = {{ whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }} type = {(width < getBreakPoint() ? 'h6' : 'h5')}>
           <Rank conference_statistic_ranking={conference_statistic_ranking} />
-          {conference.name}
+          {name}
         </Typography>
         <OptionPicker buttonName = {season.toString()} options = {seasonOptions} selected = {[season.toString()]} actionHandler = {handleSeason} isRadio = {true} />
       </div>

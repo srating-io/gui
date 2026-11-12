@@ -34,13 +34,23 @@ const Server = async ({ organization_id, division_id, season, conference_id }) =
   });
 
 
+  // the client reads the name out of the dictionary, which has not loaded on the server render
+  const conference: General.Conference = await useServerAPI({
+    class: 'conference',
+    function: 'get',
+    arguments: {
+      conference_id,
+    },
+    cache: revalidateSeconds,
+  });
+
   const allSeasons = Object.values(team_season_conferences).map((row) => row.season);
   // gets only the unique ones
   const seasons = [...new Set(allSeasons)];
 
   return (
     <>
-      <HeaderClient conference_statistic_ranking = {conference_statistic_ranking} season = {season} conference_id = {conference_id} seasons = {seasons} />
+      <HeaderClient conference_statistic_ranking = {conference_statistic_ranking} season = {season} conference_id = {conference_id} seasons = {seasons} conferenceName = {(conference && conference.name) || ''} />
     </>
   );
 };

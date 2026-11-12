@@ -97,6 +97,18 @@ const Server = async ({ organization_id, division_id, season, team_id }) => {
     cache: revalidateSeconds,
   });
 
+  // the client reads the code out of the dictionary, which has not loaded on the server render
+  const conference: General.Conference | null = team.conference_id ?
+    await useServerAPI({
+      class: 'conference',
+      function: 'get',
+      arguments: {
+        conference_id: team.conference_id,
+      },
+      cache: revalidateSeconds,
+    }) :
+    null;
+
   const seasons = Object.values(team_season_conferences).map(((row) => row.season));
   // above should be unique already... but if not, uncomment
   // const seasons = [...new Set(allSeasons)];
@@ -112,6 +124,7 @@ const Server = async ({ organization_id, division_id, season, team_id }) => {
         coach = {coach}
         coach_statistic_ranking = {coach_statistic_ranking}
         conference_statistic_ranking = {conference_statistic_ranking}
+        conferenceCode = {(conference && conference.code) || ''}
       />
     </>
   );
