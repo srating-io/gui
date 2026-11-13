@@ -38,8 +38,12 @@ const FooterNavigation = () => {
     'ranking',
     'games',
     'projections',
-    'fantasy',
+    // 'fantasy',
   ];
+
+  if (organization_id === Organization.getCBBID()) {
+    pages.push('fantasy');
+  }
 
   if (pathName) {
     const splat = pathName.split('/');
@@ -131,12 +135,14 @@ const FooterNavigation = () => {
     },
   ];
 
-  options.splice(1, 0, {
-    value: 'fantasy',
-    label: 'Fantasy',
-    icon: <SportsEsportsIcon style = {{ fontSize: 24 }} />,
-    handler: handleFantasy,
-  });
+  if (organization_id === Organization.getCBBID()) {
+    options.splice(1, 0, {
+      value: 'fantasy',
+      label: 'Fantasy',
+      icon: <SportsEsportsIcon style = {{ fontSize: 24 }} />,
+      handler: handleFantasy,
+    });
+  }
 
   const footerStyle = {
     display: 'flex',
