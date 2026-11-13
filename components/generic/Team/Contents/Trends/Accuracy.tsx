@@ -2,6 +2,7 @@
 
 import { ChartResidual, ResidualPoint } from '@/components/generic/Chart';
 import Odds from '@/components/helpers/Odds';
+import Url from '@/components/helpers/Url';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { Dates } from '@esmalley/ts-utils';
 import { Button, LinearProgress, Typography, useTheme } from '@esmalley/react-material-ui';
@@ -22,7 +23,7 @@ import { setLoading } from '@/redux/features/loading-slice';
  * Margins are taken from this team's perspective rather than the home side's, so a mark in the
  * top right is a win the model saw coming and one in the top left is a win it did not.
  */
-const Accuracy = ({ games, team_id }: { games: Team.getScheduleResults, team_id: string }) => {
+const Accuracy = ({ games, team_id, organization_id }: { games: Team.getScheduleResults, team_id: string, organization_id: string }) => {
   const theme = useTheme();
   const [, startTransition] = useTransition();
   const dispatch = useAppDispatch();
@@ -92,15 +93,22 @@ const Accuracy = ({ games, team_id }: { games: Team.getScheduleResults, team_id:
       });
     };
 
-    const handleLiveWinRate = () => {
-      navigation.picksView({ view: 'stats' });
+    const liveAccuracyHref = Url.projections({ organization_id, view: 'stats' });
+
+    const handleLiveWinRate = (e) => {
+      e.preventDefault();
+      navigation.picks(liveAccuracyHref);
     };
 
     return (
       <div style = {{ maxWidth: 400, margin: 'auto' }}>
         <Typography type = 'h6' style = {{ marginBottom: 10 }}>Subscription required</Typography>
         <Typography type = 'body1' style = {{ marginBottom: 10 }}>Subscribe for just $5 per month to unlock subscriber tools!</Typography>
-        <Typography type = 'a' onClick = {handleLiveWinRate}>View the live accuracy</Typography>
+        {
+          liveAccuracyHref ?
+            <Typography type = 'a' href = {liveAccuracyHref} onClick = {handleLiveWinRate}>View the live accuracy</Typography> :
+            ''
+        }
         <div style = {{ textAlign: 'right' }}>
           <Button onClick={handleSubscribe} autoFocus title = {'Subscribe'} value = 'subscribe' />
         </div>

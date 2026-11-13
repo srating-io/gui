@@ -256,7 +256,7 @@ const Client = (
   return (
     <Contents>
       {subView === 'ranking' ? getRankingGraph() : ''}
-      {subView === 'accuracy' ? <Accuracy games = {schedule} team_id = {team_id} /> : ''}
+      {subView === 'accuracy' ? <Accuracy games = {schedule} team_id = {team_id} organization_id = {organization_id} /> : ''}
       {subView === 'stats' ? <StatsGraph organization_id = {organization_id} division_id = {division_id} season = {season} statistic_rankings = {statistic_rankings} games = {games} conference_statistic_rankings = {conference_statistic_rankings} league_statistic_rankings = {league_statistic_rankings} boxscores={boxscores} /> : ''}
     </Contents>
   );
