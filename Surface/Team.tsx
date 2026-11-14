@@ -213,7 +213,7 @@ class Team extends Surface {
               <HeaderServer organization_id={organization_id} division_id={division_id} season = {season} team_id = {team_id} />
             </Suspense>
           </HeaderClientWrapper>
-          <NavBar />
+          <NavBar view = {view} />
           <ContentsWrapper>
             {getContent()}
           </ContentsWrapper>

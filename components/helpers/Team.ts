@@ -58,11 +58,17 @@ class Team {
   /**
    * Get the conference name
    */
-  getConference(conferences): string {
-    let name = 'Unknown';
+  /**
+   * `fallback` is the code resolved on the server, for the render where the dictionary is still
+   * empty. Without it this answered 'Unknown', which is what a crawler then read.
+   */
+  getConference(conferences, fallback?: string): string {
+    let name = fallback || 'Unknown';
 
-    if (this.getTeam().conference_id) {
-      name = conferences[this.getTeam().conference_id].code;
+    const conference = conferences && conferences[this.getTeam().conference_id];
+
+    if (conference && conference.code) {
+      name = conference.code;
     }
 
     return name;

@@ -1,5 +1,6 @@
 import { getStore } from '@/app/StoreProvider';
 import { DEFAULT_CBB_ID, DEFAULT_CFB_ID, DEFAULT_NBA_ID, DEFAULT_ORGANIZATION_ID } from './Defaults';
+import Url from './Url';
 import { General } from '@srating-io/types';
 
 
@@ -89,15 +90,22 @@ class Organization {
   }
 
   public static getPath({ organizations, organization_id }: { organizations: General.Organizations, organization_id: string}): string {
-    if (!organizations || !Object.keys(organizations).length) {
-      return 'Loading...';
-    }
     if (!organization_id) {
       throw new Error('organization_id required');
     }
 
-    if (!(organization_id in organizations)) {
-      throw new Error('organization_id not in organizations');
+    /**
+     * The dictionary is loaded client side, so a server render has nothing to look up. This used
+     * to answer 'Loading...' there, and callers interpolate the result straight into an href -
+     * which put `/Loading.../conference/<id>` in the html a crawler reads. The segment is the
+     * organization's lowercased code either way, and `Url.getSport` derives it from the id.
+     */
+    if (
+      !organizations ||
+      !Object.keys(organizations).length ||
+      !(organization_id in organizations)
+    ) {
+      return Url.getSport({ organization_id });
     }
 
     return Organization.getPathCode(organizations[organization_id]);

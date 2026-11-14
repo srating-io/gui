@@ -15,13 +15,24 @@ const getNavHeaderHeight = () => {
 
 export { getNavHeaderHeight };
 
-const NavBar = () => {
+/**
+ * `view` is the view the server resolved from the url.
+ *
+ * The store wins once the visitor has clicked a tab, so the highlight is still instant. It is
+ * only the first render that needs the prop: `ReduxWrapper` seeds the view in an effect, so the
+ * store is empty while the server renders and the markup marked the wrong tab selected -- which
+ * React then had to throw away and regenerate.
+ */
+const NavBar = ({ view: serverView }: { view?: string }) => {
   const router = useRouter();
   const pathName = usePathname();
   const theme = useTheme();
   const dispatch = useAppDispatch();
 
-  const view = useAppSelector((state) => state.coachReducer.view) || 'trends';
+  const storeView = useAppSelector((state) => state.coachReducer.view);
+
+  // the selector is read first on purpose - putting it after `||` would call a hook conditionally
+  const view = serverView || storeView || 'trends';
   const [isPending, startTransition] = useTransition();
 
   const tabOrder = ['trends', 'seasons'];

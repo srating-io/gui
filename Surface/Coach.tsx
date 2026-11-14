@@ -207,10 +207,10 @@ class Coach extends Surface {
         <ReduxWrapper coach = {data.coach} coach_team_seasons = {data.coach_team_seasons} teams = {data.teams} statistic_rankings = {data.statistic_rankings} view = {view}>
           <HeaderClientWrapper>
             <Suspense fallback = {<HeaderClientSkeleon />}>
-              <HeaderServer organization_id={organization_id} division_id={division_id} coach_id = {coach_id} season = {season} />
+              <HeaderServer organization_id={organization_id} division_id={division_id} coach_id = {coach_id} season = {season} coach = {data.coach} coach_team_seasons = {data.coach_team_seasons} teams = {data.teams} statistic_rankings = {data.statistic_rankings} />
             </Suspense>
           </HeaderClientWrapper>
-          <NavBar />
+          <NavBar view = {view} />
           <ContentsWrapper>
             {getContent()}
           </ContentsWrapper>

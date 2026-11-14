@@ -87,7 +87,12 @@ const Client = (
     player_statistic_ranking,
     statistic_ranking,
     season,
-    player_team_season_id
+    player_team_season_id,
+    player: serverPlayer,
+    team: serverTeam,
+    teams: serverTeams,
+    player_team_season: serverPlayerTeamSeason,
+    player_team_seasons: serverPlayerTeamSeasons,
   }:
   {
     organization_id: string,
@@ -96,15 +101,34 @@ const Client = (
     statistic_ranking: Basketball.StatisticRanking | Football.StatisticRanking,
     season: number,
     player_team_season_id: string,
+    player?: General.Player | null,
+    team?: General.Team | null,
+    teams?: General.Teams | null,
+    player_team_season?: General.PlayerTeamSeason | null,
+    player_team_seasons?: General.PlayerTeamSeasons | null,
   },
 ) => {
   const navigation = useNavigation();
   const theme = useTheme();
-  const player: General.Player = useAppSelector((state) => state.playerReducer.player);
-  const team: General.Team | null = useAppSelector((state) => state.playerReducer.team);
-  const player_team_seasons: General.PlayerTeamSeasons = useAppSelector((state) => state.playerReducer.player_team_seasons);
-  const player_team_season = useAppSelector((state) => state.playerReducer.player_team_season);
-  const teams: General.Teams = useAppSelector((state) => state.playerReducer.teams);
+  const storePlayer: General.Player = useAppSelector((state) => state.playerReducer.player);
+  const storeTeam: General.Team | null = useAppSelector((state) => state.playerReducer.team);
+  const storePlayerTeamSeasons: General.PlayerTeamSeasons = useAppSelector((state) => state.playerReducer.player_team_seasons);
+  const storePlayerTeamSeason = useAppSelector((state) => state.playerReducer.player_team_season);
+  const storeTeams: General.Teams = useAppSelector((state) => state.playerReducer.teams);
+
+  /**
+   * The rows the server resolved win.
+   *
+   * `ReduxWrapper` seeds these in an effect, so during the server render the store still holds
+   * empty objects and this header wrote 'undefined undefined' where the player's name goes --
+   * which is what a crawler read. The team header already takes its row as a prop for this
+   * reason. The store stays as the fallback for anything that renders this without the rows.
+   */
+  const player: General.Player = serverPlayer || storePlayer;
+  const team: General.Team | null = serverTeam || storeTeam;
+  const player_team_seasons: General.PlayerTeamSeasons = serverPlayerTeamSeasons || storePlayerTeamSeasons;
+  const player_team_season = serverPlayerTeamSeason || storePlayerTeamSeason;
+  const teams: General.Teams = serverTeams || storeTeams;
   const organizations = useAppSelector((state) => state.dictionaryReducer.organization);
   const path = Organization.getPath({ organizations, organization_id });
 

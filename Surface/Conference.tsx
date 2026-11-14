@@ -226,7 +226,7 @@ class Conference extends Surface {
           <HeaderClientWrapper>
             <HeaderServer organization_id={organization_id} division_id={division_id} conference_id = {conference_id} season = {season} />
           </HeaderClientWrapper>
-          <NavBar />
+          <NavBar view = {view} />
           {/* <SubNavBar view = {view} /> */}
           <ContentsWrapper>
             {getContent()}

@@ -13,10 +13,16 @@ import {
 
 
 class Initializer {
-  public static getInitialOrganizationID() {
-    if (typeof window !== 'undefined') {
-      const pathName = window.location.pathname;
-      const splat = pathName.split('/');
+  /**
+   * `window` is undefined on the server, so anything rendering on both sides of hydration has
+   * to pass the path in. Reading `window` here returns the default sport on the server and the
+   * real one on the client, which seeds a store the client then disagrees with.
+   */
+  public static getInitialOrganizationID(pathName?: string) {
+    const path = pathName ?? (typeof window !== 'undefined' ? window.location.pathname : undefined);
+
+    if (path) {
+      const splat = path.split('/');
       if (splat.length > 1) {
         if (splat[1] === 'cfb') {
           return DEFAULT_CFB_ID;
@@ -35,8 +41,8 @@ class Initializer {
     return DEFAULT_ORGANIZATION_ID;
   }
 
-  public static getInitialDivisionID() {
-    const organization_id = Initializer.getInitialOrganizationID();
+  public static getInitialDivisionID(pathName?: string) {
+    const organization_id = Initializer.getInitialOrganizationID(pathName);
 
     // default to FBS
     if (organization_id === DEFAULT_CFB_ID) {
@@ -54,8 +60,8 @@ class Initializer {
     return DEFAULT_D1_DIVISION_ID;
   }
 
-  public static getInitialSeason() {
-    const organization_id = Initializer.getInitialOrganizationID();
+  public static getInitialSeason(pathName?: string) {
+    const organization_id = Initializer.getInitialOrganizationID(pathName);
 
     // default to FBS
     if (organization_id === DEFAULT_CFB_ID) {

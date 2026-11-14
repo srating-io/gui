@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 
@@ -26,15 +26,7 @@ const Template = ({ children }: { children: React.ReactNode }) => {
 
   const { width } = useWindowDimensions();
 
-  /**
-   * TODO this fixes some hydration issues...but shouldnt be needed...
-   * I think this causes flashing too
-   */
-  const [isMounted, setIsMounted] = useState(false);
-
   useEffect(() => {
-    setIsMounted(true);
-
     // the cookie is all the server render had to go on. A first visit has none, and anyone who
     // picked a mode before it was kept in one has it only in localStorage, so those are applied
     // here - after hydration, where changing the mode is a re-render rather than a mismatch
@@ -160,23 +152,19 @@ const Template = ({ children }: { children: React.ReactNode }) => {
   return (
     <ThemeProvider theme={themeMode}>
       <UXBaseline />
-      {
-      isMounted ?
-        <ScrollProvider>
-          <ScrollContainer>
-            <div>
-              <Toast style = {{ bottom: 64 }} />
-              <Spinner />
-              <Header />
-                <div style = {{ padding: `${paddingTop} 0px 56px 0px` }}>
-                  {children}
-                </div>
-              <FooterNavigation />
-            </div>
-          </ScrollContainer>
-        </ScrollProvider>
-        : ''
-      }
+      <ScrollProvider>
+        <ScrollContainer>
+          <div>
+            <Toast style = {{ bottom: 64 }} />
+            <Spinner />
+            <Header />
+              <div style = {{ padding: `${paddingTop} 0px 56px 0px` }}>
+                {children}
+              </div>
+            <FooterNavigation />
+          </div>
+        </ScrollContainer>
+      </ScrollProvider>
     </ThemeProvider>
   );
 };

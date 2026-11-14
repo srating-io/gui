@@ -4,7 +4,11 @@ import { Client } from '@/components/generic/Player/Header/Client';
 import { useServerAPI } from '@/components/serverAPI';
 import { Basketball, Football } from '@srating-io/types';
 
-const Server = async ({ organization_id, division_id, season, player_id, team_id, player_team_season_id }) => {
+const Server = async ({
+  organization_id, division_id, season, player_id, team_id, player_team_season_id,
+  // resolved by the surface, and forwarded so the client does not have to wait for the store
+  player, team, teams, player_team_season, player_team_seasons,
+}) => {
   const revalidateSeconds = 60 * 60 * 6; // 6 hours
 
   let player_statistic_ranking = await useServerAPI({
@@ -70,7 +74,7 @@ const Server = async ({ organization_id, division_id, season, player_id, team_id
 
   return (
     <>
-      <Client organization_id={organization_id} division_id={division_id} player_statistic_ranking = {player_statistic_ranking} statistic_ranking = {statistic_ranking} season = {season} player_team_season_id = {player_team_season_id} />
+      <Client organization_id={organization_id} division_id={division_id} player_statistic_ranking = {player_statistic_ranking} statistic_ranking = {statistic_ranking} season = {season} player_team_season_id = {player_team_season_id} player = {player} team = {team} teams = {teams} player_team_season = {player_team_season} player_team_seasons = {player_team_seasons} />
     </>
   );
 };
