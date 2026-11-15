@@ -69,7 +69,6 @@ const Client = (
   const [slateData, setSlateData] = useState<SlateData | null>(null);
   const [loadedSlates, setLoadedSlates] = useState(false);
   const [loadingSlate, setLoadingSlate] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
 
   // Which of this user's entries the room is acting for. An id rather than an index, so the
   // selection survives the list reordering under a broadcast.
@@ -110,14 +109,8 @@ const Client = (
     });
   }, [fantasy_group_id, session_id, dispatch]);
 
-  // `quiet` holds the grid on screen for the refresh that follows a selection. The rows come
-  // back all but identical, so swapping them for a progress bar reads as the whole page
-  // reloading -- and it unmounts the picker, discarding the click it had already drawn.
-  const loadSlate = useCallback((fantasy_slate_id: string, quiet = false) => {
-    if (!quiet) {
-      setLoadingSlate(true);
-    }
-
+  const loadSlate = useCallback((fantasy_slate_id: string) => {
+    setLoadingSlate(true);
     loadingSlateID.current = fantasy_slate_id;
 
     useClientAPI({
@@ -134,12 +127,7 @@ const Client = (
       setLoadingSlate(false);
 
       if (!data || data.error) {
-        // a quiet refresh re-reads a slate already on screen, so a failure means those rows are
-        // stale rather than wrong -- blanking them would leave a progress bar standing for good
-        if (!quiet) {
-          setSlateData(null);
-        }
-
+        setSlateData(null);
         return;
       }
 
@@ -151,10 +139,7 @@ const Client = (
 
       loadingSlateID.current = null;
       setLoadingSlate(false);
-
-      if (!quiet) {
-        setSlateData(null);
-      }
+      setSlateData(null);
     });
   }, [session_id]);
 
@@ -217,61 +202,6 @@ const Client = (
     }
   }, [selectedSlateID, loadSlate]);
 
-  const handleChoose = (game_id: string, team_id: string) => {
-    if (!fantasy_entry || !selectedSlateID) {
-      return;
-    }
-
-    setMessage(null);
-
-    useClientAPI({
-      class: 'fantasy_selection',
-      function: 'select',
-      arguments: {
-        fantasy_slate_id: selectedSlateID,
-        fantasy_entry_id: fantasy_entry.fantasy_entry_id,
-        game_id,
-        team_id,
-      },
-    }).then((data) => {
-      if (!data || data.error) {
-        // the api is the authority on whether a team is spent or a slate is closed, so show what
-        // it said rather than guessing in here
-        setMessage(data && data.error ? data.error : 'Could not save that selection.');
-        return;
-      }
-
-      loadSlate(selectedSlateID, true);
-    }).catch(() => {
-      setMessage('Could not save that selection.');
-    });
-  };
-
-  // Soft deletes the row rather than blanking it, which is what releases the team for another
-  // round. The api re-checks both the lock flag and the deadline, so there is no need to here.
-  const handleClear = (fantasy_selection_id: string) => {
-    if (!selectedSlateID) {
-      return;
-    }
-
-    setMessage(null);
-
-    useClientAPI({
-      class: 'fantasy_selection',
-      function: 'clear',
-      arguments: { fantasy_selection_id },
-    }).then((data) => {
-      if (!data || data.error) {
-        setMessage(data && data.error ? data.error : 'Could not clear that selection.');
-        return;
-      }
-
-      loadSlate(selectedSlateID, true);
-    }).catch(() => {
-      setMessage('Could not clear that selection.');
-    });
-  };
-
   if (!loadedSlates) {
     return <ClientSkeleton />;
   }
@@ -292,7 +222,7 @@ const Client = (
   const fantasy_slate = slateData ? slateData.fantasy_slate : null;
   const used_team_ids = (fantasy_entry && slateData && slateData.fantasy_entry_id_x_used_team_ids[fantasy_entry.fantasy_entry_id]) || [];
 
-  // this entry's selection on the open slate, which is also what the buttons render as chosen
+  // this entry's selection on the open slate, which is also what the picker renders as chosen
   const own_selection = fantasy_entry && slateData
     ? Object.values(slateData.fantasy_selections).find((row) => row.fantasy_entry_id === fantasy_entry.fantasy_entry_id)
     : null;
@@ -355,16 +285,7 @@ const Client = (
       }
 
       <Paper style = {{ padding: 16, marginBottom: 12 }}>
-        <div style = {{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-          <Typography type = 'h6'>{getSlateLabel(fantasy_slate)}</Typography>
-          <Button
-            value = 'clear-pick'
-            title = 'Clear pick'
-            ink
-            disabled = {!own_selection || locked || !fantasy_entry || +fantasy_entry.eliminated === 1}
-            onClick = {() => own_selection && handleClear(own_selection.fantasy_selection_id)}
-          />
-        </div>
+        <Typography type = 'h6'>{getSlateLabel(fantasy_slate)}</Typography>
         <Typography type = 'body1' style = {{ color: theme.text.secondary }}>
           {
             fantasy_slate && !locked && fantasy_slate.lock_datetime
@@ -381,12 +302,6 @@ const Client = (
         </Typography>
       </Paper>
 
-      {message ? (
-        <Paper style = {{ padding: 16, marginBottom: 12 }}>
-          <Typography type = 'body1' style = {{ color: theme.error ? theme.error.main : undefined }}>{message}</Typography>
-        </Paper>
-      ) : ''}
-
       {
         loadingSlate || !slateData
           ? <ClientSkeleton />
@@ -399,7 +314,6 @@ const Client = (
                 used_team_ids = {used_team_ids}
                 selected_team_id = {own_selection ? own_selection.team_id : null}
                 locked = {locked || !fantasy_entry || +fantasy_entry.eliminated === 1}
-                onChoose = {handleChoose}
               />
               <TeamsRemaining
                 teams = {slateData.teams}

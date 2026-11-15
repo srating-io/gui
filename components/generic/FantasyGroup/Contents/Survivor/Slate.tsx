@@ -1,11 +1,15 @@
 'use client';
 
-import { Inputs, MultiPicker, MultiPickerOption, Paper, Tile, Typography, useTheme } from '@esmalley/react-material-ui';
+import { Columns, Paper, Tile, Typography, useTheme } from '@esmalley/react-material-ui';
 import { General } from '@srating-io/types';
 import { Dates } from '@esmalley/ts-utils';
 
 /**
  * One slate's games, as the things an entry chooses between.
+ *
+ * Display only for now. Three click paths (Button, ButtonSwitch, MultiPicker) each misfired, so the
+ * selection wiring was torn out to be rebuilt from scratch; the tiles still show what is chosen,
+ * spent or closed, which is what the rebuild has to preserve.
  *
  * The number beside each team is a win probability or nothing at all. It used to fall back to the
  * elo rating, which is never withheld -- but a bare `1494` landed in the same slot a subscriber
@@ -36,7 +40,6 @@ const Slate = (
     used_team_ids,
     selected_team_id,
     locked,
-    onChoose,
   }:
   {
     games: General.Games;
@@ -45,13 +48,9 @@ const Slate = (
     used_team_ids: string[];
     selected_team_id: string | null;
     locked: boolean;
-    onChoose: (game_id: string, team_id: string) => void;
   },
 ) => {
   const theme = useTheme();
-
-  // one handler for the whole slate, the same way the create wizard shares one across its step
-  const inputHandler = new Inputs();
 
   const sorted = Object.values(games).sort((a, b) => +a.start_timestamp - +b.start_timestamp);
 
@@ -76,12 +75,35 @@ const Slate = (
       { team: home, team_id: game.home_team_id, isHome: true },
     ];
 
-    // a spent team cannot be chosen again, so its option greys out while its opponent stays live
-    const options: MultiPickerOption[] = sides.map(({ team, team_id, isHome }) => ({
-      label: `${team ? team.code || team.name : 'Team'} ${formatOutlook(outlook, isHome)}`.trim(),
-      value: team_id,
-      disabled: used_team_ids.includes(team_id),
-    }));
+    // a spent team greys out while its opponent stays live; a chosen one keeps its fill and only
+    // dims on a closed slate, so the selection stays legible
+    const options = sides.map(({ team, team_id, isHome }) => {
+      const chosen = selected_team_id === team_id;
+      const unavailable = locked || started || used_team_ids.includes(team_id);
+
+      let fill: React.CSSProperties = {};
+
+      if (chosen) {
+        fill = { backgroundColor: theme.blue[500] };
+      } else if (unavailable) {
+        fill = { backgroundColor: theme.action.disabledBackground, color: theme.text.disabled };
+      }
+
+      const optionStyle: React.CSSProperties = {
+        textAlign: 'center',
+        padding: '8px 16px',
+        opacity: unavailable ? 0.6 : 1,
+        ...fill,
+      };
+
+      return (
+        <Paper key = {team_id} style = {optionStyle}>
+          <Typography type = 'body1' style = {{ color: 'inherit' }}>
+            {`${team ? team.code || team.name : 'Team'} ${formatOutlook(outlook, isHome)}`.trim()}
+          </Typography>
+        </Paper>
+      );
+    });
 
     const usedNote = sides
       .filter(({ team_id }) => used_team_ids.includes(team_id))
@@ -100,21 +122,9 @@ const Slate = (
           primary = {`${away ? away.name : 'Away'} at ${home ? home.name : 'Home'}`}
           secondary = {secondary}
         />
-        <MultiPicker
-          inputHandler = {inputHandler}
-          options = {options}
-          selected = {selected_team_id ? [selected_team_id] : []}
-          isRadio
-          numberOfColumns = {2}
-          disabled = {locked || started}
-          onChange = {(value) => {
-            const team_id = Array.isArray(value) ? value[0] : value;
-
-            if (team_id) {
-              onChoose(game.game_id, String(team_id));
-            }
-          }}
-        />
+        <Columns numberOfColumns = {2} style = {{ gap: 10 }}>
+          {options}
+        </Columns>
       </div>
     );
   });
