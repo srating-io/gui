@@ -5,6 +5,7 @@ import { LinearProgress, Paper, Tile, Typography, useTheme } from '@esmalley/rea
 import { Fantasy, General } from '@srating-io/types';
 import { useClientAPI } from '@/components/clientAPI';
 import { useAppSelector } from '@/redux/hooks';
+import { getSlateLabel } from '@/components/helpers/FantasySlate';
 
 /** How one settled selection went, in a word. `correct` is null until the round settles. */
 const describeOutcome = (row: Fantasy.FantasySelection): string => {
@@ -77,11 +78,17 @@ const Survivor = () => {
     return <LinearProgress color = {theme.secondary.main} containerStyle={{ width: '50%', margin: 'auto' }} />;
   }
 
+  // An api older than this gui returns the selections without the slates or the teams they refer
+  // to, and indexing those threw before anything rendered. The two are deployed separately, so a
+  // missing key degrades the copy below rather than taking the whole page down.
+  const fantasy_slates = (data && data.fantasy_slates) || {};
+  const teams = (data && data.teams) || {};
+
   // In the order they were played. The api returns them keyed by id, which is no order at all.
   const selections = data
-    ? Object.values(data.fantasy_selections).sort((a, b) => {
-      const first = data.fantasy_slates[a.fantasy_slate_id];
-      const second = data.fantasy_slates[b.fantasy_slate_id];
+    ? Object.values(data.fantasy_selections || {}).sort((a, b) => {
+      const first = fantasy_slates[a.fantasy_slate_id];
+      const second = fantasy_slates[b.fantasy_slate_id];
 
       return (first ? +first.ordinal : 0) - (second ? +second.ordinal : 0);
     })
@@ -103,8 +110,8 @@ const Survivor = () => {
           selections.length
             ? selections.map((row) => {
               const outcome = describeOutcome(row);
-              const team = row.team_id && data ? data.teams[row.team_id] : null;
-              const fantasy_slate = data ? data.fantasy_slates[row.fantasy_slate_id] : null;
+              const team = row.team_id ? teams[row.team_id] : null;
+              const fantasy_slate = fantasy_slates[row.fantasy_slate_id] || null;
 
               // A rival's live selection comes back with its team nulled, which is not the same
               // thing as never having chosen -- say so rather than printing the id, which is what
@@ -112,7 +119,7 @@ const Survivor = () => {
               const chosen = row.team_id ? 'Chosen' : 'Hidden until the round closes';
 
               const primary = [
-                fantasy_slate ? (fantasy_slate.name || `Round ${fantasy_slate.ordinal}`) : null,
+                fantasy_slate ? getSlateLabel(fantasy_slate) : null,
                 team ? team.name : chosen,
               ].filter((value) => !!value).join(' · ');
 

@@ -43,7 +43,9 @@ export { getMarginTop, getBreakPoint, getDateBarHeight };
 export type DateBarMode = 'day' | 'week';
 
 const DateBar = (
-  { dates, date, mode = 'day', weeks = [], showModeToggle = false }:
+  {
+    dates, date, mode = 'day', weeks = [], showModeToggle = false, onSelect, disabledDates = [], top,
+  }:
   {
     dates: string[];
     date: string | null;
@@ -55,6 +57,20 @@ const DateBar = (
      * reads a store seeded from window.location, so during ssr it claims cfb for every sport.
      */
     showModeToggle?: boolean;
+    /**
+     * Takes the click instead of the `?date=` param, for a surface that owns its own selection.
+     * Survivor needs this: it keys off a slate id, and the games slice is not its store.
+     */
+    onSelect?: (date: string) => void;
+    /** Shown but not selectable, for a day that is in range yet has nothing behind it yet */
+    disabledDates?: string[];
+    /**
+     * An explicit viewport offset. Left out, the bar fixes itself at wherever it happens to sit in
+     * the flow, which only lands right when it is the first thing on the surface -- inside a
+     * centered content column it started at the column's edge and ran off the right of the screen.
+     * Setting it pins the bar to the left of the viewport too, so `width: 100%` spans the screen.
+     */
+    top?: number;
   },
 ) => {
   const theme = useTheme();
@@ -80,12 +96,23 @@ const DateBar = (
     tabDatesObject[dates[i]] = true;
   }
 
+  const disabledDatesObject = {};
+
+  for (let i = 0; i < disabledDates.length; i++) {
+    disabledDatesObject[disabledDates[i]] = true;
+  }
+
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [calAncor, setCalAncor] = useState(null);
 
   const updateDate = (value: string) => {
     if (scrollRef && scrollRef.current) {
       scrollRef.current.scrollTop = 0;
+    }
+
+    if (onSelect) {
+      onSelect(value);
+      return;
     }
 
     if (searchParams?.get('date') !== value) {
@@ -144,7 +171,7 @@ const DateBar = (
 
   // todo make the inner an a tag with the link
   const buildPill = (
-    { key, label, selected, tooltip, onClick, fixedWidth }:
+    { key, label, selected, tooltip, onClick, fixedWidth, disabled = false }:
     {
       key: string;
       label: string;
@@ -152,6 +179,7 @@ const DateBar = (
       tooltip: string | null;
       onClick: () => void;
       fixedWidth: boolean;
+      disabled?: boolean;
     },
   ) => {
     // day labels are uniform, week labels are not: 'Champ Wk' does not fit a 60px box
@@ -162,13 +190,14 @@ const DateBar = (
     const pillStyle = {
       fontSize: '12px',
       color: selected ? selectedTextColor : Color.getTextColor('#ffffff', backgroundColor),
-      cursor: 'pointer',
+      cursor: disabled ? 'default' : 'pointer',
+      opacity: disabled ? 0.45 : 1,
       height: '100%',
       verticalAlign: 'middle',
       display: 'flex',
       alignItems: 'center',
       borderBottom: `${borderBottomSize} ${selected ? selectedColor : backgroundColor} solid`,
-      '&:hover': {
+      '&:hover': disabled ? {} : {
         backgroundColor: Color.alphaColor('#fff', 0.25),
       },
       ...widthStyle,
@@ -179,7 +208,7 @@ const DateBar = (
         ref = {selected ? (scrollRefDate as RefObject<HTMLDivElement>) : null}
         key = {key}
         className = {Style.getStyleClassName(pillStyle)}
-        onClick = {onClick}
+        onClick = {disabled ? undefined : onClick}
       >
         <div style = {{ width: '100%', whiteSpace: 'nowrap' }}>{label}</div>
       </div>
@@ -234,6 +263,7 @@ const DateBar = (
         tooltip: null,
         onClick: () => { updateDate(dates[i]); },
         fixedWidth: true,
+        disabled: !!disabledDatesObject[dates[i]],
       }));
     }
   }
@@ -282,7 +312,16 @@ const DateBar = (
 
 
   return (
-    <div style = {({ display: 'flex', position: 'fixed', width: '100%', zIndex: 1100, height, backgroundColor, color: Color.getTextColor('#ffffff', backgroundColor) })}>
+    <div style = {({
+      display: 'flex',
+      position: 'fixed',
+      width: '100%',
+      zIndex: 1100,
+      height,
+      backgroundColor,
+      color: Color.getTextColor('#ffffff', backgroundColor),
+      ...(top === undefined ? {} : { top, left: 0 }),
+    })}>
       <div style = {{ display: 'inline-flex' }}>
         {modeToggle}
         <IconButton onClick={scrollLeft} value = 'scroll-left' icon = {<KeyboardArrowLeftIcon style = {iconStyle} />} />
@@ -297,6 +336,9 @@ const DateBar = (
         height: '100%',
         textAlign: 'center',
         alignItems: 'center',
+        // `safe` so a strip wider than the bar still starts at the first pill rather than
+        // centering its overflow out of reach
+        justifyContent: 'safe center',
       }}>
         {dateContainers}
       </div>
@@ -313,7 +355,9 @@ const DateBar = (
             maxDate = {dates[dates.length - 1]}
             value = {date}
             shouldDisableDate = {(d: Date) => {
-              if (!(Dates.format(Dates.parse(d), 'Y-m-d') in tabDatesObject)) {
+              const value = Dates.format(Dates.parse(d), 'Y-m-d');
+
+              if (!(value in tabDatesObject) || value in disabledDatesObject) {
                 return true;
               }
               return false;

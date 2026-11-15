@@ -21,7 +21,8 @@ import { Button, LinearProgress, Typography, useTheme } from '@esmalley/react-ma
 
 
 /**
- * The main wrapper div for all the contents
+ * The main wrapper div for all the contents. Clears the nav bar only: a view that hangs its own
+ * bar under it, like survivor's date bar, pads for that itself.
  */
 const Contents = ({ children }): React.JSX.Element => {
   const paddingTop = getNavHeaderHeight();
@@ -56,9 +57,7 @@ const ContentsWrapper = (
   // one already running instead of being dropped by the guard.
   const requesting = useRef<string | null>(null);
 
-  const paddingTop = getNavHeaderHeight();
-
-  const heightToRemove = paddingTop + footerNavigationHeight + headerBarHeight + 120;
+  const heightToRemove = getNavHeaderHeight() + footerNavigationHeight + headerBarHeight + 120;
 
   // the id comes from the route, not the slice - on a back navigation the slice can still hold the
   // league that was open before, and loading that one is how its data ended up under this url

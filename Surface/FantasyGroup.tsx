@@ -118,6 +118,20 @@ class FantasyGroup extends Surface {
       return notFound();
     }
 
+    // The api blacklists getSeasonDates for a client caller, so the schedule is read here with the
+    // server secret. Only the dates come down: the league's own window is applied in the room,
+    // because a private group's start and end are stripped out of getData above.
+    const seasonDates: string[] = (view === 'survivor' ? await useServerAPI({
+      class: 'game',
+      function: 'getSeasonDates',
+      arguments: {
+        organization_id: fantasy_group.organization_id,
+        division_id: fantasy_group.division_id,
+        season: fantasy_group.season,
+      },
+      cache: 60 * 60 * 12,
+    }) : []) || [];
+
     const getContents = () => {
       if (view === 'draft') {
         // The draft board's player ranking is loaded in the browser, so its ttl is signed here
@@ -157,7 +171,7 @@ class FantasyGroup extends Surface {
       if (view === 'survivor') {
         return (
           <SurvivorClientWrapper>
-            <SurvivorClient fantasy_group_id={fantasy_group_id} />
+            <SurvivorClient fantasy_group_id={fantasy_group_id} seasonDates={seasonDates} />
           </SurvivorClientWrapper>
         );
       }
@@ -172,7 +186,7 @@ class FantasyGroup extends Surface {
 
     return (
       <ReduxWrapper fantasy_group = {fantasy_group}>
-        <NavBar />
+        <NavBar fantasy_group_id = {fantasy_group_id} />
         <ContentsWrapper fantasy_group_id = {fantasy_group_id}>
           {getContents()}
         </ContentsWrapper>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button, Columns, LinearProgress, Paper, Typography, useTheme } from '@esmalley/react-material-ui';
 import { Dates } from '@esmalley/ts-utils';
 import { Fantasy, General } from '@srating-io/types';
@@ -8,6 +8,9 @@ import { useClientAPI } from '@/components/clientAPI';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { setDataKey } from '@/redux/features/fantasy_group-slice';
 import { getOwnEntries } from '@/components/helpers/FantasyGroup';
+import { findSlateByDate, getEligibleDates, getSlateEasternRange, getSlateLabel, hasSurvivorDateBar } from '@/components/helpers/FantasySlate';
+import DateBar, { getDateBarHeight, getMarginTop } from '@/components/generic/DateBar';
+import { getNavHeaderHeight } from '@/components/generic/FantasyGroup/NavBar';
 import Slate from './Slate';
 import TeamsRemaining from './TeamsRemaining';
 
@@ -44,12 +47,21 @@ const ClientSkeleton = () => {
   );
 };
 
-const Client = ({ fantasy_group_id }: { fantasy_group_id: string }) => {
+/**
+ * `seasonDates` is every date the sport plays on this season, read on the server because the api
+ * blacklists that call for a client. The league's own run is not stored anywhere -- only two slates
+ * exist at a time -- so the stretch of days it will cover is derived from it here.
+ */
+const Client = (
+  { fantasy_group_id, seasonDates = [] }:
+  { fantasy_group_id: string; seasonDates?: string[] },
+) => {
   const theme = useTheme();
   const dispatch = useAppDispatch();
 
   const fantasy_entrys = useAppSelector((state) => state.fantasyGroupReducer.fantasy_entrys);
   const fantasy_slates = useAppSelector((state) => state.fantasyGroupReducer.fantasy_slates);
+  const fantasy_group = useAppSelector((state) => state.fantasyGroupReducer.fantasy_group);
   const user_id = useAppSelector((state) => state.userReducer.user.user_id);
   const session_id = useAppSelector((state) => state.userReducer.session_id);
 
@@ -57,7 +69,6 @@ const Client = ({ fantasy_group_id }: { fantasy_group_id: string }) => {
   const [slateData, setSlateData] = useState<SlateData | null>(null);
   const [loadedSlates, setLoadedSlates] = useState(false);
   const [loadingSlate, setLoadingSlate] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
 
   // Which of this user's entries the room is acting for. An id rather than an index, so the
   // selection survives the list reordering under a broadcast.
@@ -138,6 +149,40 @@ const Client = ({ fantasy_group_id }: { fantasy_group_id: string }) => {
 
   const ordered = Object.values(fantasy_slates || {}).sort((a, b) => +a.ordinal - +b.ordinal);
 
+  // Which days already have a round behind them. Built once per slate rather than range tested per
+  // day, because the eastern date costs an Intl read and a season is ~160 of each.
+  const coveredDates = useMemo(() => {
+    const covered: {[date: string]: boolean} = {};
+
+    for (const row of Object.values(fantasy_slates || {})) {
+      const range = getSlateEasternRange(row);
+
+      if (range) {
+        covered[range.first] = true;
+      }
+    }
+
+    return covered;
+  }, [fantasy_slates]);
+
+  const eligibleDates = useMemo(() => {
+    return getEligibleDates(fantasy_group, seasonDates);
+  }, [fantasy_group, seasonDates]);
+
+  const upcomingDates = useMemo(() => {
+    return eligibleDates.filter((row) => !coveredDates[row]);
+  }, [eligibleDates, coveredDates]);
+
+  const selectedRange = getSlateEasternRange(ordered.find((row) => row.fantasy_slate_id === selectedSlateID));
+  const selectedDate = selectedRange ? selectedRange.first : null;
+
+  // ContentsWrapper holds this view back until the slice holds this league, so the group is ours
+  const showDateBar = hasSurvivorDateBar(fantasy_group, seasonDates);
+
+  // Hangs under the group nav bar, which sits at the header margin. getMarginTop reads the window,
+  // so it is a hook -- it cannot be called from the branch below.
+  const dateBarTop = getMarginTop() + getNavHeaderHeight();
+
   // Open on the one still accepting a selection, since that is the only one anyone can act on.
   // Falls back to the most recent, so a finished league still shows its last result. Only ever
   // chooses when nothing is chosen -- a broadcast must not move the strip under someone.
@@ -156,36 +201,6 @@ const Client = ({ fantasy_group_id }: { fantasy_group_id: string }) => {
       loadSlate(selectedSlateID);
     }
   }, [selectedSlateID, loadSlate]);
-
-  const handleChoose = (game_id: string, team_id: string) => {
-    if (!fantasy_entry || !selectedSlateID) {
-      return;
-    }
-
-    setMessage(null);
-
-    useClientAPI({
-      class: 'fantasy_selection',
-      function: 'select',
-      arguments: {
-        fantasy_slate_id: selectedSlateID,
-        fantasy_entry_id: fantasy_entry.fantasy_entry_id,
-        game_id,
-        team_id,
-      },
-    }).then((data) => {
-      if (!data || data.error) {
-        // the api is the authority on whether a team is spent or a slate is closed, so show what
-        // it said rather than guessing in here
-        setMessage(data && data.error ? data.error : 'Could not save that selection.');
-        return;
-      }
-
-      loadSlate(selectedSlateID);
-    }).catch(() => {
-      setMessage('Could not save that selection.');
-    });
-  };
 
   if (!loadedSlates) {
     return <ClientSkeleton />;
@@ -207,18 +222,73 @@ const Client = ({ fantasy_group_id }: { fantasy_group_id: string }) => {
   const fantasy_slate = slateData ? slateData.fantasy_slate : null;
   const used_team_ids = (fantasy_entry && slateData && slateData.fantasy_entry_id_x_used_team_ids[fantasy_entry.fantasy_entry_id]) || [];
 
-  // this entry's selection on the open slate, which is also what the buttons render as chosen
+  // this entry's selection on the open slate, which is also what the picker renders as chosen; a
+  // cleared row has no team and is no selection
   const own_selection = fantasy_entry && slateData
-    ? Object.values(slateData.fantasy_selections).find((row) => row.fantasy_entry_id === fantasy_entry.fantasy_entry_id)
+    ? Object.values(slateData.fantasy_selections).find((row) => row.fantasy_entry_id === fantasy_entry.fantasy_entry_id && row.team_id)
     : null;
 
+  // The api counts this slate's own pick as spent, which would disable the chosen tile and leave
+  // no way to click it off. TeamsRemaining keeps the full list.
+  const choosable_used_team_ids = own_selection ? used_team_ids.filter((team_id) => team_id !== own_selection.team_id) : used_team_ids;
+
   const locked = fantasy_slate ? +fantasy_slate.locked === 1 : true;
+
+  // Merged rather than reloaded: select returns the one row it rewrote. The spent list swaps this
+  // slate's old team for the new one, since a team is only spent while a row holds it.
+  const handleSelected = (fantasy_selections: Fantasy.FantasySelections) => {
+    setSlateData((prev) => {
+      if (!prev) {
+        return prev;
+      }
+
+      const next = { ...prev.fantasy_selections };
+      let fantasy_entry_id: string | null = null;
+
+      for (const fantasy_selection_id in fantasy_selections) {
+        const row = fantasy_selections[fantasy_selection_id];
+
+        // a duplicate the api soft deleted comes back empty
+        if (!row || !row.fantasy_selection_id) {
+          delete next[fantasy_selection_id];
+          continue;
+        }
+
+        // the strip moved to another slate while this was in flight
+        if (row.fantasy_slate_id !== prev.fantasy_slate.fantasy_slate_id) {
+          return prev;
+        }
+
+        next[fantasy_selection_id] = row;
+        fantasy_entry_id = row.fantasy_entry_id;
+      }
+
+      if (!fantasy_entry_id) {
+        return { ...prev, fantasy_selections: next };
+      }
+
+      const ownTeamIDs = (rows: Fantasy.FantasySelections): string[] => Object.values(rows)
+        .flatMap((row) => (row.fantasy_entry_id === fantasy_entry_id && row.team_id ? [row.team_id] : []));
+
+      const before = ownTeamIDs(prev.fantasy_selections);
+      const used = (prev.fantasy_entry_id_x_used_team_ids[fantasy_entry_id] || [])
+        .filter((team_id) => !before.includes(team_id))
+        .concat(ownTeamIDs(next));
+
+      return {
+        ...prev,
+        fantasy_selections: next,
+        fantasy_entry_id_x_used_team_ids: { ...prev.fantasy_entry_id_x_used_team_ids, [fantasy_entry_id]: used },
+      };
+    });
+  };
 
   const alive = Object.values(fantasy_entrys || {}).filter((row) => +row.eliminated === 0).length;
   const total = Object.keys(fantasy_entrys || {}).length;
 
   return (
-    <div style = {{ padding: 5, maxWidth: 1200, margin: 'auto' }}>
+    // the date bar is fixed, so the room clears it itself -- the wrapper only clears the nav bar
+    <div style = {{ padding: 5, paddingTop: showDateBar ? getDateBarHeight() + 5 : 5, maxWidth: 1200, margin: 'auto' }}>
       {
         own_fantasy_entrys.length > 1 ? (
           <div style = {{ marginBottom: 12 }}>
@@ -238,20 +308,38 @@ const Client = ({ fantasy_group_id }: { fantasy_group_id: string }) => {
         ) : ''
       }
 
-      <div style = {{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
-        {ordered.map((row) => (
-          <Button
-            key = {row.fantasy_slate_id}
-            value = {row.fantasy_slate_id}
-            title = {row.name || `Round ${row.ordinal}`}
-            ink = {row.fantasy_slate_id !== selectedSlateID}
-            onClick = {() => setSelectedSlateID(row.fantasy_slate_id)}
+      {
+        showDateBar ? (
+          <DateBar
+            dates = {eligibleDates}
+            date = {selectedDate}
+            disabledDates = {upcomingDates}
+            top = {dateBarTop}
+            onSelect = {(value) => {
+              const slate = findSlateByDate(fantasy_slates, value);
+
+              if (slate) {
+                setSelectedSlateID(slate.fantasy_slate_id);
+              }
+            }}
           />
-        ))}
-      </div>
+        ) : (
+          <div style = {{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+            {ordered.map((row) => (
+              <Button
+                key = {row.fantasy_slate_id}
+                value = {row.fantasy_slate_id}
+                title = {getSlateLabel(row)}
+                ink = {row.fantasy_slate_id !== selectedSlateID}
+                onClick = {() => setSelectedSlateID(row.fantasy_slate_id)}
+              />
+            ))}
+          </div>
+        )
+      }
 
       <Paper style = {{ padding: 16, marginBottom: 12 }}>
-        <Typography type = 'h6'>{fantasy_slate ? (fantasy_slate.name || `Round ${fantasy_slate.ordinal}`) : ''}</Typography>
+        <Typography type = 'h6'>{getSlateLabel(fantasy_slate)}</Typography>
         <Typography type = 'body1' style = {{ color: theme.text.secondary }}>
           {
             fantasy_slate && !locked && fantasy_slate.lock_datetime
@@ -268,25 +356,21 @@ const Client = ({ fantasy_group_id }: { fantasy_group_id: string }) => {
         </Typography>
       </Paper>
 
-      {message ? (
-        <Paper style = {{ padding: 16, marginBottom: 12 }}>
-          <Typography type = 'body1' style = {{ color: theme.error ? theme.error.main : undefined }}>{message}</Typography>
-        </Paper>
-      ) : ''}
-
       {
         loadingSlate || !slateData
           ? <ClientSkeleton />
           : (
             <Columns numberOfColumns={2}>
               <Slate
+                fantasy_slate = {slateData.fantasy_slate}
+                fantasy_entry = {fantasy_entry}
                 games = {slateData.games}
                 teams = {slateData.teams}
                 game_id_x_game_outlook = {slateData.game_id_x_game_outlook}
-                used_team_ids = {used_team_ids}
+                used_team_ids = {choosable_used_team_ids}
                 selected_team_id = {own_selection ? own_selection.team_id : null}
                 locked = {locked || !fantasy_entry || +fantasy_entry.eliminated === 1}
-                onChoose = {handleChoose}
+                onSelected = {handleSelected}
               />
               <TeamsRemaining
                 teams = {slateData.teams}

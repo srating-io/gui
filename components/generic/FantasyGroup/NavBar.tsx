@@ -18,16 +18,21 @@ import { FantasyGroupLoadData, handleLoad } from './ReduxWrapper';
 import FantasyGroupHelper from '@/components/helpers/FantasyGroup';
 import Organization from '@/components/helpers/Organization';
 import { Objector, Style } from '@esmalley/ts-utils';
+import { getMarginTop } from '@/components/generic/DateBar';
 import { useNavigation } from '@/components/hooks/useNavigation';
 import { Button, IconButton, Menu, MenuOption, Modal, Typography, useTheme } from '@esmalley/react-material-ui';
 import { Fantasy } from '@srating-io/types';
 
 
 const getNavHeaderHeight = () => {
-  return 32;
+  return 48;
 };
 
 export { getNavHeaderHeight };
+
+// holds the back arrow's width on both ends, so the title stays centered on the pages and states
+// where BackButton renders nothing -- it hides itself when there is no history to go back to
+const backSlotWidth = 40;
 
 type ModalData = {
   title: string;
@@ -43,7 +48,7 @@ type LockResponse = {
 }
 
 
-const NavBar = () => {
+const NavBar = ({ fantasy_group_id }: { fantasy_group_id: string }) => {
   const naviation = useNavigation();
   const theme = useTheme();
 
@@ -66,14 +71,40 @@ const NavBar = () => {
   const fantasyHelper = new FantasyGroupHelper({ fantasy_group });
 
 
+  // `top` without `left` leaves a fixed element on its static horizontal position, which starts it
+  // at the centered content column rather than the viewport edge
   const divStyle = Objector.extender(
     Style.getNavBar(),
     {
       justifyContent: 'space-between',
+      alignItems: 'center',
       backgroundColor: theme.background.main,
       padding: '0px 10px',
+      height: getNavHeaderHeight(),
+      top: getMarginTop(),
+      left: 0,
+      // the base scrolls for a tab strip; a long league name should ellipsize instead
+      overflowX: 'hidden',
     },
   );
+
+  const slotStyle: React.CSSProperties = {
+    display: 'flex',
+    flex: `0 0 ${backSlotWidth}px`,
+  };
+
+  // the slice is shared across leagues, so on a navigation it can still hold the one that was open
+  // before -- a blank title costs nothing next to naming the wrong league
+  const titleStyle: React.CSSProperties = {
+    flex: '1 1 auto',
+    minWidth: 0,
+    textAlign: 'center',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+  };
+
+  const title = fantasy_group.fantasy_group_id === fantasy_group_id ? fantasy_group.name : '';
 
   const handleOpen = (event) => {
     setAnchor(event.currentTarget);
@@ -332,8 +363,11 @@ const NavBar = () => {
   return (
     <>
       <div className={Style.getStyleClassName(divStyle)}>
-        <div><BackButton /></div>
-        <div>
+        <div style = {slotStyle}><BackButton /></div>
+        <div style = {titleStyle}>
+          <Typography type = 'h6' style = {{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</Typography>
+        </div>
+        <div style = {slotStyle}>
           {
             options.length ?
             <>
