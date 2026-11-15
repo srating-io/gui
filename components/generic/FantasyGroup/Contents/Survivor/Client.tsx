@@ -8,9 +8,9 @@ import { useClientAPI } from '@/components/clientAPI';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { setDataKey } from '@/redux/features/fantasy_group-slice';
 import { getOwnEntries } from '@/components/helpers/FantasyGroup';
-import { findSlateByDate, getEligibleDates, getSlateEasternRange, getSlateLabel } from '@/components/helpers/FantasySlate';
-import DateBar, { getMarginTop } from '@/components/generic/DateBar';
-import { useSurvivorDateBar } from '@/components/hooks/useSurvivorDateBar';
+import { findSlateByDate, getEligibleDates, getSlateEasternRange, getSlateLabel, hasSurvivorDateBar } from '@/components/helpers/FantasySlate';
+import DateBar, { getDateBarHeight, getMarginTop } from '@/components/generic/DateBar';
+import { getNavHeaderHeight } from '@/components/generic/FantasyGroup/NavBar';
 import Slate from './Slate';
 import TeamsRemaining from './TeamsRemaining';
 
@@ -191,11 +191,12 @@ const Client = (
   const selectedRange = getSlateEasternRange(ordered.find((row) => row.fantasy_slate_id === selectedSlateID));
   const selectedDate = selectedRange ? selectedRange.first : null;
 
-  // the nav bar pins off this same answer, so it has to come from one place
-  const showDateBar = useSurvivorDateBar(fantasy_group_id, seasonDates);
+  // ContentsWrapper holds this view back until the slice holds this league, so the group is ours
+  const showDateBar = hasSurvivorDateBar(fantasy_group, seasonDates);
 
-  // getMarginTop reads the window, so it is a hook -- it cannot be called from the branch below
-  const dateBarTop = getMarginTop();
+  // Hangs under the group nav bar, which sits at the header margin. getMarginTop reads the window,
+  // so it is a hook -- it cannot be called from the branch below.
+  const dateBarTop = getMarginTop() + getNavHeaderHeight();
 
   // Open on the one still accepting a selection, since that is the only one anyone can act on.
   // Falls back to the most recent, so a finished league still shows its last result. Only ever
@@ -302,7 +303,8 @@ const Client = (
   const total = Object.keys(fantasy_entrys || {}).length;
 
   return (
-    <div style = {{ padding: 5, maxWidth: 1200, margin: 'auto' }}>
+    // the date bar is fixed, so the room clears it itself -- the wrapper only clears the nav bar
+    <div style = {{ padding: 5, paddingTop: showDateBar ? getDateBarHeight() + 5 : 5, maxWidth: 1200, margin: 'auto' }}>
       {
         own_fantasy_entrys.length > 1 ? (
           <div style = {{ marginBottom: 12 }}>

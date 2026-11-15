@@ -6,8 +6,6 @@ import { headerBarHeight } from '@/components/generic/Header';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { InitialState, setDataKey } from '@/redux/features/fantasy_group-slice';
 import { getNavHeaderHeight } from './NavBar';
-import { getDateBarHeight } from '@/components/generic/DateBar';
-import { useSurvivorDateBar } from '@/components/hooks/useSurvivorDateBar';
 import { getStore } from '@/app/StoreProvider';
 import { isRequestFailure, useClientAPI } from '@/components/clientAPI';
 import { FantasyGroupLoadData, handleLoad } from './ReduxWrapper';
@@ -23,19 +21,11 @@ import { Button, LinearProgress, Typography, useTheme } from '@esmalley/react-ma
 
 
 /**
- * How far the content has to clear the bars above it. The nav bar is always there, and the survivor
- * view stacks a date bar on top of it -- this is the only place that adds them up.
+ * The main wrapper div for all the contents. Clears the nav bar only: a view that hangs its own
+ * bar under it, like survivor's date bar, pads for that itself.
  */
-const getContentOffset = (hasDateBar: boolean): number => {
-  return getNavHeaderHeight() + (hasDateBar ? getDateBarHeight() : 0);
-};
-
-
-/**
- * The main wrapper div for all the contents
- */
-const Contents = ({ children, hasDateBar = false }): React.JSX.Element => {
-  const paddingTop = getContentOffset(hasDateBar);
+const Contents = ({ children }): React.JSX.Element => {
+  const paddingTop = getNavHeaderHeight();
   return (
     <div style = {{ paddingTop, maxWidth: 1200, margin: 'auto' }}>
       {children}
@@ -44,8 +34,8 @@ const Contents = ({ children, hasDateBar = false }): React.JSX.Element => {
 };
 
 const ContentsWrapper = (
-  { children, fantasy_group_id, seasonDates = [] }:
-  { children: React.JSX.Element; fantasy_group_id: string; seasonDates?: string[] },
+  { children, fantasy_group_id }:
+  { children: React.JSX.Element; fantasy_group_id: string },
 ) => {
   const theme = useTheme();
   const dispatch = useAppDispatch();
@@ -54,8 +44,6 @@ const ContentsWrapper = (
   const session_id = useAppSelector((state) => state.userReducer.session_id);
   const fantasy_group = useAppSelector((state) => state.fantasyGroupReducer.fantasy_group);
   const loadingView = useAppSelector((state) => state.fantasyGroupReducer.loadingView);
-
-  const hasDateBar = useSurvivorDateBar(fantasy_group_id, seasonDates);
 
   const [loaded, setLoaded] = useState(false);
   const [canView, setCanView] = useState(true);
@@ -69,9 +57,7 @@ const ContentsWrapper = (
   // one already running instead of being dropped by the guard.
   const requesting = useRef<string | null>(null);
 
-  const paddingTop = getContentOffset(hasDateBar);
-
-  const heightToRemove = paddingTop + footerNavigationHeight + headerBarHeight + 120;
+  const heightToRemove = getNavHeaderHeight() + footerNavigationHeight + headerBarHeight + 120;
 
   // the id comes from the route, not the slice - on a back navigation the slice can still hold the
   // league that was open before, and loading that one is how its data ended up under this url
@@ -241,7 +227,7 @@ const ContentsWrapper = (
 
   if (loadFailed) {
     return (
-      <Contents hasDateBar = {hasDateBar}>
+      <Contents>
         <Typography style = {{ textAlign: 'center' }} type = 'h5'>Could not load this league</Typography>
         <Typography style = {{ textAlign: 'center' }} type = 'body1'>Check your connection and try again.</Typography>
         <Button title = 'Retry' value = 'retry' onClick = {() => load()} containerStyle = {{ textAlign: 'center' }} />
@@ -251,7 +237,7 @@ const ContentsWrapper = (
 
   if (!canView) {
     return (
-      <Contents hasDateBar = {hasDateBar}>
+      <Contents>
         <Typography style = {{ textAlign: 'center' }} type = 'h5'>You do not have permission to view this group!</Typography>
       </Contents>
     );
@@ -262,7 +248,7 @@ const ContentsWrapper = (
   const isThisGroup = fantasy_group.fantasy_group_id === fantasy_group_id;
 
   return (
-    <Contents hasDateBar = {hasDateBar}>
+    <Contents>
       {
       loadingView || !loaded || !isThisGroup ?
         <div style = {{

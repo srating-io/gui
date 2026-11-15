@@ -18,8 +18,7 @@ import { FantasyGroupLoadData, handleLoad } from './ReduxWrapper';
 import FantasyGroupHelper from '@/components/helpers/FantasyGroup';
 import Organization from '@/components/helpers/Organization';
 import { Objector, Style } from '@esmalley/ts-utils';
-import { getDateBarHeight, getMarginTop } from '@/components/generic/DateBar';
-import { useSurvivorDateBar } from '@/components/hooks/useSurvivorDateBar';
+import { getMarginTop } from '@/components/generic/DateBar';
 import { useNavigation } from '@/components/hooks/useNavigation';
 import { Button, IconButton, Menu, MenuOption, Modal, Typography, useTheme } from '@esmalley/react-material-ui';
 import { Fantasy } from '@srating-io/types';
@@ -49,10 +48,7 @@ type LockResponse = {
 }
 
 
-const NavBar = (
-  { fantasy_group_id, seasonDates = [] }:
-  { fantasy_group_id: string; seasonDates?: string[] },
-) => {
+const NavBar = ({ fantasy_group_id }: { fantasy_group_id: string }) => {
   const naviation = useNavigation();
   const theme = useTheme();
 
@@ -72,10 +68,6 @@ const NavBar = (
   const path = Organization.getPath({ organizations, organization_id });
   const open = Boolean(anchor);
 
-  // decided here rather than on the surface, which reaches a private group stripped of the
-  // dates the answer comes from
-  const hasDateBar = useSurvivorDateBar(fantasy_group_id, seasonDates);
-
   const fantasyHelper = new FantasyGroupHelper({ fantasy_group });
 
 
@@ -89,7 +81,7 @@ const NavBar = (
       backgroundColor: theme.background.main,
       padding: '0px 10px',
       height: getNavHeaderHeight(),
-      top: getMarginTop() + (hasDateBar ? getDateBarHeight() : 0),
+      top: getMarginTop(),
       left: 0,
       // the base scrolls for a tab strip; a long league name should ellipsize instead
       overflowX: 'hidden',
