@@ -120,7 +120,7 @@ const Slate = (
   });
 
   return (
-    <Paper style = {{ padding: 16 }}>
+    <div>
       <Typography type = 'caption' style = {{ color: theme.text.secondary }}>
         {
           locked
@@ -129,7 +129,7 @@ const Slate = (
         }
       </Typography>
       {rows}
-    </Paper>
+    </div>
   );
 };
 
