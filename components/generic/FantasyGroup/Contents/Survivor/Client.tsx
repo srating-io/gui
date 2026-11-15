@@ -222,12 +222,66 @@ const Client = (
   const fantasy_slate = slateData ? slateData.fantasy_slate : null;
   const used_team_ids = (fantasy_entry && slateData && slateData.fantasy_entry_id_x_used_team_ids[fantasy_entry.fantasy_entry_id]) || [];
 
-  // this entry's selection on the open slate, which is also what the picker renders as chosen
+  // this entry's selection on the open slate, which is also what the picker renders as chosen; a
+  // cleared row has no team and is no selection
   const own_selection = fantasy_entry && slateData
-    ? Object.values(slateData.fantasy_selections).find((row) => row.fantasy_entry_id === fantasy_entry.fantasy_entry_id)
+    ? Object.values(slateData.fantasy_selections).find((row) => row.fantasy_entry_id === fantasy_entry.fantasy_entry_id && row.team_id)
     : null;
 
+  // The api counts this slate's own pick as spent, which would disable the chosen tile and leave
+  // no way to click it off. TeamsRemaining keeps the full list.
+  const choosable_used_team_ids = own_selection ? used_team_ids.filter((team_id) => team_id !== own_selection.team_id) : used_team_ids;
+
   const locked = fantasy_slate ? +fantasy_slate.locked === 1 : true;
+
+  // Merged rather than reloaded: select returns the one row it rewrote. The spent list swaps this
+  // slate's old team for the new one, since a team is only spent while a row holds it.
+  const handleSelected = (fantasy_selections: Fantasy.FantasySelections) => {
+    setSlateData((prev) => {
+      if (!prev) {
+        return prev;
+      }
+
+      const next = { ...prev.fantasy_selections };
+      let fantasy_entry_id: string | null = null;
+
+      for (const fantasy_selection_id in fantasy_selections) {
+        const row = fantasy_selections[fantasy_selection_id];
+
+        // a duplicate the api soft deleted comes back empty
+        if (!row || !row.fantasy_selection_id) {
+          delete next[fantasy_selection_id];
+          continue;
+        }
+
+        // the strip moved to another slate while this was in flight
+        if (row.fantasy_slate_id !== prev.fantasy_slate.fantasy_slate_id) {
+          return prev;
+        }
+
+        next[fantasy_selection_id] = row;
+        fantasy_entry_id = row.fantasy_entry_id;
+      }
+
+      if (!fantasy_entry_id) {
+        return { ...prev, fantasy_selections: next };
+      }
+
+      const ownTeamIDs = (rows: Fantasy.FantasySelections): string[] => Object.values(rows)
+        .flatMap((row) => (row.fantasy_entry_id === fantasy_entry_id && row.team_id ? [row.team_id] : []));
+
+      const before = ownTeamIDs(prev.fantasy_selections);
+      const used = (prev.fantasy_entry_id_x_used_team_ids[fantasy_entry_id] || [])
+        .filter((team_id) => !before.includes(team_id))
+        .concat(ownTeamIDs(next));
+
+      return {
+        ...prev,
+        fantasy_selections: next,
+        fantasy_entry_id_x_used_team_ids: { ...prev.fantasy_entry_id_x_used_team_ids, [fantasy_entry_id]: used },
+      };
+    });
+  };
 
   const alive = Object.values(fantasy_entrys || {}).filter((row) => +row.eliminated === 0).length;
   const total = Object.keys(fantasy_entrys || {}).length;
@@ -308,12 +362,15 @@ const Client = (
           : (
             <Columns numberOfColumns={2}>
               <Slate
+                fantasy_slate = {slateData.fantasy_slate}
+                fantasy_entry = {fantasy_entry}
                 games = {slateData.games}
                 teams = {slateData.teams}
                 game_id_x_game_outlook = {slateData.game_id_x_game_outlook}
-                used_team_ids = {used_team_ids}
+                used_team_ids = {choosable_used_team_ids}
                 selected_team_id = {own_selection ? own_selection.team_id : null}
                 locked = {locked || !fantasy_entry || +fantasy_entry.eliminated === 1}
+                onSelected = {handleSelected}
               />
               <TeamsRemaining
                 teams = {slateData.teams}

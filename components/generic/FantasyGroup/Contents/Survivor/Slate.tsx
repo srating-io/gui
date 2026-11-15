@@ -1,15 +1,16 @@
 'use client';
 
-import { Columns, Paper, Tile, Typography, useTheme } from '@esmalley/react-material-ui';
-import { General } from '@srating-io/types';
-import { Dates } from '@esmalley/ts-utils';
+import { useEffect, useState } from 'react';
+import { Inputs, MultiPicker, Paper, Tile, Typography, useTheme } from '@esmalley/react-material-ui';
+import { Fantasy, General } from '@srating-io/types';
+import { Dates, toast } from '@esmalley/ts-utils';
+import { useClientAPI } from '@/components/clientAPI';
 
 /**
  * One slate's games, as the things an entry chooses between.
  *
- * Display only for now. Three click paths (Button, ButtonSwitch, MultiPicker) each misfired, so the
- * selection wiring was torn out to be rebuilt from scratch; the tiles still show what is chosen,
- * spent or closed, which is what the rebuild has to preserve.
+ * A radio per game but one selection per slate: choosing in another game moves it, and clicking the
+ * chosen team again clears it. Both rewrite the entry's one row for the slate.
  *
  * The number beside each team is a win probability or nothing at all. It used to fall back to the
  * elo rating, which is never withheld -- but a bare `1494` landed in the same slot a subscriber
@@ -34,23 +35,37 @@ const formatOutlook = (outlook: General.GameOutlook | undefined, isHome: boolean
 
 const Slate = (
   {
+    fantasy_slate,
+    fantasy_entry,
     games,
     teams,
     game_id_x_game_outlook,
     used_team_ids,
     selected_team_id,
     locked,
+    onSelected,
   }:
   {
+    fantasy_slate: Fantasy.FantasySlate;
+    fantasy_entry: Fantasy.FantasyEntry | null;
     games: General.Games;
     teams: General.Teams;
     game_id_x_game_outlook: {[game_id: string]: General.GameOutlook};
     used_team_ids: string[];
     selected_team_id: string | null;
     locked: boolean;
+    onSelected: (fantasy_selections: Fantasy.FantasySelections) => void;
   },
 ) => {
   const theme = useTheme();
+
+  const [selectedTeamID, setSelectedTeamID] = useState<string | null>(selected_team_id);
+  const [sending, setSending] = useState(false);
+
+  // the slate or the entry changed under us, or a broadcast moved the selection
+  useEffect(() => {
+    setSelectedTeamID(selected_team_id);
+  }, [selected_team_id]);
 
   const sorted = Object.values(games).sort((a, b) => +a.start_timestamp - +b.start_timestamp);
 
@@ -61,6 +76,56 @@ const Slate = (
       </Paper>
     );
   }
+
+  const handleChange = (value: (string | number)[] | string | number | null, game: General.Game) => {
+    if (sending || !fantasy_entry) {
+      return;
+    }
+
+    const picked = Array.isArray(value) ? value[0] : value;
+    const team_id = picked ? String(picked) : null;
+
+    // a null only means "clear" from the game that holds the selection
+    const holdsSelection = selectedTeamID === game.home_team_id || selectedTeamID === game.away_team_id;
+
+    if (team_id === selectedTeamID || (!team_id && !holdsSelection)) {
+      return;
+    }
+
+    const previous = selectedTeamID;
+
+    setSelectedTeamID(team_id);
+    setSending(true);
+
+    const rollBack = (message: string) => {
+      setSending(false);
+      setSelectedTeamID(previous);
+      toast.error(message);
+    };
+
+    useClientAPI({
+      class: 'fantasy_selection',
+      function: 'select',
+      arguments: {
+        fantasy_entry_id: fantasy_entry.fantasy_entry_id,
+        fantasy_slate_id: fantasy_slate.fantasy_slate_id,
+        game_id: game.game_id,
+        team_id,
+      },
+    })
+      .then((data) => {
+        if (!data || data.error) {
+          rollBack(data && data.error ? data.error : 'Could not save that selection');
+          return;
+        }
+
+        setSending(false);
+        onSelected(data.fantasy_selections || {});
+      })
+      .catch(() => rollBack('Could not save that selection'));
+  };
+
+  const inputHandler = new Inputs();
 
   const rows = sorted.map((game) => {
     const outlook = game_id_x_game_outlook[game.game_id];
@@ -75,35 +140,13 @@ const Slate = (
       { team: home, team_id: game.home_team_id, isHome: true },
     ];
 
-    // a spent team greys out while its opponent stays live; a chosen one keeps its fill and only
-    // dims on a closed slate, so the selection stays legible
-    const options = sides.map(({ team, team_id, isHome }) => {
-      const chosen = selected_team_id === team_id;
-      const unavailable = locked || started || used_team_ids.includes(team_id);
+    const options = sides.map(({ team, team_id, isHome }) => ({
+      label: `${team ? team.code || team.name : 'Team'} ${formatOutlook(outlook, isHome)}`.trim(),
+      value: team_id,
+      disabled: locked || started || used_team_ids.includes(team_id),
+    }));
 
-      let fill: React.CSSProperties = {};
-
-      if (chosen) {
-        fill = { backgroundColor: theme.blue[500] };
-      } else if (unavailable) {
-        fill = { backgroundColor: theme.action.disabledBackground, color: theme.text.disabled };
-      }
-
-      const optionStyle: React.CSSProperties = {
-        textAlign: 'center',
-        padding: '8px 16px',
-        opacity: unavailable ? 0.6 : 1,
-        ...fill,
-      };
-
-      return (
-        <Paper key = {team_id} style = {optionStyle}>
-          <Typography type = 'body1' style = {{ color: 'inherit' }}>
-            {`${team ? team.code || team.name : 'Team'} ${formatOutlook(outlook, isHome)}`.trim()}
-          </Typography>
-        </Paper>
-      );
-    });
+    const selected = selectedTeamID && sides.some(({ team_id }) => team_id === selectedTeamID) ? [selectedTeamID] : [];
 
     const usedNote = sides
       .filter(({ team_id }) => used_team_ids.includes(team_id))
@@ -122,9 +165,13 @@ const Slate = (
           primary = {`${away ? away.name : 'Away'} at ${home ? home.name : 'Home'}`}
           secondary = {secondary}
         />
-        <Columns numberOfColumns = {2} style = {{ gap: 10 }}>
-          {options}
-        </Columns>
+        <MultiPicker
+          inputHandler = {inputHandler}
+          isRadio
+          options = {options}
+          selected = {selected}
+          onChange = {(value) => handleChange(value, game)}
+        />
       </div>
     );
   });
@@ -135,7 +182,7 @@ const Slate = (
         {
           locked
             ? 'This one is closed.'
-            : 'Choose one team you think will win. Everything closes when the first game starts.'
+            : 'Choose one team you think will win, or click it again to clear. Everything closes when the first game starts.'
         }
       </Typography>
       {rows}
