@@ -129,7 +129,7 @@ class Games extends Surface {
           </Suspense>
         </ContentsClientWrapper>
         <FloatingButtons />
-        <Refresher dates = {selectedDates} games = {games} />
+        <Refresher dates = {selectedDates} games = {games} organization_id = {organization_id} division_id = {division_id} />
       </>
     );
   }
