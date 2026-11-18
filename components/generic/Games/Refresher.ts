@@ -5,26 +5,35 @@ import {
   setDataKey,
 } from '@/redux/features/games-slice';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { refresh } from '../actions';
 import { getTagLabel } from '@/components/handlers/secret/shared';
 import { getStore } from '@/app/StoreProvider';
 import { Objector } from '@esmalley/ts-utils';
 
 
-const Refresher = ({ dates, games }) => {
+// the sport comes from the page, not the store: a sport switch reverts the store's organization_id
+// for a moment mid-navigation, and a fetch fired then marks the date checked with the old sport's scores
+const Refresher = ({ dates, games, organization_id, division_id }) => {
   const online = useAppSelector((state) => state.generalReducer.online);
   const refreshEnabled = useAppSelector((state) => state.gamesReducer.refreshEnabled);
   const refreshRate = useAppSelector((state) => state.gamesReducer.refreshRate);
-  const organization_id = useAppSelector((state) => state.organizationReducer.organization_id);
-  const division_id = useAppSelector((state) => state.organizationReducer.division_id);
   const dispatch = useAppDispatch();
 
   const [loading, setLoading] = useState(false);
-  const [lastDatesKey, setLastDatesKey] = useState(null);
+  const [lastRequestKey, setLastRequestKey] = useState<string | null>(null);
+
+  // a reply landing after the page is gone would overwrite the next page's scores
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   // dates is a fresh array identity every server render, so compare the joined string
-  const datesKey = dates.join(',');
+  const requestKey = [organization_id, division_id, ...dates].join(',');
 
   // get the data when coming back online
   useEffect(() => {
@@ -58,7 +67,7 @@ const Refresher = ({ dates, games }) => {
       return;
     }
 
-    setLastDatesKey(datesKey);
+    setLastRequestKey(requestKey);
     setLoading(true);
     dispatch(setDataKey({ key: 'refreshLoading', value: true }));
 
@@ -71,6 +80,10 @@ const Refresher = ({ dates, games }) => {
         start_date: dates,
       },
     }).then((response) => {
+      if (!mountedRef.current) {
+        return;
+      }
+
       if (response && !response.error) {
         failures = 0;
         const store = getStore();
@@ -92,6 +105,9 @@ const Refresher = ({ dates, games }) => {
         setTimeout(getData, 1000);
       }
     }).catch((e) => {
+      if (!mountedRef.current) {
+        return;
+      }
       dispatch(setDataKey({ key: 'refreshLoading', value: false }));
       setLoading(false);
     });
@@ -99,7 +115,7 @@ const Refresher = ({ dates, games }) => {
 
 
   useEffect(() => {
-    if (lastDatesKey !== datesKey) {
+    if (lastRequestKey !== requestKey) {
       getData();
     }
 
