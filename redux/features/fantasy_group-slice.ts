@@ -116,11 +116,14 @@ export const fantasy_group = createSlice({
       const { value, key } = action.payload;
       stateController.setDataKey(state, key, value);
     },
+    seed: (state: InitialState, action: PayloadAction<Partial<InitialState>>) => {
+      stateController.seed(state, action.payload);
+    },
   },
 });
 
 export const {
-  setDataKey, resetDataKey, reset, updateFromURL,
+  setDataKey, seed, resetDataKey, reset, updateFromURL,
 } = fantasy_group.actions;
 export default fantasy_group.reducer;
 

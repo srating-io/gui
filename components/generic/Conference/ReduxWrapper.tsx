@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { setDataKey } from '@/redux/features/conference-slice';
+import { seed } from '@/redux/features/conference-slice';
 import { useAppDispatch } from '@/redux/hooks';
 import { Basketball, Football, General } from '@srating-io/types';
 
@@ -12,12 +12,7 @@ const ReduxWrapper = (
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    dispatch(setDataKey({ key: 'view', value: view }));
-    dispatch(setDataKey({ key: 'subview', value: subview }));
-    dispatch(setDataKey({ key: 'team_season_conferences', value: team_season_conferences }));
-    dispatch(setDataKey({ key: 'teams', value: teams }));
-    dispatch(setDataKey({ key: 'statistic_rankings', value: statistic_rankings }));
-    dispatch(setDataKey({ key: 'elos', value: elos }));
+    dispatch(seed({ view, subview, team_season_conferences, teams, statistic_rankings, elos }));
   }, [dispatch, team_season_conferences, teams, statistic_rankings, elos]);
 
   return (

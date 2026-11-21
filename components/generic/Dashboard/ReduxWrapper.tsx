@@ -2,7 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { useAppDispatch } from '@/redux/hooks';
-import { setDataKey } from '@/redux/features/dashboard-slice';
+import { seed } from '@/redux/features/dashboard-slice';
 
 const ReduxWrapper = (
   {
@@ -17,7 +17,7 @@ const ReduxWrapper = (
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    dispatch(setDataKey({ key: 'view', value: view }));
+    dispatch(seed({ view }));
   }, [dispatch, view]);
 
   return (

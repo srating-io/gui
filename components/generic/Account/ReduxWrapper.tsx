@@ -2,7 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { useAppDispatch } from '@/redux/hooks';
-import { setDataKey } from '@/redux/features/user-slice';
+import { seed } from '@/redux/features/user-slice';
 
 const ReduxWrapper = (
   {
@@ -18,7 +18,7 @@ const ReduxWrapper = (
 
 
   useEffect(() => {
-    dispatch(setDataKey({ key: 'view', value: view }));
+    dispatch(seed({ view }));
   }, [dispatch, view]);
 
 

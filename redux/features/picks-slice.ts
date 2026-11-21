@@ -86,6 +86,9 @@ export const picks = createSlice({
       const { value, key } = action.payload;
       stateController.setDataKey(state, key, value);
     },
+    seed: (state: InitialState, action: PayloadAction<Partial<InitialState>>) => {
+      stateController.seed(state, action.payload);
+    },
   },
 });
 
@@ -94,5 +97,6 @@ export const {
   reset,
   resetDataKey,
   setDataKey,
+  seed,
 } = picks.actions;
 export default picks.reducer;

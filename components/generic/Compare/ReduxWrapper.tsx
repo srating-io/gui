@@ -2,7 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { useAppDispatch } from '@/redux/hooks';
-import { setDataKey } from '@/redux/features/compare-slice';
+import { seed } from '@/redux/features/compare-slice';
 import { updateOrganizationID, updateDivisionID } from '@/redux/features/organization-slice';
 import { Team } from '@srating-io/types';
 
@@ -37,14 +37,7 @@ const ReduxWrapper = (
   useEffect(() => {
     dispatch(updateOrganizationID(organization_id));
     dispatch(updateDivisionID(division_id));
-    dispatch(setDataKey({ key: 'home_team_id', value: home_team_id }));
-    dispatch(setDataKey({ key: 'away_team_id', value: away_team_id }));
-    dispatch(setDataKey({ key: 'season', value: season }));
-    dispatch(setDataKey({ key: 'neutral_site', value: neutral_site }));
-    dispatch(setDataKey({ key: 'teams', value: teams }));
-    dispatch(setDataKey({ key: 'view', value: view }));
-    dispatch(setDataKey({ key: 'subview', value: subview }));
-    dispatch(setDataKey({ key: 'neutral_site', value: neutral_site }));
+    dispatch(seed({ home_team_id, away_team_id, season, neutral_site, teams, view, subview }));
   }, [
     dispatch,
     organization_id,

@@ -69,12 +69,16 @@ export const coach = createSlice({
       const { value, key } = action.payload;
       stateController.setDataKey(state, key, value);
     },
+    seed: (state: InitialState, action: PayloadAction<Partial<InitialState>>) => {
+      stateController.seed(state, action.payload);
+    },
   },
 });
 
 export const {
   updateFromURL,
   setDataKey,
+  seed,
   resetDataKey,
   reset,
 } = coach.actions;

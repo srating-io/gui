@@ -92,10 +92,8 @@ export const game = createSlice({
       const { value, key } = action.payload;
       stateController.setDataKey(state, key, value);
     },
-    // Load the server's values without writing the url. A raw history write leaves Next's tree
-    // keyed on the old search params, so its next refresh counts as a navigation and scrolls to top.
     seed: (state: InitialState, action: PayloadAction<Partial<InitialState>>) => {
-      Object.assign(state, action.payload);
+      stateController.seed(state, action.payload);
     },
   },
 });

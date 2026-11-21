@@ -3,7 +3,7 @@
 import React, { useEffect } from 'react';
 
 import ButtonSwitch from '@/components/generic/ButtonSwitch';
-import { setDataKey } from '@/redux/features/fantasy_group-slice';
+import { seed, setDataKey } from '@/redux/features/fantasy_group-slice';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { isPreSeasonPool } from './shared';
 
@@ -42,7 +42,7 @@ const StatViewSwitch = ({ rows, style = { marginBottom: 10 } }: { rows: object[]
       return;
     }
 
-    dispatch(setDataKey({ key: 'draft_stat_view', value: isPreSeasonPool(rows) ? 'career_active' : 'season' }));
+    dispatch(seed({ draft_stat_view: isPreSeasonPool(rows) ? 'career_active' : 'season' }));
   }, [draft_stat_view, rows, dispatch]);
 
   return (

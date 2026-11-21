@@ -108,6 +108,9 @@ export const dashboard = createSlice({
       const { value, key } = action.payload;
       stateController.setDataKey(state, key, value);
     },
+    seed: (state: InitialState, action: PayloadAction<Partial<InitialState>>) => {
+      stateController.seed(state, action.payload);
+    },
     updateDataKey: <K extends keyof InitialState>(state: InitialState, action: PayloadAction<ActionPayload<K>>) => {
       const { value, key } = action.payload;
       stateController.updateDataKey(state, key, value);
@@ -121,6 +124,7 @@ export const {
   updateFromURL,
   updateDataKey,
   setDataKey,
+  seed,
   reset,
   resetDataKey,
 } = dashboard.actions;

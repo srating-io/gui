@@ -286,6 +286,17 @@ class State<T extends object> {
   }
 
   /**
+   * Load server-derived values without writing the url. A raw history write leaves Next's router
+   * tree keyed on the old search params, so its next refresh counts as a navigation and scrolls.
+   */
+  public seed(state: WritableDraft<T>, values: Partial<T>) {
+    for (const key of Object.keys(values) as Array<keyof T>) {
+      (state as T)[key] = values[key] as T[keyof T];
+      this.setLocalStorage(key, values[key]);
+    }
+  }
+
+  /**
    * Set a specific data key value and update the URL
    */
   public setDataKey<K extends keyof T>(state: WritableDraft<T>, key: K, value: T[K]) {

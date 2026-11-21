@@ -2,7 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { useAppDispatch } from '@/redux/hooks';
-import { setDataKey } from '@/redux/features/picks-slice';
+import { seed } from '@/redux/features/picks-slice';
 
 const ReduxWrapper = (
   {
@@ -18,8 +18,7 @@ const ReduxWrapper = (
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    dispatch(setDataKey({ key: 'view', value: view }));
-    dispatch(setDataKey({ key: 'season', value: season }));
+    dispatch(seed({ view, season }));
   }, [dispatch, season, view]);
 
 
