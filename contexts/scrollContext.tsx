@@ -1,5 +1,5 @@
-import React, { createContext, useContext, ReactNode, RefObject, useRef, useEffect, useState } from 'react';
-import { usePathname, useSearchParams } from 'next/navigation';
+import React, { createContext, useContext, ReactNode, RefObject, useRef, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { useWindowDimensions } from '@esmalley/react-material-ui';
 
 type ScrollContextType = RefObject<HTMLDivElement | null>;
@@ -36,10 +36,9 @@ const useScrollContext = (): RefObject<HTMLDivElement | null> => {
 
 const ScrollContainer: React.FC<ScrollContainerProps> = ({ children }) => {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const { width } = useWindowDimensions();
 
-  const [currentPathname] = useState(pathname);
+  const previousPathname = useRef(pathname);
 
 
   const scrollRefContext = useScrollContext();
@@ -62,16 +61,18 @@ const ScrollContainer: React.FC<ScrollContainerProps> = ({ children }) => {
   //   })
   // }, [router.events])
 
+  // compare against the previous pathname, not the first one: against the first, every later
+  // search param change on a client-navigated page (a url write, a tab) threw the reader to the top
   useEffect(() => {
-    // console.log('ScrollContainer useEffect triggered')
     if (
-      currentPathname !== pathname &&
+      previousPathname.current !== pathname &&
       scrollRefContext &&
       scrollRefContext.current
     ) {
       scrollRefContext.current.scrollTop = 0;
     }
-  }, [pathname, searchParams]);
+    previousPathname.current = pathname;
+  }, [pathname]);
 
   return (
     <div ref = {scrollRefContext} className = {scrollerClasses}>
