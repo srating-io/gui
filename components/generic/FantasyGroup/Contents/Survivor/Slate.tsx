@@ -5,6 +5,7 @@ import { Inputs, MultiPicker, Paper, Tile, Typography, useTheme } from '@esmalle
 import { Fantasy, General } from '@srating-io/types';
 import { Dates, toast } from '@esmalley/ts-utils';
 import { useClientAPI } from '@/components/clientAPI';
+import HelperTeam from '@/components/helpers/Team';
 
 /**
  * One slate's games, as the things an entry chooses between.
@@ -141,7 +142,7 @@ const Slate = (
     ];
 
     const options = sides.map(({ team, team_id, isHome }) => ({
-      label: `${team ? team.code || team.name : 'Team'} ${formatOutlook(outlook, isHome)}`.trim(),
+      label: `${team ? new HelperTeam({ team }).getName() : 'Team'} ${formatOutlook(outlook, isHome)}`.trim(),
       value: team_id,
       disabled: locked || started || used_team_ids.includes(team_id),
     }));
@@ -150,7 +151,7 @@ const Slate = (
 
     const usedNote = sides
       .filter(({ team_id }) => used_team_ids.includes(team_id))
-      .map(({ team }) => (team ? team.code || team.name : ''))
+      .map(({ team }) => (team ? new HelperTeam({ team }).getName() : ''))
       .filter((value) => !!value);
 
     const secondary = [

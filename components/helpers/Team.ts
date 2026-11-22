@@ -16,17 +16,15 @@ class Team {
 
 
   /**
-   * Get the team name
+   * Get the team name: the short display name ("Purdue", "Arizona St."), else the full one.
+   * Never `code`, which is an abbreviation.
    */
   getName(): string {
     if (!this.getTeam()) {
       return 'Unknown';
     }
-    if (this.getTeam().code) {
-      return this.getTeam().code;
-    }
-    if (this.getTeam().alt_name) {
-      return this.getTeam().alt_name;
+    if (this.getTeam().name_short) {
+      return this.getTeam().name_short;
     }
     if (this.getTeam().name) {
       return this.getTeam().name;
@@ -37,22 +35,24 @@ class Team {
 
 
   /**
-   * Get the team name short
+   * Get the team's short code. A curated `code` (PUR, NU, ILST) is printed as is; without one, the
+   * first three letters of the ncaa code or the name, with spaces dropped so "W GA" is never "W G".
    */
   getNameShort(): string {
-    let name = 'Unknown';
+    const team = this.getTeam();
 
-    if (this.getTeam().char6) {
-      name = this.getTeam().char6;
-    } else if (this.getTeam().code) {
-      name = this.getTeam().code;
-    } else if (this.getTeam().alt_name) {
-      name = this.getTeam().alt_name;
-    } else if (this.getTeam().name) {
-      name = this.getTeam().name;
+    if (!team) {
+      return 'UNK';
     }
 
-    return name.toUpperCase().substring(0, 3);
+    // only an abbreviation shaped code is curated; anything longer is a leftover name
+    if (team.code && /^[A-Z0-9&'.-]{2,5}$/.test(team.code)) {
+      return team.code;
+    }
+
+    const name = team.char6 || team.name_short || team.name || 'Unknown';
+
+    return String(name).replace(/\s+/g, '').toUpperCase().substring(0, 3);
   }
 
   /**
