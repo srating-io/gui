@@ -99,7 +99,7 @@ export class BaseTableDetails {
     }
 
     // Dynamic grouping fallback for tables without explicit section definitions
-    const basicInfoKeys = ['name', 'first_name', 'last_name', 'alt_name', 'code', 'char6', 'description', 'title'];
+    const basicInfoKeys = ['name', 'first_name', 'last_name', 'name_short', 'code', 'char6', 'description', 'title'];
     const systemKeys = ['guid', 'inactive', 'active', 'status', 'version'];
 
     const basicFields: FieldConfig[] = [];

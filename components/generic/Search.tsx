@@ -130,7 +130,7 @@ const Search = (
       group: 'Teams',
       value: team.team_id,
       selectable: true,
-      label: team.alt_name || team.name,
+      label: team.name_short || team.name,
       team_id: team.team_id,
       onSelect: handleClick,
     };

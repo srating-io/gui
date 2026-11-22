@@ -45,7 +45,7 @@ const TeamSearch = (
     return {
       value: row.team_id,
       selectable: true,
-      label: row.alt_name || row.name,
+      label: row.name_short || row.name,
       onSelect: handleTeamSelect,
     };
   });

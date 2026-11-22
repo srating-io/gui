@@ -6,7 +6,7 @@ export class TeamTableDetails extends BaseTableDetails {
     return [
       {
         title: 'Basic Info',
-        fields: ['name', 'alt_name', 'code', 'char6'],
+        fields: ['name', 'name_short', 'code', 'char6'],
       },
       {
         title: 'Colors',

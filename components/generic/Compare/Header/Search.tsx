@@ -121,7 +121,7 @@ const Search = () => {
     return {
       value: team.team_id,
       selectable: true,
-      label: team.alt_name || team.name,
+      label: team.name_short || team.name,
       onSelect: handleClick,
     };
   }).sort((a, b) => {
