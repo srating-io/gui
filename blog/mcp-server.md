@@ -55,8 +55,7 @@ the [tool docs](https://docs.srating.io/mcp/tools).
 ## Why
 
 An assistant is a good front end for this kind of data. You ask in plain English, it works out which
-team, season and stat you meant, and it puts the answer together from a few lookups. A ranking table
-can't do that. It's also the best demo the API has had: what the assistant does through the MCP
+team, season and stat you meant, and it puts the answer together from a few lookups. It's also the best demo the API has had: what the assistant does through the MCP
 server is a smaller version of what the API does for your own code.
 
 Questions, bugs or ideas: [contact@srating.io](mailto:contact@srating.io).
