@@ -55,6 +55,16 @@ const Privacy = () => {
           <Typography type='body1'>Public Interaction: Comments you post are visible to other users of the site.</Typography>
           <br />
 
+          <Typography type='h6'>4. AI Assistant Connector</Typography>
+          <br />
+          <Typography type='body1'>Our MCP server at mcp.srating.io lets AI assistants such as Claude, ChatGPT and Codex look up srating.io data. It applies to you only if you connect it to an assistant.</Typography>
+          <br />
+          <Typography type='body1'>What it receives: only the arguments the assistant sends with each request, such as a team name, a sport or a date. It does not receive your conversation, your assistant account, or any files, and it has no sign-in.</Typography>
+          <Typography type='body1'>What it returns: the same public sports data shown on srating.io, such as scores, rankings, and published statistics for teams, players and coaches. It returns nothing about you.</Typography>
+          <Typography type='body1'>What it keeps: results are cached briefly and shared by everyone using the connector, so they are not tied to you. Like the rest of the site, our server logs record IP addresses and request times, which we use to keep the service running and to prevent abuse.</Typography>
+          <Typography type='body1'>The assistant you use is operated by its own provider, and its handling of your conversation is governed by that provider's privacy policy.</Typography>
+          <br />
+
           <Typography type='h6'>5. Data Security</Typography>
           <br />
           <Typography type='body1'>We implement industry-standard security measures to protect your information. However, no method of transmission over the internet is 100% secure, and we cannot guarantee absolute security.</Typography>
@@ -78,7 +88,7 @@ const Privacy = () => {
           <Typography type='body1'>If you have any questions about this Privacy Policy, please contact us at: contact@srating.io</Typography>
 
           <br />
-          <Typography type='body1'>Effective Date: March 5, 2026</Typography>
+          <Typography type='body1'>Effective Date: November 23, 2026</Typography>
         </div>
       </main>
     </div>
