@@ -109,8 +109,12 @@ const getCount = async (
   return (result && typeof result.count === 'number' && result.count) || 0;
 };
 
+// no dash, so it can never be mistaken for a `${sport}-${kind}` shard
+const SITE_SHARD = 'site';
+
 export async function generateSitemaps() {
-  const ids: { id: string }[] = [];
+  // pages that belong to no sport, listed once rather than in every sport's shard
+  const ids: { id: string }[] = [{ id: SITE_SHARD }];
 
   // the paged kinds, each with the count request it needs. gathered first so the counts for all
   // three sports go out together rather than one round trip at a time
@@ -152,6 +156,13 @@ export default async function sitemap(
   { id }: { id: Promise<string> | string },
 ): Promise<MetadataRoute.Sitemap> {
   const shard = String(await id);
+
+  if (shard === SITE_SHARD) {
+    return [
+      { url: getAbsoluteUrl('/ai'), changeFrequency: 'monthly', priority: 0.7 },
+    ];
+  }
+
   const [sport, kind, page] = shard.split('-');
 
   const target = SPORTS.find((row) => row.sport === sport);
