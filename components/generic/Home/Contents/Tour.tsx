@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { Tab, Typography, useTheme, useWindowDimensions } from '@esmalley/react-material-ui';
 
 import Api from './Tour/Api';
+import Assistants from './Tour/Assistants';
 import Compare from './Tour/Compare';
 import Projections from './Tour/Projections';
 import Rankings from './Tour/Rankings';
@@ -13,7 +14,7 @@ import { getMaxWidth } from '../ContentsWrapper';
 
 
 /**
- * The five tools, one at a time.
+ * The six tools, one at a time.
  *
  * Laid out end to end these sections ran to seven thousand pixels, which put the price list far
  * enough down the page that nobody scrolling casually would ever reach it - and a landing page
@@ -32,6 +33,7 @@ const tabs = [
   { value: 'compare', title: 'Compare', short: 'Compare' },
   { value: 'schedules', title: 'Teams & schedules', short: 'Teams' },
   { value: 'api', title: 'API', short: 'API' },
+  { value: 'ai', title: 'AI assistants', short: 'AI' },
 ];
 
 const Tour = ({ path }: { path: string }) => {
@@ -57,6 +59,10 @@ const Tour = ({ path }: { path: string }) => {
 
     if (selected === 'api') {
       return <Api />;
+    }
+
+    if (selected === 'ai') {
+      return <Assistants />;
     }
 
     return <Rankings path = {path} />;
