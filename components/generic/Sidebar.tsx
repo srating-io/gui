@@ -19,6 +19,7 @@ import ScoresIcon from '@esmalley/react-material-icons/Scoreboard';
 import PicksIcon from '@esmalley/react-material-icons/Insights';
 import ArticleIcon from '@esmalley/react-material-icons/Article';
 import QueryStatsIcon from '@esmalley/react-material-icons/QueryStats';
+import SmartToyIcon from '@esmalley/react-material-icons/SmartToy';
 import { reset } from '@/redux/features/compare-slice';
 import { setLoading } from '@/redux/features/loading-slice';
 import Organization from '../helpers/Organization';
@@ -176,6 +177,12 @@ const Sidebar = (
       })}
 
       <Divider />
+
+      {getButtonContainer({
+        onClick: () => { onClick(); router.push('/ai'); },
+        icon: <SmartToyIcon style={iconStyle} />,
+        text: 'AI assistants',
+      })}
 
       {getButtonContainer({
         onClick: () => { window.open('https://docs.srating.io', '_blank'); },

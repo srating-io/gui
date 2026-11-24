@@ -377,6 +377,22 @@ const Pricing = ({ view }: { view: string | null; }) => {
                   </Typography>
                 </div>
               </li>
+              <li className = {Style.getStyleClassName(liStyle)}>
+                <div style = {{ flexShrink: 0 }}>
+                  <SmartToyIcon style = {{ fontSize: 24, color: theme.primary.main }} />
+                </div>
+                <div style = {{ display: 'flex', flexDirection: 'column' }}>
+                  <Typography type = 'subtitle1'>Or just ask your AI assistant</Typography>
+                  <Typography type = 'body2' style = {{ color: theme.text.secondary }}>
+                    Claude, ChatGPT and Codex can look up srating.io data through our free MCP server, no key needed.{' '}
+                      <a
+                        style={{ cursor: 'pointer', color: theme.link.primary }}
+                        onClick={(e) => { e.preventDefault(); router.push('/ai'); }}
+                        href='/ai'
+                      >Set it up</a>
+                  </Typography>
+                </div>
+              </li>
             </ul>
           </div>
         </div>
